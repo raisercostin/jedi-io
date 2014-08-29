@@ -484,9 +484,4 @@
 			</snapshots>
 		</repository>
 	</repositories>
-
-  <scm>
-    <connection>scm:svn:https://svn.raisercostin.dnsdojo.org/all/projects/projects/raisercostin-maven-defaults/tags/raisercostin-utils-0.1</connection>
-    <developerConnection>scm:svn:https://svn.raisercostin.dnsdojo.org/all/projects/projects/raisercostin-maven-defaults/tags/raisercostin-utils-0.1</developerConnection>
-  </scm>
 </project>
