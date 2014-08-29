@@ -31,6 +31,12 @@
 			<url>svn:https://raisercostin.googlecode.com/svn/maven2-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
+	<scm>
+		<connection>scm:git:https://github.com/raisercostin/${artifactId}.git</connection>
+		<developerConnection>scm:git:https://github.com/raisercostin/${artifactId}.git</developerConnection>
+		<url>https://github.com/raisercostin/${artifactId}.git</url>
+		<tag>HEAD</tag>
+	</scm>
 	<developers>
 		<developer>
 			<id>raisercostin</id>
@@ -478,4 +484,9 @@
 			</snapshots>
 		</repository>
 	</repositories>
+
+  <scm>
+    <connection>scm:svn:https://svn.raisercostin.dnsdojo.org/all/projects/projects/raisercostin-maven-defaults/tags/raisercostin-utils-0.1</connection>
+    <developerConnection>scm:svn:https://svn.raisercostin.dnsdojo.org/all/projects/projects/raisercostin-maven-defaults/tags/raisercostin-utils-0.1</developerConnection>
+  </scm>
 </project>
