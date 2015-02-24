@@ -1,4 +1,4 @@
-package util.io
+package org.raisercostin.util.io
 
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes

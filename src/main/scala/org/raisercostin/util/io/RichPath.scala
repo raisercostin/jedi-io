@@ -1,4 +1,4 @@
-package util.io
+package org.raisercostin.util.io
 
 import java.io.{ IOException, InputStream, OutputStream }
 import java.nio.file.{ Path, Paths, Files, SimpleFileVisitor, FileVisitResult }
