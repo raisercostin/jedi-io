@@ -21,6 +21,18 @@
 			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
 		</license>
 	</licenses>
+	<developers>
+		<developer>
+			<id>raisercostin</id>
+			<name>Costin Grigore</name>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:https://github.com/raisercostin/${artifactId}.git</connection>
+		<developerConnection>scm:git:https://github.com/raisercostin/${artifactId}.git</developerConnection>
+		<url>https://github.com/raisercostin/${artifactId}.git</url>
+		<tag>HEAD</tag>
+	</scm>
 	<distributionManagement>
 		<repository>
 			<id>raisercostin-releases</id>
@@ -31,18 +43,6 @@
 			<url>svn:https://raisercostin.googlecode.com/svn/maven2-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
-	<scm>
-		<connection>scm:git:https://github.com/raisercostin/${artifactId}.git</connection>
-		<developerConnection>scm:git:https://github.com/raisercostin/${artifactId}.git</developerConnection>
-		<url>https://github.com/raisercostin/${artifactId}.git</url>
-		<tag>HEAD</tag>
-	</scm>
-	<developers>
-		<developer>
-			<id>raisercostin</id>
-			<name>Costin Grigore</name>
-		</developer>
-	</developers>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.5</maven.compiler.source>
