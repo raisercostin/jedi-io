@@ -187,4 +187,44 @@ c/e/f.txt""".replaceAll("\r", ""),
     }
     Test.main(Array())
   }
+  import scala.io.Codec
+  import java.nio.charset.Charset
+  import java.nio.charset.CodingErrorAction
+  import java.nio.charset.MalformedInputException
+
+  test("get lines from utf-8 file with BOM") {
+    val result = Locations.classpath("/fileWithBom.txt").readContent
+    assertEquals(66, result.size)
+  }
+  test("get lines from utf-8 file with BOM - throw exceptions") {
+    val is = getClass.getResourceAsStream("/fileWithBom.txt")
+    intercept[MalformedInputException] {
+      val result = scala.io.Source.fromInputStream(is)(Codec("UTF-8")).getLines.exists(_ => false)
+    }
+    val result = Locations.classpath("/fileWithBom2.txt").readContent
+    assertEquals(17, result.size)
+  }
+  test("read from resources in other jars") {
+    //println(com.gravity.goose.text.HashUtils.getClass().getClassLoader())
+    //println(Locations.getClass.getClassLoader)
+    val s1 = Locations.stream(Locations.getClass.getClassLoader.getResourceAsStream("META-INF/maven/org.slf4j/slf4j-api/pom.properties")).readContentAsText.get
+    val text = Locations.classpath("META-INF/maven/org.slf4j/slf4j-api/pom.properties").readContentAsText.get
+    assertEquals(s1, text)
+  }
+  test("read from resources in local classpath") {
+    val s2 = Locations.stream(Locations.getClass.getClassLoader.getResourceAsStream("fileWithBom.txt")).readContentAsText.get
+    val text2 = Locations.classpath("fileWithBom.txt").readContentAsText.get
+    assertEquals(s2, text2)
+  }
+  test("get lines from utf-8 file with BOM - low level implementation") {
+    import org.apache.commons.io.input.BOMInputStream
+    val is = getClass.getResourceAsStream("/fileWithBom.txt")
+    val bis = new BOMInputStream(is, false)
+    println(bis.getBOM())
+    println(bis.getBOMCharsetName())
+    val decoder = Charset.forName("UTF-8").newDecoder()
+    decoder.onMalformedInput(CodingErrorAction.IGNORE)
+    val result = scala.io.Source.fromInputStream(bis)(Codec(decoder)).getLines
+    assertEquals(2, result.size)
+  }
 }
