@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>org.raisercostin</groupId>
 	<artifactId>raisercostin-utils</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>raisercostin-utils</name>
 	<licenses>
@@ -28,9 +28,9 @@
 		</developer>
 	</developers>
 	<scm>
-		<connection>scm:git:https://github.com/raisercostin/${artifactId}.git</connection>
-		<developerConnection>scm:git:https://github.com/raisercostin/${artifactId}.git</developerConnection>
-		<url>https://github.com/raisercostin/${artifactId}.git</url>
+		<connection>scm:git:https://github.com/raisercostin/${project.artifactId}.git</connection>
+		<developerConnection>scm:git:https://github.com/raisercostin/${project.artifactId}.git</developerConnection>
+		<url>https://github.com/raisercostin/${project.artifactId}.git</url>
 		<tag>HEAD</tag>
 	</scm>
 	<distributionManagement>
@@ -48,6 +48,7 @@
 		<maven.compiler.source>1.5</maven.compiler.source>
 		<maven.compiler.target>1.5</maven.compiler.target>
 		<source.version>1.7</source.version>
+		<scala.main.version>2.10</scala.main.version>
 		<scala.version>2.10.4</scala.version>
 		<!--<scala.version>2.9.0-1</scala.version>-->
 		<org.springframework.version>3.1.2.RELEASE</org.springframework.version>
@@ -81,6 +82,11 @@
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-compiler</artifactId>
 			<version>${scala.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scalatest</groupId>
+			<artifactId>scalatest_${scala.main.version}</artifactId>
+			<version>2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>

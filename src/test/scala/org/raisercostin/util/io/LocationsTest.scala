@@ -130,8 +130,8 @@ c/e/f.txt""".replaceAll("\r", ""),
   test("inheritance") {
     //How can I define an inherited operation that returns the current type (and not current type instance) in scala?
     //I already tried to return this.type but in case I need to create a new instance will not work.
-    object Test {
-      def main(args: Array[String]) {
+    //object Test {
+    //  def main(args: Array[String]) {
         trait A {
           //return current instance type
           def op: this.type = { println("opA"); this }
@@ -183,9 +183,9 @@ c/e/f.txt""".replaceAll("\r", ""),
          * op3B
          * doB
          */
-      }
-    }
-    Test.main(Array())
+    //  }
+    //}
+    //Test.main(Array())
   }
   import scala.io.Codec
   import java.nio.charset.Charset
