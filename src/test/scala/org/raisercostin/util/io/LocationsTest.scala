@@ -133,12 +133,15 @@ c/e/f.txt""".replaceAll("\r", ""),
     //object Test {
     //  def main(args: Array[String]) {
         trait A {
+          type Return //= A
           //return current instance type
           def op: this.type = { println("opA"); this }
           //return current type (but must be overriden) 
           def op2: A = { println("op2A"); this }
           //return current type (without the need to override)
           def op3[T >: A]: T = { println("opA"); this }
+          //def op4[T <: A]: T = { println("opA"); this }
+          //def op5: Return = { println("opA"); this }
         }
         case class B extends A {
           def doB = println("doB")
@@ -158,10 +161,14 @@ c/e/f.txt""".replaceAll("\r", ""),
             //here it works
             new B()
           }
+          type Return = B
+          def op5: Return = { println("opA"); this }
         }
         //Inherits both op2 and op3 from A but op2 and op3 need to return a C type 
         case class C extends A {
+          type Return = C
           def doC = println("doC")
+          def op5: Return = { println("opA"); this }
         }
         B().op.doB
         C().op.doC
@@ -171,6 +178,9 @@ c/e/f.txt""".replaceAll("\r", ""),
 
         B().op3.doB
         //C().op3.doC //compilation error => value doC is not a member of type parameter T
+
+        B().op5.doB
+        C().op5.doC
 
         /**
          * Output:

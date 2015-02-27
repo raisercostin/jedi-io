@@ -129,7 +129,8 @@ trait BaseLocation extends NavigableLocation {
     this
   }
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
-  def list: Iterator[InputLocation] = Option(existing).map(_.toFile.listFiles.toIterator).getOrElse(Iterator()).map(Locations.file(_))
+ //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
+  def list: Iterator[this.type] = Option(existing).map(_.toFile.listFiles.toIterator).getOrElse(Iterator()).map(Locations.file(_).asInstanceOf[this.type])
   def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
     Locations.file(pathInRaw).parent.traverse
   else
@@ -325,7 +326,7 @@ trait FileLocationLike extends InOutLocation {
   def parent: this.type = new FileLocation(parentName).asInstanceOf[this.type]
   def size = toFile.length()
   //import org.raisercostin.util.MimeTypesUtils2
-  //def mimeType = MimeTypesUtils2.getMimeType(toPath)
+  def mimeType = MimeTypesUtils2.getMimeType(toPath)
   def asFile: FileLocationLike = this
 }
 case class MemoryLocation(val memoryName: String) extends RelativeLocationLike with InputLocation with OutputLocation {
@@ -410,7 +411,7 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
     case Some(entry) =>
       rootzip.getInputStream(entry)
   }
-  override def list: Iterator[InputLocation] = Option(existing).map(_ => entries).getOrElse(Iterator()).map(entry => ZipInputLocation(zip, Some(entry)))
+  override def list: Iterator[this.type] = Option(existing).map(_ => entries).getOrElse(Iterator()).map(entry => ZipInputLocation(zip, Some(entry)).asInstanceOf[this.type])
 
   private lazy val rootzip = new java.util.zip.ZipFile(Try { toFile }.getOrElse(Locations.temp.randomChild(name).copyFrom(zip).toFile))
   //private lazy val rootzip = new java.util.zip.ZipInputStream(zip.toInputStream)
