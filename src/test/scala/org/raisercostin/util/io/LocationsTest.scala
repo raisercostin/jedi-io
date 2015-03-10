@@ -143,7 +143,7 @@ c/e/f.txt""".replaceAll("\r", ""),
           //def op4[T <: A]: T = { println("opA"); this }
           //def op5: Return = { println("opA"); this }
         }
-        case class B extends A {
+        case class B() extends A {
           def doB = println("doB")
 
           override def op: this.type = {
@@ -165,7 +165,7 @@ c/e/f.txt""".replaceAll("\r", ""),
           def op5: Return = { println("opA"); this }
         }
         //Inherits both op2 and op3 from A but op2 and op3 need to return a C type 
-        case class C extends A {
+        case class C() extends A {
           type Return = C
           def doC = println("doC")
           def op5: Return = { println("opA"); this }

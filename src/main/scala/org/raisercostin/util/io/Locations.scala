@@ -105,17 +105,20 @@ trait BaseLocation extends NavigableLocation {
   def toInputStream: InputStream
   def toPath(subFile: String): Path = toPath.resolve(subFile)
 
-  def toSource: scala.io.BufferedSource = {
-    //import org.apache.commons.io.input.BOMInputStream
-    //import org.apache.commons.io.IOUtils
-    //def toBomInputStream: InputStream = new BOMInputStream(toInputStream,false)
+  def decoder = {
     import java.nio.charset.Charset
     import java.nio.charset.CodingErrorAction
     val decoder = Charset.forName("UTF-8").newDecoder()
     decoder.onMalformedInput(CodingErrorAction.IGNORE)
+    decoder
+  }
+  def toSource: scala.io.BufferedSource = 
+    //import org.apache.commons.io.input.BOMInputStream
+    //import org.apache.commons.io.IOUtils
+    //def toBomInputStream: InputStream = new BOMInputStream(toInputStream,false)
     scala.io.Source.fromInputStream(toInputStream)(decoder)
     //def toSource: BufferedSource = scala.io.Source.fromInputStream(toInputStream, "UTF-8")
-  }
+  
   def absolute: String = toPath("").toAbsolutePath.toString
   def absoluteStandard: String = standard(_.absolute)
   def isAbsolute = toFile.isAbsolute()
@@ -129,7 +132,7 @@ trait BaseLocation extends NavigableLocation {
     this
   }
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
- //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
+  //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
   def list: Iterator[this.type] = Option(existing).map(_.toFile.listFiles.toIterator).getOrElse(Iterator()).map(Locations.file(_).asInstanceOf[this.type])
   def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
     Locations.file(pathInRaw).parent.traverse
@@ -145,15 +148,15 @@ trait BaseLocation extends NavigableLocation {
   def isFile = toFile.isFile
   def exists = toFile.exists
   def renamedIfExists: this.type = {
-      def findUniqueName[T <: BaseLocation](destFile: T): T = {
-        var newDestFile = destFile
-        var counter = 1
-        while (newDestFile.exists) {
-          newDestFile = destFile.withBaseName { baseName: String => (baseName + "-" + counter) }
-          counter += 1
-        }
-        newDestFile
+    def findUniqueName[T <: BaseLocation](destFile: T): T = {
+      var newDestFile = destFile
+      var counter = 1
+      while (newDestFile.exists) {
+        newDestFile = destFile.withBaseName { baseName: String => (baseName + "-" + counter) }
+        counter += 1
       }
+      newDestFile
+    }
     findUniqueName(this)
   }
   def nonExisting(process: (this.type) => Any): this.type = {
@@ -192,6 +195,7 @@ trait BaseLocation extends NavigableLocation {
 }
 trait InputLocation extends AbsoluteBaseLocation {
   def toInputStream: InputStream = new FileInputStream(absolute)
+  def toReader: java.io.Reader = new java.io.InputStreamReader(toInputStream,decoder)
   //def child(child: String): InputLocation
   //def parent: InputLocation.this.type
   def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
