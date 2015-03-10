@@ -1,12 +1,13 @@
-raisercostin-utils
-==================
+# input/output locations #
 
-personal utility scala classes
+The main purpose of this project is to provide uniform, fluent access to various input and output data locations.
 
-[![Build Status](https://travis-ci.org/raisercostin/raisercostin-utils.svg?branch=master)](http://travis-ci.org/raisercostin/raisercostin-utils)
+- Reading from a file:
+ ```
+	Locations.file("/home/costin/myfile.txt").readContent
+ ```
 
-= Release with maven
-
-- release with standard maven process
-
-	    mvn release:prepare release:perform -Prelease -DskipTests -Darguments="-DskipTests -Prelease"
+ - Copying a file to a new folder (and create 
+ ```
+	Locations.file("/home/costin/myfile.txt").copyTo(Locations.file("/home/costin/folder2/myfile2.txt").mkdirOnParentIfNecessary))
+ ```
