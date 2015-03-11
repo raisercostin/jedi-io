@@ -133,7 +133,9 @@ trait BaseLocation extends NavigableLocation {
   }
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
   //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
-  def list: Iterator[this.type] = Option(existing).map(_.toFile.listFiles.toIterator).getOrElse(Iterator()).map(Locations.file(_).asInstanceOf[this.type])
+  def list: Iterator[this.type] = Option(existing).map{x=>
+      Option(x.toFile.listFiles).map(_.toIterator).getOrElse(Iterator(x.toFile))
+    }.getOrElse(Iterator()).map(Locations.file(_).asInstanceOf[this.type])
   def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
     Locations.file(pathInRaw).parent.traverse
   else
@@ -229,7 +231,7 @@ trait InputLocation extends AbsoluteBaseLocation {
     //    import encodings.`UTF-8`
     //    val src = uri"http://rapture.io/sample.json".slurp[Char]
     //existing(toSource).getLines mkString ("\n")
-    try { IOUtils.toString(toInputStream) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
+    try { IOUtils.toString(toReader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
   }
   def readContentAsText: Try[String] =
     Try(readContent)
