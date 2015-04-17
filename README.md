@@ -24,3 +24,8 @@ The main purpose of this project is to provide uniform, fluent access to various
  ```
 
 For more samples see [LocationsTest.scala](src/test/scala/org/raisercostin/util/io/LocationsTest.scala)
+
+## Releasing ##
+ ```
+ mvn release:prepare release:perform -Prelease -DskipTests -Darguments="-DskipTests -Prelease"
+ ```

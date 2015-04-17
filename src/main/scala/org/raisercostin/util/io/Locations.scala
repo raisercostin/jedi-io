@@ -50,9 +50,9 @@ trait NavigableLocation { self =>
   def child(child: String): this.type
 
   def child(childText: Option[String]): this.type = childText match {
-    case None => this
+    case None                      => this
     case Some(s) if s.trim.isEmpty => this
-    case Some(s) => child(s)
+    case Some(s)                   => child(s)
   }
   def child(childLocation: RelativeLocation): this.type = {
     if (childLocation.isEmpty) {
@@ -96,6 +96,7 @@ trait AbsoluteBaseLocation extends BaseLocation with AbsoluteLocation {
   def path: String = FilenameUtils.getPath(absolute)
 }
 trait BaseLocation extends NavigableLocation {
+  type ChildLocation <: BaseLocation
   def raw: String
   def nameAndBefore: String = absolute
   /**To read data you should read the inputstream*/
@@ -104,6 +105,10 @@ trait BaseLocation extends NavigableLocation {
   def toPath: Path = toFile.toPath
   def toInputStream: InputStream
   def toPath(subFile: String): Path = toPath.resolve(subFile)
+  def mimeType = mimeTypeFromName.orElse(mimeTypeFromContent)
+  def mimeTypeFromName = MimeTypeDetectors.mimeTypeFromName(nameAndBefore)
+  def mimeTypeFromContent = MimeTypeDetectors.mimeTypeFromContent(toPath)
+  def size = toFile.length()
 
   def decoder = {
     import java.nio.charset.Charset
@@ -112,13 +117,13 @@ trait BaseLocation extends NavigableLocation {
     decoder.onMalformedInput(CodingErrorAction.IGNORE)
     decoder
   }
-  def toSource: scala.io.BufferedSource = 
+  def toSource: scala.io.BufferedSource =
     //import org.apache.commons.io.input.BOMInputStream
     //import org.apache.commons.io.IOUtils
     //def toBomInputStream: InputStream = new BOMInputStream(toInputStream,false)
     scala.io.Source.fromInputStream(toInputStream)(decoder)
-    //def toSource: BufferedSource = scala.io.Source.fromInputStream(toInputStream, "UTF-8")
-  
+  //def toSource: BufferedSource = scala.io.Source.fromInputStream(toInputStream, "UTF-8")
+
   def absolute: String = toPath("").toAbsolutePath.toString
   def absoluteStandard: String = standard(_.absolute)
   def isAbsolute = toFile.isAbsolute()
@@ -133,14 +138,23 @@ trait BaseLocation extends NavigableLocation {
   }
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
   //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
-  def list: Iterator[this.type] = Option(existing).map{x=>
-      Option(x.toFile.listFiles).map(_.toIterator).getOrElse(Iterator(x.toFile))
-    }.getOrElse(Iterator()).map(Locations.file(_).asInstanceOf[this.type])
+  def list: Iterator[ChildLocation] = Option(existing).map { x =>
+    Option(x.toFile.listFiles).map(_.toIterator).getOrElse(Iterator(x.toFile))
+  }.getOrElse(Iterator()).map(Locations.file(_).asInstanceOf[ChildLocation])
+  def descendants: Iterable[ChildLocation] = {
+    val all: Iterable[File] = Option(existing).map { x =>
+      traverse.map(_._1.toFile).toIterable
+    }.getOrElse(Iterable[File]())
+    all.map(buildNew)
+  }
+
+  def buildNew(x:File):ChildLocation = Locations.file(x).asInstanceOf[ChildLocation]
+
   def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
     Locations.file(pathInRaw).parent.traverse
   else
     new FileVisitor.TraversePath(toPath)
-  def traverseFiles = if (exists) traverse.map { case (file, attr) => file } else Traversable()
+  def traverseFiles: Traversable[Path] = if (exists) traverse.map { case (file, attr) => file } else Traversable()
 
   def traverseWithDir = new FileVisitor.TraversePath(toPath, true)
   protected def using[A <: { def close(): Unit }, B](resource: A)(f: A => B): B =
@@ -196,8 +210,9 @@ trait BaseLocation extends NavigableLocation {
   def length: Long = toFile.length()
 }
 trait InputLocation extends AbsoluteBaseLocation {
+  type ChildLocation <: InputLocation
   def toInputStream: InputStream = new FileInputStream(absolute)
-  def toReader: java.io.Reader = new java.io.InputStreamReader(toInputStream,decoder)
+  def toReader: java.io.Reader = new java.io.InputStreamReader(toInputStream, decoder)
   //def child(child: String): InputLocation
   //def parent: InputLocation.this.type
   def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
@@ -317,6 +332,7 @@ case class FileLocation(fileFullPath: String, append: Boolean = false) extends F
   def withAppend: this.type = this.copy(append = true).asInstanceOf[this.type]
 }
 trait FileLocationLike extends InOutLocation {
+  override type ChildLocation=FileLocationLike
   def fileFullPath: String
   def append: Boolean
 
@@ -330,12 +346,11 @@ trait FileLocationLike extends InOutLocation {
   //should not throw exception but return Try?
   def checkedChild(child: String): String = { require(!child.endsWith(" "), "Child [" + child + "] has trailing spaces"); child }
   def parent: this.type = new FileLocation(parentName).asInstanceOf[this.type]
-  def size = toFile.length()
   //import org.raisercostin.util.MimeTypesUtils2
-  def mimeType = MimeTypesUtils2.getMimeType(toPath)
   def asFile: FileLocationLike = this
 }
 case class MemoryLocation(val memoryName: String) extends RelativeLocationLike with InputLocation with OutputLocation {
+  type ChildLocation = MemoryLocation
   def relativePath: String = memoryName
   override def raw = memoryName
   def asInput: InputLocation = this
@@ -350,6 +365,9 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocationLike w
   def withAppend: this.type = ???
   override def length: Long = outStream.size()
   override def mkdirOnParentIfNecessary: this.type = this
+  override def exists = true
+  override def descendants: Iterable[ChildLocation] = Iterable(this)
+  override def size = outStream.size()
 }
 object ClassPathInputLocation {
   private def getDefaultClassLoader(): ClassLoader = {
@@ -401,6 +419,7 @@ case class ClassPathInputLocation(initialResourcePath: String) extends InputLoca
 }
 
 case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) extends InputLocation {
+  type ChildLocation = ZipInputLocation
   def raw = "ZipInputLocation[" + zip + "," + entry + "]"
   def parent: this.type = ???
   def child(child: String): this.type = entry match {
@@ -417,7 +436,7 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
     case Some(entry) =>
       rootzip.getInputStream(entry)
   }
-  override def list: Iterator[this.type] = Option(existing).map(_ => entries).getOrElse(Iterator()).map(entry => ZipInputLocation(zip, Some(entry)).asInstanceOf[this.type])
+  override def list: Iterator[ChildLocation] = Option(existing).map(_ => entries).getOrElse(Iterator()).map(entry => ZipInputLocation(zip, Some(entry)).asInstanceOf[this.type])
 
   private lazy val rootzip = new java.util.zip.ZipFile(Try { toFile }.getOrElse(Locations.temp.randomChild(name).copyFrom(zip).toFile))
   //private lazy val rootzip = new java.util.zip.ZipInputStream(zip.toInputStream)
