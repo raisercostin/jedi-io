@@ -1,6 +1,6 @@
 organization := "org.raisercostin"
 name := "jedi-io"
-version := "0.11"
+version := "0.12"
 description := "Scala fluent file utility library"
 homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
