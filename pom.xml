@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>org.raisercostin</groupId>
 	<artifactId>jedi-io</artifactId>
-	<version>0.8-SNAPSHOT</version>
+	<version>0.8</version>
 	<packaging>jar</packaging>
 	<name>jedi-io</name>
 	<licenses>
@@ -31,7 +31,7 @@
 		<connection>scm:git:https://github.com/raisercostin/${project.artifactId}.git</connection>
 		<developerConnection>scm:git:https://github.com/raisercostin/${project.artifactId}.git</developerConnection>
 		<url>https://github.com/raisercostin/${project.artifactId}.git</url>
-		<tag>HEAD</tag>
+		<tag>jedi-io-0.8</tag>
 	</scm>
 	<distributionManagement>
 		<repository>
