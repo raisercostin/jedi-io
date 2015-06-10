@@ -1,6 +1,6 @@
 organization := "org.raisercostin"
 name := "jedi-io"
-version := "0.10"
+version := "0.11"
 description := "Scala fluent file utility library"
 homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
@@ -42,3 +42,5 @@ EclipseKeys.eclipseOutput := Some("target2/eclipse")
 //bintray
 publishMavenStyle := true
 bintrayPackageLabels := Seq("scala", "io", "nio", "file", "path", "stream", "writer")
+//bintray doesn't like snapshot versions - https://github.com/softprops/bintray-sbt/issues/12
+releaseNextVersion := { ver => sbtrelease.Version(ver).map(_.bumpMinor.string).getOrElse(sbtrelease.versionFormatError) }
