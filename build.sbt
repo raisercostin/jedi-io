@@ -6,7 +6,7 @@ name := "raisercostin-utils"
 
 version := "0.1"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.5"
 
 libraryDependencies ++= Seq(
 	"net.sf.jopt-simple" % "jopt-simple" % "2.4.1" intransitive() //exclude("org.apache.ant" % "ant")
@@ -34,3 +34,5 @@ licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"
 bintrayOrganization in bintray := None
 
 resolvers += "raisercostin" at "https://raisercostin.googlecode.com/svn/maven2"
+
+EclipseKeys.eclipseOutput := Some("target2/eclipse")
