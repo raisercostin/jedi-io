@@ -2,7 +2,7 @@ import bintray.Keys._
 
 organization := "org.raisercostin"
 
-name := "raisercostin-utils"
+name := "jedi-io"
 
 version := "0.1"
 
