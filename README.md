@@ -25,7 +25,19 @@ The main purpose of this project is to provide uniform, fluent access to various
 
 For more samples see [LocationsTest.scala](src/test/scala/org/raisercostin/util/io/LocationsTest.scala)
 
-## Releasing ##
+
+## How to use ##
+ - from sbt
  ```
- mvn release:prepare release:perform -Prelease -DskipTests -Darguments="-DskipTests -Prelease"
+ libraryDependencies += "org.raisercostin" %% "jedi-io" % "0.10.0"
+ ```
+ - maven resolver at bintray - http://dl.bintray.com/raisercostin/maven
+ ```
+ resolvers += "raisercostin repository" at "http://dl.bintray.com/raisercostin/maven"
+ ```
+ 
+## Development ##
+ - to release
+ ```
+ sbt> release skip-tests
  ```

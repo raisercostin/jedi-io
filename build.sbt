@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
 // This is an example.  bintray-sbt requires licenses to be specified 
 // (using a canonical name).
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
-resolvers += "raisercostin" at "http://dl.bintray.com/raisercostin/maven"
+resolvers += "raisercostin resolver" at "http://dl.bintray.com/raisercostin/maven"
 pomExtra := (
   <scm>
     <url>git@github.com:raisercostin/{name.value}.git</url>
