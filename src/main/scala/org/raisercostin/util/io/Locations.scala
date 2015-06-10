@@ -30,6 +30,9 @@ import java.nio.file.Files
 import java.security.AccessController
 import java.io.FileSystem
 
+import Locations._
+import java.io.IOException
+
 /**
  * Should take into consideration several composable/ortogonal aspects:
  * - end of line: win,linux,osx - internal standard: \n
@@ -42,8 +45,6 @@ import java.io.FileSystem
 package object io {
 
 }
-
-import Locations._
 trait NavigableLocation { self =>
   def nameAndBefore: String
   def parent: this.type
@@ -103,7 +104,8 @@ trait BaseLocation extends NavigableLocation {
   def toUrl: java.net.URL = toFile.toURI.toURL
   def toFile: File
   def toPath: Path = toFile.toPath
-  def toInputStream: InputStream
+  protected def unsafeToInputStream: InputStream
+  def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStream)(op)
   def toPath(subFile: String): Path = toPath.resolve(subFile)
   def mimeType = mimeTypeFromName.orElse(mimeTypeFromContent)
   def mimeTypeFromName = MimeTypeDetectors.mimeTypeFromName(nameAndBefore)
@@ -117,12 +119,11 @@ trait BaseLocation extends NavigableLocation {
     decoder.onMalformedInput(CodingErrorAction.IGNORE)
     decoder
   }
-  def toSource: scala.io.BufferedSource =
-    //import org.apache.commons.io.input.BOMInputStream
-    //import org.apache.commons.io.IOUtils
-    //def toBomInputStream: InputStream = new BOMInputStream(toInputStream,false)
-    scala.io.Source.fromInputStream(toInputStream)(decoder)
-  //def toSource: BufferedSource = scala.io.Source.fromInputStream(toInputStream, "UTF-8")
+  def toSource: scala.io.BufferedSource = usingInputStream(input => scala.io.Source.fromInputStream(input)(decoder))
+  //import org.apache.commons.io.input.BOMInputStream
+  //import org.apache.commons.io.IOUtils
+  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
+  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
 
   def absolute: String = toPath("").toAbsolutePath.toString
   def absoluteStandard: String = standard(_.absolute)
@@ -148,7 +149,7 @@ trait BaseLocation extends NavigableLocation {
     all.map(buildNew)
   }
 
-  def buildNew(x:File):ChildLocation = Locations.file(x).asInstanceOf[ChildLocation]
+  def buildNew(x: File): ChildLocation = Locations.file(x).asInstanceOf[ChildLocation]
 
   def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
     Locations.file(pathInRaw).parent.traverse
@@ -159,6 +160,8 @@ trait BaseLocation extends NavigableLocation {
   def traverseWithDir = new FileVisitor.TraversePath(toPath, true)
   protected def using[A <: { def close(): Unit }, B](resource: A)(f: A => B): B =
     try f(resource) finally resource.close()
+    //IOUtils.closeQuietly(resource)
+
 
   def hasDirs = RichPath.wrapPath(toPath).list.find(_.toFile.isDirectory).nonEmpty
   def isFile = toFile.isFile
@@ -211,33 +214,29 @@ trait BaseLocation extends NavigableLocation {
 }
 trait InputLocation extends AbsoluteBaseLocation {
   type ChildLocation <: InputLocation
-  def toInputStream: InputStream = new FileInputStream(absolute)
-  def toReader: java.io.Reader = new java.io.InputStreamReader(toInputStream, decoder)
+  protected def unsafeToInputStream: InputStream = new FileInputStream(absolute)
+  def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
+  protected def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
   //def child(child: String): InputLocation
   //def parent: InputLocation.this.type
   def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
-  def usingInputStream(op: InputStream => Unit): Unit =
-    using(toInputStream)(inputStream => op(inputStream))
   def readLines =
     existing(toSource).getLines
   def copyToIfNotExists(dest: OutputLocation) = { dest.existingOption.map(_.copyFrom(this)); this }
   def copyTo(dest: OutputLocation) = {
     dest.mkdirOnParentIfNecessary
-    val source = toInputStream
-    try {
-      val output = dest.toOutputStream
-      try {
-        IOUtils.copyLarge(source, output)
-        output.close()
-      } finally {
-        IOUtils.closeQuietly(output)
-      }
-    } finally {
-      IOUtils.closeQuietly(source)
+    usingInputStream { source =>
+        val output = dest.toOutputStream
+        try {
+          IOUtils.copyLarge(source, output)
+          output.close()
+        } finally {
+          IOUtils.closeQuietly(output)
+        }
     }
     //overwrite
-    //    FileUtils.copyInputStreamToFile(toInputStream, dest.toOutputStream)
-    //    IOUtils.copyLarge(toInputStream, dest.toOutputStream)
+    //    FileUtils.copyInputStreamToFile(unsafeToInputStream, dest.toOutputStream)
+    //    IOUtils.copyLarge(unsafeToInputStream, dest.toOutputStream)
   }
   def readContent = {
     // Read a file into a string
@@ -246,7 +245,9 @@ trait InputLocation extends AbsoluteBaseLocation {
     //    import encodings.`UTF-8`
     //    val src = uri"http://rapture.io/sample.json".slurp[Char]
     //existing(toSource).getLines mkString ("\n")
-    try { IOUtils.toString(toReader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
+    usingReader { reader =>
+      try { IOUtils.toString(reader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
+    }
   }
   def readContentAsText: Try[String] =
     Try(readContent)
@@ -281,7 +282,7 @@ trait OutputLocation extends BaseLocation {
   def deleteIfExists: this.type = {
     if (exists) {
       logger.info(s"delete existing $absolute")
-      FileUtils.forceDelete(toFile)
+      ApacheFileUtils.forceDelete(toPath)
     }
     this
   }
@@ -308,6 +309,19 @@ trait OutputLocation extends BaseLocation {
   }
 }
 
+object ApacheFileUtils {
+  def forceDelete(path: Path) = try {
+    FileUtils.forceDelete(path.toFile)
+  } catch {
+    case e: IOException =>
+      val msg = "Unable to delete file: "
+      if (e.getMessage.startsWith(msg)) {
+        Files.deleteIfExists(Paths.get(e.getMessage.stripPrefix(msg)))
+      } else
+        throw e
+  }
+}
+
 trait InOutLocation extends InputLocation with OutputLocation {
 }
 trait RelativeLocationLike extends BaseLocation {
@@ -315,7 +329,7 @@ trait RelativeLocationLike extends BaseLocation {
   require(!relativePath.startsWith(SEP), s"The relative path $relativePath shouldn't start with file separator [$SEP].")
   override def toFile: File = ???
   override def toPath: Path = ???
-  override def toInputStream: InputStream = ???
+  protected override def unsafeToInputStream: InputStream = ???
   override def absolute: String = ???
   override def nameAndBefore: String = relativePath
   def raw: String = relativePath
@@ -328,11 +342,8 @@ trait RelativeLocationLike extends BaseLocation {
   def nonEmpty: Boolean = !isEmpty
 }
 case class RelativeLocation(relativePath: String) extends RelativeLocationLike
-case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike {
-  def withAppend: this.type = this.copy(append = true).asInstanceOf[this.type]
-}
 trait FileLocationLike extends InOutLocation {
-  override type ChildLocation=FileLocationLike
+  override type ChildLocation = FileLocationLike
   def fileFullPath: String
   def append: Boolean
 
@@ -341,13 +352,17 @@ trait FileLocationLike extends InOutLocation {
   def asInput: InputLocation = this
   lazy val toFile: File = new File(fileFullPath)
   override def toPath: Path = Paths.get(fileFullPath)
-  override def toInputStream: InputStream = new FileInputStream(toFile)
+  protected override def unsafeToInputStream: InputStream = new FileInputStream(toFile)
   def child(child: String): this.type = new FileLocation(toPath.resolve(checkedChild(child)).toFile.getAbsolutePath).asInstanceOf[this.type]
   //should not throw exception but return Try?
   def checkedChild(child: String): String = { require(!child.endsWith(" "), "Child [" + child + "] has trailing spaces"); child }
   def parent: this.type = new FileLocation(parentName).asInstanceOf[this.type]
   //import org.raisercostin.util.MimeTypesUtils2
   def asFile: FileLocationLike = this
+}
+case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike {
+  //override type ChildLocation=FileLocationLike
+  def withAppend: this.type = this.copy(append = true).asInstanceOf[this.type]
 }
 case class MemoryLocation(val memoryName: String) extends RelativeLocationLike with InputLocation with OutputLocation {
   type ChildLocation = MemoryLocation
@@ -359,7 +374,7 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocationLike w
   lazy val outStream = new ByteArrayOutputStream()
   override def toFile: File = ???
   override def toOutputStream: OutputStream = outStream
-  override def toInputStream: InputStream = new ByteArrayInputStream(outStream.toByteArray())
+  protected override def unsafeToInputStream: InputStream = new ByteArrayInputStream(outStream.toByteArray())
   //  def child(child: String): this.type = ???
   //  def parent: this.type = ???
   def withAppend: this.type = ???
@@ -403,7 +418,7 @@ case class ClassPathInputLocation(initialResourcePath: String) extends InputLoca
   override def exists = resource != null
   override def absolute: String = toUrl.toURI().getPath() //Try{toFile.getAbsolutePath()}.recover{case e:Throwable => Option(toUrl).map(_.toExternalForm).getOrElse("unfound classpath://" + resourcePath) }.get
   def toFile: File = Try { new File(toUrl.toURI()) }.recoverWith { case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + this, e)) }.get
-  override def toInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
+  protected override def unsafeToInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
   def child(child: String): this.type = new ClassPathInputLocation(resourcePath + SEP + child).asInstanceOf[this.type]
   def parent: this.type = new ClassPathInputLocation(parentName).asInstanceOf[this.type]
   ///def toWrite = Locations.file(toFile.getAbsolutePath)
@@ -430,7 +445,7 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
   }
 
   def toFile: File = zip.toFile
-  override def toInputStream: InputStream = entry match {
+  protected override def unsafeToInputStream: InputStream = entry match {
     case None =>
       throw new RuntimeException("Can't read stream from zip folder " + this)
     case Some(entry) =>
@@ -439,11 +454,11 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
   override def list: Iterator[ChildLocation] = Option(existing).map(_ => entries).getOrElse(Iterator()).map(entry => ZipInputLocation(zip, Some(entry)).asInstanceOf[this.type])
 
   private lazy val rootzip = new java.util.zip.ZipFile(Try { toFile }.getOrElse(Locations.temp.randomChild(name).copyFrom(zip).toFile))
-  //private lazy val rootzip = new java.util.zip.ZipInputStream(zip.toInputStream)
+  //private lazy val rootzip = new java.util.zip.ZipInputStream(zip.unsafeToInputStream)
   import collection.JavaConverters._
   private lazy val entries = rootzip.entries.asScala
   override def name = entry.map(_.getName).getOrElse(zip.name + "-unzipped")
-  override def unzip: ZipInputLocation = new ZipInputLocation(Locations.temp.randomChild(name).copyFrom(Locations.stream(toInputStream)), None)
+  override def unzip: ZipInputLocation = usingInputStream(input=>new ZipInputLocation(Locations.temp.randomChild(name).copyFrom(Locations.stream(input)), None))
 }
 
 case class StreamLocation(val inputStream: InputStream) extends InputLocation {
@@ -451,7 +466,7 @@ case class StreamLocation(val inputStream: InputStream) extends InputLocation {
   def child(child: String): this.type = ???
   def parent: this.type = ???
   def toFile: File = ???
-  override def toInputStream: InputStream = inputStream
+  protected override def unsafeToInputStream: InputStream = inputStream
 }
 case class UrlLocation(url: java.net.URL) extends InputLocation {
   def raw = url.toExternalForm()
@@ -474,7 +489,7 @@ case class UrlLocation(url: java.net.URL) extends InputLocation {
       conn.disconnect()
     }
   }
-  override def toInputStream: InputStream = url.openStream()
+  protected override def unsafeToInputStream: InputStream = url.openStream()
 }
 case class TempLocation(temp: File, append: Boolean = false) extends FileLocationLike {
   def withAppend: this.type = this.copy(append = true).asInstanceOf[this.type]
@@ -503,6 +518,7 @@ object Locations {
 
   private def isAbsolute(path: String) = new File(path).isAbsolute()
   private def createAbsoluteFile(path: String) = {
+    require(path != null, "Path should not be null")
     if (isAbsolute(path))
       new FileLocation(path)
     else
