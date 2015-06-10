@@ -220,7 +220,7 @@ trait InputLocation extends AbsoluteBaseLocation {
   //def child(child: String): InputLocation
   //def parent: InputLocation.this.type
   def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
-  def readLines = usingSource(source=> existing(source).getLines)
+  def readLines[T](iter:Iterator[String]=>T):T = usingSource(source=> iter(existing(source).getLines))
   def copyToIfNotExists(dest: OutputLocation) = { dest.existingOption.map(_.copyFrom(this)); this }
   def copyTo(dest: OutputLocation) = {
     dest.mkdirOnParentIfNecessary
