@@ -2,7 +2,7 @@ organization := "org.raisercostin"
 
 name := "jedi-io"
 
-version := "0.9"
+version := "0.9-SNAPSHOT"
 
 scalaVersion := "2.10.5"
 
