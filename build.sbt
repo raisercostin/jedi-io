@@ -1,10 +1,12 @@
 organization := "org.raisercostin"
-
 name := "jedi-io"
-
-version := "0.9-SNAPSHOT"
+version := "0.9"
+description := "Scala fluent file utility library"
+homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
 scalaVersion := "2.10.5"
+//crossScalaVersions := Seq(scalaVersion.value, "2.11.4")
+scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
 libraryDependencies ++= Seq(
 	"net.sf.jopt-simple" % "jopt-simple" % "2.4.1" intransitive() //exclude("org.apache.ant" % "ant")
@@ -17,28 +19,26 @@ libraryDependencies ++= Seq(
 	,"commons-io" % "commons-io" % "2.4"
 )
 
-sbtPlugin := true
-
 // This is an example.  bintray-sbt requires licenses to be specified 
 // (using a canonical name).
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
-
-
-resolvers += "raisercostin" at "https://raisercostin.googlecode.com/svn/maven2"
+resolvers += "raisercostin" at "http://dl.bintray.com/raisercostin/maven"
+pomExtra := (
+  <scm>
+    <url>git@github.com:raisercostin/{name.value}.git</url>
+    <connection>scm:git:git@github.com:raisercostin/{name.value}.git</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>raisercostin</id>
+      <name>raisercostin</name>
+      <url>https://github.com/raisercostin</url>
+    </developer>
+  </developers>
+)
 
 EclipseKeys.eclipseOutput := Some("target2/eclipse")
 
-
-
-
-
-//publishing to bintray
-bintrayOrganization := Some(organization.value)
-
-bintrayReleaseOnPublish in ThisBuild := false
-
+//bintray
+publishMavenStyle := true
 bintrayPackageLabels := Seq("scala", "io", "nio", "file", "path", "stream", "writer")
-
-//publishMavenStyle := true
-//bintrayPublishSettings
-//repository in bintray := "generic"
