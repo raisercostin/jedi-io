@@ -215,12 +215,18 @@ trait InputLocation extends AbsoluteBaseLocation {
   protected def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
   def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStream)(op)
   def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
-  def usingSource[T](source: scala.io.BufferedSource=>T):T = using(unsafeToSource)(source)
+  def usingSource[T](source: scala.io.BufferedSource => T): T = using(unsafeToSource)(source)
+
+  def readLines: Iterable[String] = traverseLines.toIterable
+  def traverseLines: Traversable[String] = new Traversable[String] {
+    def foreach[U](f: String => U): Unit = {
+      usingSource{ x => x.getLines().foreach(f) }
+    }
+  }
 
   //def child(child: String): InputLocation
   //def parent: InputLocation.this.type
   def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
-  def readLines[T](iter:Iterator[String]=>T):T = usingSource(source=> iter(existing(source).getLines))
   def copyToIfNotExists(dest: OutputLocation) = { dest.existingOption.map(_.copyFrom(this)); this }
   def copyTo(dest: OutputLocation) = {
     dest.mkdirOnParentIfNecessary
@@ -286,7 +292,7 @@ trait OutputLocation extends BaseLocation {
     }
     this
   }
-  def writeContent(content: String): this.type = {usingPrintWriter(_.print(content));this}
+  def writeContent(content: String): this.type = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: this.type
   def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
@@ -531,4 +537,19 @@ object Locations {
   def relative(path: String = ""): RelativeLocation = RelativeLocation(path)
   def current(relative: String): FileLocation = file(new File(new File("."), relative).getCanonicalPath())
   def standard(path: String): String = path.replaceAllLiterally(SEP, SEP_STANDARD)
+
+  //  implicit def toClosingSource(source: InputLocation) = new {
+  //    //   def readLines[T](iter: Iterator[String] => T): T = usingSource(source => iter(existing(source).getLines))
+  //    //def readLinesAndClose: Iterable[String] = readLinesAndClose2
+  //    //new Iterator[String] { ???
+  //    //    val lines = source.getLines
+  //    //    var stillOpen = true
+  //    //      def hasNext = stillOpen && lines.hasNext
+  //    //      def next = {
+  //    //        val line = lines.next
+  //    //        if (!lines.hasNext) { source.close(); stillOpen = false }
+  //    //        line
+  //    //      }
+  //    //}
+  //  }
 }
