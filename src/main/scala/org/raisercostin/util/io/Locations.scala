@@ -136,9 +136,9 @@ trait BaseLocation extends NavigableLocation {
   }
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
   //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
-  def list: Iterator[ChildLocation] = Option(existing).map { x =>
-    Option(x.toFile.listFiles).map(_.toIterator).getOrElse(Iterator(x.toFile))
-  }.getOrElse(Iterator()).map(Locations.file(_).asInstanceOf[ChildLocation])
+  def list: Iterable[ChildLocation] = Option(existing).map { x =>
+    Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
+  }.getOrElse(Iterable()).map(Locations.file(_).asInstanceOf[ChildLocation])
   def descendants: Iterable[ChildLocation] = {
     val all: Iterable[File] = Option(existing).map { x =>
       traverse.map(_._1.toFile).toIterable
@@ -452,12 +452,15 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
     case Some(entry) =>
       rootzip.getInputStream(entry)
   }
-  override def list: Iterator[ChildLocation] = Option(existing).map(_ => entries).getOrElse(Iterator()).map(entry => ZipInputLocation(zip, Some(entry)).asInstanceOf[this.type])
+  override def list: Iterable[ChildLocation] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => ZipInputLocation(zip, Some(entry)).asInstanceOf[this.type])
 
   private lazy val rootzip = new java.util.zip.ZipFile(Try { toFile }.getOrElse(Locations.temp.randomChild(name).copyFrom(zip).toFile))
   //private lazy val rootzip = new java.util.zip.ZipInputStream(zip.unsafeToInputStream)
   import collection.JavaConverters._
-  private lazy val entries = rootzip.entries.asScala
+  import java.util.zip._
+  private lazy val entries:Iterable[ZipEntry] = new Iterable[ZipEntry]{
+    def iterator = rootzip.entries.asScala
+  }
   override def name = entry.map(_.getName).getOrElse(zip.name + "-unzipped")
   override def unzip: ZipInputLocation = usingInputStream(input => new ZipInputLocation(Locations.temp.randomChild(name).copyFrom(Locations.stream(input)), None))
 }
@@ -537,19 +540,4 @@ object Locations {
   def relative(path: String = ""): RelativeLocation = RelativeLocation(path)
   def current(relative: String): FileLocation = file(new File(new File("."), relative).getCanonicalPath())
   def standard(path: String): String = path.replaceAllLiterally(SEP, SEP_STANDARD)
-
-  //  implicit def toClosingSource(source: InputLocation) = new {
-  //    //   def readLines[T](iter: Iterator[String] => T): T = usingSource(source => iter(existing(source).getLines))
-  //    //def readLinesAndClose: Iterable[String] = readLinesAndClose2
-  //    //new Iterator[String] { ???
-  //    //    val lines = source.getLines
-  //    //    var stillOpen = true
-  //    //      def hasNext = stillOpen && lines.hasNext
-  //    //      def next = {
-  //    //        val line = lines.next
-  //    //        if (!lines.hasNext) { source.close(); stillOpen = false }
-  //    //        line
-  //    //      }
-  //    //}
-  //  }
 }
