@@ -41,16 +41,17 @@ ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".rep
   }
 
   test("test relativeTo") {
-    val dest = Locations.file("""d:\personal\photos2-proposed1-good""")
-    val from = Locations.file("""d:\personal\photos2\""")
-    val src = Locations.file("""d:\personal\photos2\1409153946085.jpg""")
+    val base = Locations.temp.randomChild()
+    val dest = base.child("""photos2-proposed1-good""")
+    val from = base.child("""photos2""")
+    val src = base.child("""photos2\1409153946085.jpg""")
     val baseName = "2014-08-27--18-39-03--------1409153946085.jpg"
     assertEquals("""d:\personal\photos2\1409153946085.jpg""", src.absolute)
     assertEquals("""d:\personal\photos2""", from.absolute)
     //assertEquals("""\1409153946085.jpg""",src.diff(src.absolute,from.absolute).get)
     //assertEquals("""1409153946085.jpg""",src.extractAncestor(from).get)
     assertEquals("""1409153946085.jpg""", src.extractPrefix(from).relativePath)
-    val destFile = dest.child(src.extractPrefix(from)).withName(_ => baseName).mkdirOnParentIfNecessary
+    val destFile = dest.child(src.extractPrefix(from)).withName(_ => baseName)
     assertEquals("""d:\personal\photos2-proposed1-good\2014-08-27--18-39-03--------1409153946085.jpg""", destFile.absolute)
   }
   test("copy from classpath") {

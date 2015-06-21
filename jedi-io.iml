@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="jedi-io" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="SBT" type="JAVA_MODULE" version="4">
+  <component name="EclipseModuleManager">
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/net.sf.jopt-simple/jopt-simple/jars/jopt-simple-2.4.1.jar!/" />
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/dom4j/dom4j/jars/dom4j-1.6.1.jar!/" />
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/xml-apis/xml-apis/jars/xml-apis-1.0.b2.jar!/" />
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/jaxen/jaxen/bundles/jaxen-1.1.6.jar!/" />
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/org.scalatest/scalatest_2.10/bundles/scalatest_2.10-2.2.4.jar!/" />
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/junit/junit/jars/junit-4.10.jar!/" />
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/jars/hamcrest-core-1.1.jar!/" />
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.5.jar!/" />
+    <libelement value="jar://$USER_HOME$/.ivy2/cache/org.slf4j/slf4j-simple/jars/slf4j-simple-1.7.5.jar!/" />
+    <libelement value="jar:///usr/local/Cellar/typesafe-activator/1.2.12/libexec/repository/commons-io/commons-io/2.4/jars/commons-io.jar!/" />
+    <conelement value="org.scala-ide.sdt.launching.SCALA_CONTAINER" />
+    <src_description expected_position="0">
+      <src_folder value="file://$MODULE_DIR$/src/main/scala-2.10" expected_position="0" />
+      <src_folder value="file://$MODULE_DIR$/src/main/scala" expected_position="1" />
+      <src_folder value="file://$MODULE_DIR$/src/main/java" expected_position="2" />
+      <src_folder value="file://$MODULE_DIR$/src/test/scala-2.10" expected_position="3" />
+      <src_folder value="file://$MODULE_DIR$/src/test/scala" expected_position="4" />
+      <src_folder value="file://$MODULE_DIR$/src/test/java" expected_position="5" />
+    </src_description>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/target/scala-2.10/classes" />
+    <output-test url="file://$MODULE_DIR$/target/scala-2.10/test-classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/scala" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/scala-2.10" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/scala-2.10/src_managed/main" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/scala" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/scala-2.10" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/target/scala-2.10/src_managed/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/target/scala-2.10/resource_managed/main" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/target/scala-2.10/resource_managed/test" type="java-test-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="SBT: commons-io:commons-io:2.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: dom4j:dom4j:1.6.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: jaxen:jaxen:1.1.6:jar" level="project" />
+    <orderEntry type="library" name="SBT: junit:junit:4.10:jar" level="project" />
+    <orderEntry type="library" name="SBT: net.sf.jopt-simple:jopt-simple:2.4.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.hamcrest:hamcrest-core:1.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-library:2.10.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-reflect:2.10.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatest:scalatest_2.10:2.2.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.slf4j:slf4j-api:1.7.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.slf4j:slf4j-simple:1.7.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: xml-apis:xml-apis:1.0.b2:jar" level="project" />
+  </component>
+</module>
