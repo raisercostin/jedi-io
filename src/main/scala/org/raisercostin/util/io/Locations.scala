@@ -525,7 +525,7 @@ case class TempLocation(temp: File, append: Boolean = false) extends FileLocatio
   def withAppend: TempLocation = this.copy(append = true)
   def fileFullPath: String = temp.getAbsolutePath()
   def randomChild(prefix: String="random", suffix: String = "") = new TempLocation(File.createTempFile(prefix, suffix, toFile))
-  override def parent: TempLocation = new TempLocation(parent.toFile)
+  override def parent: TempLocation = new TempLocation(new File(parentName))
   override def child(child:String):TempLocation =  new TempLocation(toPath.resolve(checkedChild(child)).toFile)
 }
 /**
