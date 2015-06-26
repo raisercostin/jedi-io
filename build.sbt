@@ -44,6 +44,10 @@ EclipseKeys.eclipseOutput := Some("target2/eclipse")
 unmanagedSourceDirectories in Compile := (scalaSource in Compile).value :: Nil
 unmanagedSourceDirectories in Test := (scalaSource in Test).value :: Nil
 
+//style
+//scalariformSettings
+scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
+
 //bintray
 publishMavenStyle := true
 bintrayPackageLabels := Seq("scala", "io", "nio", "file", "path", "stream", "writer")
