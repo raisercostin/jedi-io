@@ -75,11 +75,11 @@ object MimeTypeDetectors {
     var detectorsSeq: Seq[MimeTypeDetector] = Seq()
     def detectors = detectorsSeq
     //force registration
-    Seq(MimeType1,MimeType2,MimeType3,MimeType6)
+    Seq(MimeType1, MimeType2, MimeType3, MimeType6)
   }
   import MimeTypeDetectorRegistry._
   def register(mimeTypeDetector: MimeTypeDetector) = {
-    println("register "+mimeTypeDetector)
+    println("register " + mimeTypeDetector)
     detectorsSeq = mimeTypeDetector +: detectors
     this
   }

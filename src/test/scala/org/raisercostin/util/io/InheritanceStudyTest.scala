@@ -27,7 +27,7 @@ class InheritanceStudyTest extends FunSuite {
           //def op5: Return = { println("opA"); this }
         }
         case class B() extends A {
-          def doB = println("doB")
+          def doB:Unit = println("doB")
 
           override def op: this.type = {
             println("opB");
@@ -50,7 +50,7 @@ class InheritanceStudyTest extends FunSuite {
         //Inherits both op2 and op3 from A but op2 and op3 need to return a C type
         case class C() extends A {
           type Return = C
-          def doC = println("doC")
+          def doC:Unit = println("doC")
           def op5: Return = { println("opA"); this }
         }
         B().op.doB
