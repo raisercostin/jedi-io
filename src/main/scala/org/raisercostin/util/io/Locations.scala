@@ -226,9 +226,6 @@ trait BaseLocation {
 }
 trait AbsoluteBaseLocation extends BaseLocation{
 }
-trait NavigableInputLocation[Self <: NavigableInputLocation[Self]] extends InputLocation with NavigableBaseLocation[Self] { self: Self =>
-  def unzip: ZipInputLocation[NavigableInputLocation[_]] = new ZipInputLocation[NavigableInputLocation[_]](self, None)
-}
 trait InputLocation extends AbsoluteBaseLocation{
   protected def unsafeToInputStream: InputStream = new FileInputStream(absolute)
   protected def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
@@ -282,6 +279,9 @@ trait InputLocation extends AbsoluteBaseLocation{
     dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
     this
   }
+}
+trait NavigableInputLocation[Self <: NavigableInputLocation[Self]] extends InputLocation with NavigableBaseLocation[Self] { self: Self =>
+  def unzip: ZipInputLocation[NavigableInputLocation[_]] = new ZipInputLocation[NavigableInputLocation[_]](self, None)
 }
 trait NavigableOutputLocation[Self <: NavigableOutputLocation[Self]] extends OutputLocation with NavigableBaseLocation[Self] { self: Self =>
   def mkdirOnParentIfNecessary: this.type = {
