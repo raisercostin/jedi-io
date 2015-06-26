@@ -5,6 +5,7 @@ import org.junit.Assert._
 import org.scalatest.junit.JUnitRunner
 import scala.util.Try
 import java.util.regex.Pattern.Loop
+import Locations._
 
 @RunWith(classOf[JUnitRunner])
 class LocationsTest extends FunSuite {
@@ -129,7 +130,7 @@ r/u.txt""".replaceAll("\r", ""),
     assertEquals("", Locations.relative("img.jpg").extractPrefix(Locations.relative("img.jpg")).get.relativePath)
     assertEquals("b/img.jpg", Locations.relative("a/b/img.jpg").extractPrefix(Locations.relative("a")).get.relativePath)
     assertEquals("img.jpg", Locations.relative("a/b/img.jpg").extractPrefix(Locations.relative("a/b")).get.relativePath)
-    assertEquals("b/img.jpg", Locations.relativeLocal("a\\b\\img.jpg").extractPrefix(Locations.relative("a")).get.relativePath)
+    assertEquals("b/img.jpg", Locations.relative("a\\b\\img.jpg").extractPrefix(Locations.relative("a")).get.relativePath)
   }
   import scala.io.Codec
   import java.nio.charset.Charset

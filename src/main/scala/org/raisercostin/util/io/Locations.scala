@@ -92,7 +92,7 @@ trait NavigableLocation[Self <: NavigableLocation[Self]] { this: Self =>
   def baseName: String = FilenameUtils.getBaseName(nameAndBefore)
   def parentName: String = //toFile.getParentFile.getAbsolutePath
     Option(FilenameUtils.getFullPathNoEndSeparator(nameAndBefore)).getOrElse("")
-  def extractPrefix(ancestor: NavigableLocation[Self]): Try[RelativeLocation] = extractAncestor(ancestor).map(x => relative(FileSystem.constructPath(x)))
+  def extractPrefix(ancestor: NavigableLocation[Self]): Try[RelativeLocation] = extractAncestor(ancestor).map(x => relative(FileSystem.constructPath(x))(FileSystem.identityFormatter))
   def extractAncestor(ancestor: NavigableLocation[Self]): Try[Seq[String]] = diff(nameAndBefore, ancestor.nameAndBefore).map { FileSystem.splitPartialPath }
   def diff(text: String, prefix: String) = if (text.startsWith(prefix)) Success(text.substring(prefix.length)) else Failure(new RuntimeException(s"Text [$text] doesn't start with [$prefix]."))
   def withBaseName(baseNameSupplier: String => String): Self = parent.child(withExtension2(baseNameSupplier(baseName), extension))
@@ -105,9 +105,20 @@ trait NavigableLocation[Self <: NavigableLocation[Self]] { this: Self =>
     else name
   def standard(selector: Self => String): String = FileSystem.standard(selector(this))
 }
+trait FileSystemFormatter{
+  def standard(path:String):String
+}
+
 object FileSystem {
   protected val SEP = File.separator
   protected val SEP_STANDARD = "/"
+  protected final val WINDOWS_SEPARATOR = "\\"
+  val identityFormatter = new FileSystemFormatter(){
+    def standard(path:String):String = path
+  }
+  val unixAndWindowsToStandard = new FileSystemFormatter(){
+    def standard(path:String):String = path.replaceAllLiterally(WINDOWS_SEPARATOR,SEP_STANDARD)
+  }
   //
   //  implicit val standardFileSystem = new StandardFileSystem
   //}
@@ -592,7 +603,8 @@ object Locations {
   def url(url: java.net.URL): UrlLocation = new UrlLocation(url)
   def temp: TempLocation = TempLocation(tmpdir)
   private val tmpdir = new File(System.getProperty("java.io.tmpdir"))
-  def relative(path: String = ""): RelativeLocation = RelativeLocation(path)
-  def relativeLocal(path: String = ""): RelativeLocation = RelativeLocation(FileSystem.normalize(path))
+  def relative(path: String = "")(implicit fsf:FileSystemFormatter): RelativeLocation = RelativeLocation(fsf.standard(path))
   def current(relative: String): FileLocation = file(new File(new File("."), relative).getCanonicalPath())
+
+  implicit val unixAndWindowsToStandard = FileSystem.unixAndWindowsToStandard
 }
