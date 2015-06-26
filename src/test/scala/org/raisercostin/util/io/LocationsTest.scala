@@ -45,15 +45,15 @@ ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".rep
     val base = Locations.temp.randomChild()
     val dest = base.child("""photos2-proposed1-good""")
     val from = base.child("""photos2""")
-    val src = base.child("""photos2\1409153946085.jpg""")
+    val src = base.child("""photos2/1409153946085.jpg""")
     val baseName = "2014-08-27--18-39-03--------1409153946085.jpg"
-    assertEquals(base.absolute+"""\photos2\1409153946085.jpg""", src.absolute)
-    assertEquals(base.absolute+"""\photos2""", from.absolute)
+    assertEquals(base.absolute+"""/photos2/1409153946085.jpg""", src.absolute)
+    assertEquals(base.absolute+"""/photos2""", from.absolute)
     //assertEquals("""\1409153946085.jpg""",src.diff(src.absolute,from.absolute).get)
     //assertEquals("""1409153946085.jpg""",src.extractAncestor(from).get)
-    assertEquals("""1409153946085.jpg""", src.extractPrefix(from).relativePath)
-    val destFile = dest.child(src.extractPrefix(from)).withName(_ => baseName)
-    assertEquals(base.absolute+"""\photos2-proposed1-good\2014-08-27--18-39-03--------1409153946085.jpg""", destFile.absolute)
+    assertEquals("""1409153946085.jpg""", src.extractPrefix(from).get.relativePath)
+    val destFile = src.extractPrefix(from).map(dest.child).get.withName(_ => baseName)
+    assertEquals(base.absolute+"""/photos2-proposed1-good/2014-08-27--18-39-03--------1409153946085.jpg""", destFile.absolute)
   }
   test("copy from classpath") {
     val file = Locations.classpath("a b.jpg")
@@ -104,18 +104,18 @@ r/u.txt""".replaceAll("\r", ""),
     assertNotNull(Locations.file("src").parent)
   }
   test("parent of relative location") {
-    assertEquals("2013", Locations.relative("""2013\2013-05-01 - trip to Monschau""").parentName)
-    assertEquals("""2013\some space\second space""", Locations.relative("""2013\2013-05-01 - trip to Monschau""").parent.child("some space").child("second space").relativePath)
-    assertEquals("""2013""", Locations.file(".").child(Locations.relative("""2013\2013-05-01 - trip to Monschau""")).parent.name)
+    assertEquals("2013", Locations.relative("""2013/2013-05-01 - trip to Monschau""").parentName)
+    assertEquals("""2013/some space/second space""", Locations.relative("""2013/2013-05-01 - trip to Monschau""").parent.child("some space").child("second space").relativePath)
+    assertEquals("""2013""", Locations.file(".").child(Locations.relative("""2013/2013-05-01 - trip to Monschau""")).parent.name)
   }
   test("bug with trailing child fiels") {
     Try { Locations.file(""".""").child("2013-05-01 - trip to ") }.toString should startWith("Failure(java.lang.IllegalArgumentException: requirement failed: Child [2013-05-01 - trip to ] has trailing spaces)")
   }
   test("current folder") {
-    Locations.current("target").toString should not include ("." + Locations.SEP + "target")
+    Locations.current("target").toString should not include ("./target")
   }
   test("relative location should not start with file separator") {
-    Try { Locations.relative(Locations.SEP + "folder") }.toString should include("shouldn't start with file separator")
+    Try { Locations.relative("/folder") }.toString should include("shouldn't start with file separator")
   }
   test("relative location parent") {
     Locations.relative("").child("a").raw.toString should equal("a")
@@ -125,82 +125,11 @@ r/u.txt""".replaceAll("\r", ""),
     Locations.relative("folder").child("aaaa").parent.raw.toString should equal("folder")
   }
   test("relative computation") {
-    assertEquals("", Locations.relative("path").extractPrefix(Locations.relative("path")).relativePath)
-    assertEquals("", Locations.relative("img.jpg").extractPrefix(Locations.relative("img.jpg")).relativePath)
-    assertEquals("/b/img.jpg", Locations.relative("a/b/img.jpg").extractPrefix(Locations.relative("a")).relativePath)
-    assertEquals("/img.jpg", Locations.relative("a/b/img.jpg").extractPrefix(Locations.relative("a/b")).relativePath)
-    assertEquals("b\\img.jpg", Locations.relative("a\\b\\img.jpg").extractPrefix(Locations.relative("a")).relativePath)
-  }
-
-  test("inheritance") {
-    //How can I define an inherited operation that returns the current type (and not current type instance) in scala?
-    //I already tried to return this.type but in case I need to create a new instance will not work.
-    //object Test {
-    //  def main(args: Array[String]) {
-        trait A {
-          type Return //= A
-          //return current instance type
-          def op: this.type = { println("opA"); this }
-          //return current type (but must be overriden)
-          def op2: A = { println("op2A"); this }
-          //return current type (without the need to override)
-          def op3[T >: A]: T = { println("opA"); this }
-          //def op4[T <: A]: T = { println("opA"); this }
-          //def op5: Return = { println("opA"); this }
-        }
-        case class B() extends A {
-          def doB = println("doB")
-
-          override def op: this.type = {
-            println("opB");
-            this
-            //new B() - compilation error: type mismatch;  found: B  required: B.this.type
-          }
-          override def op2: B = {
-            println("op2B");
-            new B()
-            //here it works
-          }
-          override def op3[T >: B]: B = {
-            println("op3B");
-            //here it works
-            new B()
-          }
-          type Return = B
-          def op5: Return = { println("opA"); this }
-        }
-        //Inherits both op2 and op3 from A but op2 and op3 need to return a C type
-        case class C() extends A {
-          type Return = C
-          def doC = println("doC")
-          def op5: Return = { println("opA"); this }
-        }
-        B().op.doB
-        C().op.doC
-
-        B().op2.doB
-        //C().op2.doC //compilation error => value doC is not a member of A
-
-        B().op3.doB
-        //C().op3.doC //compilation error => value doC is not a member of type parameter T
-
-        B().op5.doB
-        C().op5.doC
-
-        /**
-         * Output:
-         * opB
-         * doB
-         * opA
-         * doC
-         * op2B
-         * doB
-         * op3B
-         * doB
-         */
-    //  }
-    //}
-    //Test.main(Array())
+    assertEquals("", Locations.relative("path").extractPrefix(Locations.relative("path")).get.relativePath)
+    assertEquals("", Locations.relative("img.jpg").extractPrefix(Locations.relative("img.jpg")).get.relativePath)
+    assertEquals("b/img.jpg", Locations.relative("a/b/img.jpg").extractPrefix(Locations.relative("a")).get.relativePath)
+    assertEquals("img.jpg", Locations.relative("a/b/img.jpg").extractPrefix(Locations.relative("a/b")).get.relativePath)
+    assertEquals("b/img.jpg", Locations.relativeLocal("a\\b\\img.jpg").extractPrefix(Locations.relative("a")).get.relativePath)
   }
   import scala.io.Codec
   import java.nio.charset.Charset
