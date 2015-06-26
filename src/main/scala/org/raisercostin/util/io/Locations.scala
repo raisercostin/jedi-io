@@ -105,6 +105,12 @@ trait NavigableLocation[Self <: NavigableLocation[Self]] { this: Self =>
     else name
   def standard(selector: Self => String): String = FileSystem.standard(selector(this))
 }
+/**
+ * A formatter and parser for paths in java. The internal code should always use the internal FileSystem.SEP_STANDARD convention.
+ * //TODO All the operations that take paths as strings should specify the way the string is parsed.
+ * @see https://commons.apache.org/proper/commons-io/apidocs/org/apache/commons/io/FilenameUtils.html
+ * @see http://stackoverflow.com/questions/2417485/file-separator-vs-slash-in-paths
+ */
 trait FileSystemFormatter{
   def standard(path:String):String
 }
