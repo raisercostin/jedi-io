@@ -43,10 +43,6 @@ import java.io.Closeable
  *
  * In principle should be agnostic to these aspects and only at runtime will depend on the local environment.
  */
-
-//TODO search this.type, ChildLocation and remove them
-package object io {
-}
 //
 //trait LocationFactory[-From, +To] {
 //  def apply(child:String) : To
@@ -66,9 +62,9 @@ trait NavigableLocation[Self <: NavigableLocation[Self]] { self: Self =>
   def child(child: String): Self
 
   def child(childText: Option[String]): Self = childText match {
-    case None                      => self
+    case None => self
     case Some(s) if s.trim.isEmpty => self
-    case Some(s)                   => child(s)
+    case Some(s) => child(s)
   }
   def child(childLocation: RelativeLocation): Self = {
     if (childLocation.isEmpty) {
@@ -110,58 +106,34 @@ trait NavigableLocation[Self <: NavigableLocation[Self]] { self: Self =>
     if (ext.length > 0)
       name + "." + ext
     else name
-  def standard(selector: Self => String): String = FileSystem.standard(selector(self))
-}
-/**
- * A formatter and parser for paths in java. The internal code should always use the internal FileSystem.SEP_STANDARD convention.
- * //TODO All the operations that take paths as strings should specify the way the string is parsed.
- * @see https://commons.apache.org/proper/commons-io/apidocs/org/apache/commons/io/FilenameUtils.html
- * @see http://stackoverflow.com/questions/2417485/file-separator-vs-slash-in-paths
- */
-trait FileSystemFormatter {
-  def standard(path: String): String
-}
-
-object FileSystem {
-  protected val SEP = File.separator
-  protected val SEP_STANDARD = "/"
-  protected final val WINDOWS_SEPARATOR = "\\"
-  val identityFormatter = new FileSystemFormatter() {
-    def standard(path: String): String = path
-  }
-  val unixAndWindowsToStandard = new FileSystemFormatter() {
-    def standard(path: String): String = path.replaceAllLiterally(WINDOWS_SEPARATOR, SEP_STANDARD)
-  }
-  //
-  //  implicit val standardFileSystem = new StandardFileSystem
-  //}
-  //
-  //trait FileSystem {
-  //import FileSystem._
-  def standard(path: String): String = path.replaceAllLiterally(SEP, SEP_STANDARD)
-  def requireStandad(path: String) = {
-    //TODO: test that the file is not in a form specific to windows or other non linux(standard) way
-  }
-  def requireRelativePath(path: String) =
-    require(!path.startsWith(FileSystem.SEP_STANDARD), s"The relative path $path shouldn't start with file separator [${SEP_STANDARD}].")
-  def splitRelativePath(path: String): Array[String] = {
-    requireRelativePath(path)
-    splitPartialPath(path)
-  }
-  def splitPartialPath(path: String): Array[String] = {
-    path.split(Pattern.quote(SEP_STANDARD)).filterNot(_.trim.isEmpty)
-  }
-  def constructPath(names: Seq[String]): String = names.foldLeft("")((x, y) => (if (x.isEmpty) "" else (x + SEP_STANDARD)) + y)
-  def addChild(path: String, child: String): String = path + FileSystem.SEP_STANDARD + child
-  def normalize(path: String): String = path.replaceAllLiterally(SEP, SEP_STANDARD)
 }
 //class StandardFileSystem extends FileSystem
+trait NavigableBaseLocation[Self <: NavigableBaseLocation[Self]] extends NavigableLocation[Self] with BaseLocation { self: Self =>
+  def list: Iterable[Self] = Option(existing).map { x =>
+    Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
+  }.getOrElse(Iterable()).map(Locations.file(_).asInstanceOf[Self])
+  def descendants: Iterable[Self] = {
+    val all: Iterable[File] = Option(existing).map { x =>
+      traverse.map(_._1.toFile).toIterable
+    }.getOrElse(Iterable[File]())
+    all.map(buildNew)
+  }
 
-trait BaseLocation[Self <: BaseLocation[Self]] extends NavigableLocation[Self] { self: Self =>
+  def buildNew(x: File): Self = Locations.file(x).asInstanceOf[Self]
+  def renamedIfExists: Self = {
+    @tailrec
+    def findUniqueName(destFile: Self, counter: Int): Self =
+      if (destFile.exists)
+        findUniqueName(destFile.withBaseName { baseName: String => (baseName + "-" + counter) }, counter + 1)
+      else
+        destFile
+    findUniqueName(self, 1)
+  }
+}
+trait BaseLocation {
   //trait BaseLocation[+Self] extends NavigableLocation[Self]{self:Self=>
   //  override type Self = BaseLocation
   def raw: String
-  def nameAndBefore: String = absolute
   /**To read data you should read the inputstream*/
   def toUrl: java.net.URL = toFile.toURI.toURL
   def toFile: File
@@ -185,30 +157,13 @@ trait BaseLocation[Self <: BaseLocation[Self]] extends NavigableLocation[Self] {
   //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
 
   def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
-  def absolute: String = standard(_.absolutePlatformDependent)
-  def isAbsolute = toFile.isAbsolute()
-  def mkdirIfNecessary: Self = {
+  def standard(selector: this.type => String): String = FileSystem.standard(selector(this))
+  def mkdirIfNecessary: this.type = {
     FileUtils.forceMkdir(toFile)
-    self
-  }
-  def parent: Self
-  def mkdirOnParentIfNecessary: Self = {
-    parent.mkdirIfNecessary
-    self
+    this
   }
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
   //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
-  def list: Iterable[Self] = Option(existing).map { x =>
-    Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
-  }.getOrElse(Iterable()).map(Locations.file(_).asInstanceOf[Self])
-  def descendants: Iterable[Self] = {
-    val all: Iterable[File] = Option(existing).map { x =>
-      traverse.map(_._1.toFile).toIterable
-    }.getOrElse(Iterable[File]())
-    all.map(buildNew)
-  }
-
-  def buildNew(x: File): Self = Locations.file(x).asInstanceOf[Self]
 
   def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
     Locations.file(pathInRaw).parent.traverse
@@ -229,28 +184,19 @@ trait BaseLocation[Self <: BaseLocation[Self]] extends NavigableLocation[Self] {
   def hasDirs = RichPath.wrapPath(toPath).list.find(_.toFile.isDirectory).nonEmpty
   def isFile = toFile.isFile
   def exists = toFile.exists
-  def renamedIfExists: Self = {
-    @tailrec
-    def findUniqueName(destFile: Self, counter: Int): Self =
-      if (destFile.exists)
-        findUniqueName(destFile.withBaseName { baseName: String => (baseName + "-" + counter) }, counter + 1)
-      else
-        destFile
-    findUniqueName(self, 1)
-  }
-  def nonExisting(process: (Self) => Any): Self = {
-    if (!exists) process(self)
-    self
+  def nonExisting(process: (this.type) => Any): this.type = {
+    if (!exists) process(this)
+    this
   }
 
-  def existing: Self =
+  def existing: this.type =
     if (toFile.exists)
-      self
+      this
     else
-      throw new RuntimeException("[" + self + "] doesn't exist!")
-  def existingOption: Option[Self] =
+      throw new RuntimeException("[" + this + "] doesn't exist!")
+  def existingOption: Option[this.type] =
     if (exists)
-      Some(self)
+      Some(this)
     else
       None
   def existing(source: BufferedSource) = {
@@ -259,28 +205,31 @@ trait BaseLocation[Self <: BaseLocation[Self]] extends NavigableLocation[Self] {
     //println(s"$absolute hasNext=$hasNext")
     val hasNext2 = hasNext.recover {
       case ex: Throwable =>
-        throw new RuntimeException("[" + self + "] doesn't exist!")
+        throw new RuntimeException("[" + this + "] doesn't exist!")
     }
     //hasNext might be false if is empty
     //    if (!hasNext2.get)
     //      throw new RuntimeException("[" + self + "] doesn't have next!")
     source
   }
-  def inspect(message: (Self) => Any): Self = {
-    message(self)
-    self
+  def inspect(message: (this.type) => Any): this.type = {
+    message(this)
+    this
   }
   def length: Long = toFile.length()
-}
-trait AbsoluteLocation {
-  def path: String
-}
-//trait BaseLocation[Self <: BaseLocation[Self]] extends NavigableLocation[Self] {self:Self=>
-trait AbsoluteBaseLocation[Self <: AbsoluteBaseLocation[Self]] extends BaseLocation[Self] with AbsoluteLocation { self: Self =>
+
+  def nameAndBefore: String = absolute
+  def absolute: String = standard(_.absolutePlatformDependent)
+  def isAbsolute = toFile.isAbsolute()
   /**Gets only the path part (without drive name on windows for example), and without the name of file*/
   def path: String = FilenameUtils.getPath(absolute)
 }
-trait InputLocation[Self <: InputLocation[Self]] extends AbsoluteBaseLocation[Self] with AbsoluteLocation { self: Self =>
+trait AbsoluteBaseLocation extends BaseLocation{
+}
+trait NavigableInputLocation[Self <: NavigableInputLocation[Self]] extends InputLocation with NavigableBaseLocation[Self] { self: Self =>
+  def unzip: ZipInputLocation[NavigableInputLocation[_]] = new ZipInputLocation[NavigableInputLocation[_]](self, None)
+}
+trait InputLocation extends AbsoluteBaseLocation{
   protected def unsafeToInputStream: InputStream = new FileInputStream(absolute)
   protected def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
   protected def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
@@ -298,17 +247,21 @@ trait InputLocation[Self <: InputLocation[Self]] extends AbsoluteBaseLocation[Se
   //def child(child: String): InputLocation
   //def parent: InputLocation.Self
   def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
-  def copyToIfNotExists[T <: OutputLocation[T]](dest: OutputLocation[T]): Self = { dest.existingOption.map(_.copyFrom(self)); self }
-  def copyTo(dest: OutputLocation[_]) = {
-    dest.mkdirOnParentIfNecessary
+  def copyToIfNotExists(dest: OutputLocation): this.type = { dest.existingOption.map(_.copyFrom(this)); this }
+  def copyTo(dest: OutputLocation):this.type = {
     usingInputStream { source =>
       dest.usingOutputStream { output =>
         IOUtils.copyLarge(source, output)
       }
     }
+    this
     //overwrite
     //    FileUtils.copyInputStreamToFile(unsafeToInputStream, dest.toOutputStream)
     //    IOUtils.copyLarge(unsafeToInputStream, dest.toOutputStream)
+  }
+  def copyTo[T<:NavigableOutputLocation[T]](dest: NavigableOutputLocation[T]):this.type = {
+    dest.mkdirOnParentIfNecessary
+    copyTo(dest.asInstanceOf[OutputLocation])
   }
   def readContent = {
     // Read a file into a string
@@ -318,20 +271,38 @@ trait InputLocation[Self <: InputLocation[Self]] extends AbsoluteBaseLocation[Se
     //    val src = uri"http://rapture.io/sample.json".slurp[Char]
     //existing(toSource).getLines mkString ("\n")
     usingReader { reader =>
-      try { IOUtils.toString(reader) } catch { case x: Throwable => throw new RuntimeException("While reading " + self, x) }
+      try { IOUtils.toString(reader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
     }
   }
   def readContentAsText: Try[String] =
     Try(readContent)
   //Try(existing(toSource).getLines mkString ("\n"))
   //def unzip: ZipInputLocation = ???
-  def unzip: ZipInputLocation[InputLocation[_]] = new ZipInputLocation[InputLocation[_]](self, None)
-  def copyAsHardLink(dest: OutputLocation[_], overwriteIfAlreadyExists: Boolean = false): Self = {
-    dest.copyFromAsHardLink(self, overwriteIfAlreadyExists);
-    self
+  def copyAsHardLink(dest: OutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+    dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
+    this
   }
 }
-trait OutputLocation[Self <: OutputLocation[Self]] extends BaseLocation[Self] { self: Self =>
+trait NavigableOutputLocation[Self <: NavigableOutputLocation[Self]] extends OutputLocation with NavigableBaseLocation[Self] { self: Self =>
+  def mkdirOnParentIfNecessary: this.type = {
+    parent.mkdirIfNecessary
+    self
+  }
+  def rename(renamer: String => String) = {
+    val newName = renamer(baseName)
+    if (newName == baseName) {
+      //println(s"ignore [${absolute}] to [${absolute}]")
+    } else {
+      val dest: Self = parent.child(withExtension2(newName, extension))
+      //println(s"move [${absolute}] to [${dest.absolute}]")
+      FileUtils.moveFile(toFile, dest.toFile)
+    }
+  }
+  def deleteOrRenameIfExists: Self = {
+    Try { deleteIfExists }.recover { case _ => renamedIfExists }.get
+  }
+}
+trait OutputLocation extends AbsoluteBaseLocation{self=>
   //trait OutputLocation extends BaseLocation {
   //  override type Self=OutputLocation
   protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
@@ -344,46 +315,33 @@ trait OutputLocation[Self <: OutputLocation[Self]] extends BaseLocation[Self] { 
 
   //  def asInput: InputLocation
   def append: Boolean
-  def rename(renamer: String => String) = {
-    val newName = renamer(baseName)
-    if (newName == baseName) {
-      //println(s"ignore [${absolute}] to [${absolute}]")
-    } else {
-      val dest: Self = parent.child(withExtension2(newName, extension))
-      //println(s"move [${absolute}] to [${dest.absolute}]")
-      FileUtils.moveFile(toFile, dest.toFile)
-    }
-  }
-  def moveTo(dest: OutputLocation[_]): Self = {
+  def moveTo(dest: OutputLocation): this.type = {
     FileUtils.moveFile(toFile, dest.toFile)
-    self
+    this
   }
-  def deleteOrRenameIfExists: Self = {
-    Try { deleteIfExists }.recover { case _ => renamedIfExists }.get
-  }
-  def deleteIfExists: Self = {
+  def deleteIfExists: this.type = {
     if (exists) {
       logger.info(s"delete existing $absolute")
       ApacheFileUtils.forceDelete(toPath)
     }
-    self
+    this
   }
-  def writeContent(content: String): Self = { usingPrintWriter(_.print(content)); self }
+  def writeContent(content: String): this.type = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
-  def withAppend: Self
-  def copyFrom(src: InputLocation[_]): Self = { src.copyTo(self); self }
-  def copyFromAsSymlink(src: InputLocation[_]) = Files.createSymbolicLink(toPath, src.toPath)
-  def copyFromAsHardLink(src: InputLocation[_], overwriteIfAlreadyExists: Boolean = false): Self = {
+  def withAppend: self.type
+  def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
+  def copyFromAsSymlink(src: InputLocation) = Files.createSymbolicLink(toPath, src.toPath)
+  def copyFromAsHardLink(src: InputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
     if (overwriteIfAlreadyExists) {
       Files.createLink(toPath, src.toPath)
     } else {
       if (exists) {
-        throw new RuntimeException("Destination file " + self + " already exists.")
+        throw new RuntimeException("Destination file " + this + " already exists.")
       } else {
         Files.createLink(toPath, src.toPath)
       }
     }
-    self
+    this
   }
 }
 
@@ -399,7 +357,7 @@ object ApacheFileUtils {
         throw e
   }
 }
-trait InOutLocation[Self <: InOutLocation[Self]] extends InputLocation[Self] with OutputLocation[Self] { self: Self =>
+trait InOutLocation[Self <: InOutLocation[Self]] extends NavigableInputLocation[Self] with NavigableOutputLocation[Self] { self: Self =>
 }
 trait RelativeLocationLike[Self <: RelativeLocationLike[Self]] extends NavigableLocation[Self] { self: Self =>
   def relativePath: String
@@ -425,7 +383,7 @@ trait FileLocationLike[Self <: FileLocationLike[Self]] extends InOutLocation[Sel
 
   override def parentName: String = toFile.getParentFile.getAbsolutePath
   def raw = fileFullPath
-  def asInput: InputLocation[Self] = self
+  def asInput: NavigableInputLocation[Self] = self
   lazy val toFile: File = new File(fileFullPath)
   override def toPath: Path = Paths.get(fileFullPath)
   protected override def unsafeToInputStream: InputStream = new FileInputStream(toFile)
@@ -434,18 +392,18 @@ trait FileLocationLike[Self <: FileLocationLike[Self]] extends InOutLocation[Sel
   //import org.raisercostin.util.MimeTypesUtils2
   def asFile: Self = self
 }
-case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike[FileLocation] {
+case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike[FileLocation] {self=>
   //  override type ChildLocation=FileLocation
   override def parent: FileLocation = new FileLocation(parentName)
   override def child(child: String): FileLocation = new FileLocation(toPath.resolve(checkedChild(child)).toFile.getAbsolutePath)
-  def withAppend: FileLocation = this.copy(append = true)
+  override def withAppend: self.type = self.copy(append = true).asInstanceOf[self.type]
 }
 case class MemoryLocation(val memoryName: String) extends RelativeLocationLike[MemoryLocation] with InOutLocation[MemoryLocation] {
   //  type ChildLocation = MemoryLocation
   override def nameAndBefore: String = absolute
   def relativePath: String = memoryName
   override def raw = memoryName
-  def asInput: InputLocation[MemoryLocation] = this
+  def asInput: NavigableInputLocation[MemoryLocation] = this
   def append: Boolean = false
   //val buffer: Array[Byte] = Array()
   lazy val outStream = new ByteArrayOutputStream()
@@ -454,9 +412,9 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocationLike[M
   protected override def unsafeToInputStream: InputStream = new ByteArrayInputStream(outStream.toByteArray())
   def child(child: String): MemoryLocation = ???
   def parent: MemoryLocation = ???
-  def withAppend: MemoryLocation = ???
+  override def withAppend: this.type = ???
   override def length: Long = outStream.size()
-  override def mkdirOnParentIfNecessary: MemoryLocation = this
+  override def mkdirOnParentIfNecessary: this.type = this
   override def exists = true
   override def descendants: Iterable[MemoryLocation] = Iterable(this)
   override def size = outStream.size()
@@ -482,7 +440,7 @@ object ClassPathInputLocationLike {
 /**
  * @see http://www.thinkplexx.com/learn/howto/java/system/java-resource-loading-explained-absolute-and-relative-names-difference-between-classloader-and-class-resource-loading
  */
-trait ClassPathInputLocationLike[Self <: ClassPathInputLocationLike[Self]] extends InputLocation[Self] { self: Self =>
+trait ClassPathInputLocationLike[Self <: ClassPathInputLocationLike[Self]] extends NavigableInputLocation[Self] { self: Self =>
   def initialResourcePath: String
   def raw = initialResourcePath
   import ClassPathInputLocationLike._
@@ -499,7 +457,7 @@ trait ClassPathInputLocationLike[Self <: ClassPathInputLocationLike[Self]] exten
   def toFile: File = Try { new File(toUrl.toURI()) }.recoverWith { case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + self, e)) }.get
   protected override def unsafeToInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
   ///def toWrite = Locations.file(toFile.getAbsolutePath)
-  override def unzip: ZipInputLocation[InputLocation[_]] = new ZipInputLocation[InputLocation[_]](self, None)
+  override def unzip: ZipInputLocation[NavigableInputLocation[_]] = new ZipInputLocation[NavigableInputLocation[_]](self, None)
   override def parentName = {
     val index = initialResourcePath.lastIndexOf("/")
     if (index == -1)
@@ -514,7 +472,7 @@ case class ClassPathInputLocation(initialResourcePath: String) extends ClassPath
   def child(child: String): ClassPathInputLocation = new ClassPathInputLocation(FileSystem.addChild(resourcePath, child))
   def parent: ClassPathInputLocation = new ClassPathInputLocation(parentName)
 }
-case class ZipInputLocation[T <: InputLocation[_]](zip: T, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocationLike[T, ZipInputLocation[T]] {
+case class ZipInputLocation[T <: NavigableInputLocation[_]](zip: T, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocationLike[T, ZipInputLocation[T]] {
   def parent: ZipInputLocation[T] = ZipInputLocation(zip, Some(rootzip.getEntry(parentName)))
   def child(child: String): ZipInputLocation[T] = entry match {
     case None =>
@@ -525,7 +483,7 @@ case class ZipInputLocation[T <: InputLocation[_]](zip: T, entry: Option[java.ut
   override def list: Iterable[ZipInputLocation[T]] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => ZipInputLocation(zip, Some(entry)))
 }
 //TODO fix name&path&unique identifier stuff
-trait ZipInputLocationLike[T <: InputLocation[_], Self <: ZipInputLocationLike[T, Self]] extends InputLocation[ZipInputLocationLike[T, Self]] { self: Self =>
+trait ZipInputLocationLike[T <: NavigableInputLocation[_], Self <: ZipInputLocationLike[T, Self]] extends NavigableInputLocation[ZipInputLocationLike[T, Self]] { self: Self =>
   //  type ChildLocation = ZipInputLocation
   def zip: T
   def entry: Option[java.util.zip.ZipEntry]
@@ -547,19 +505,19 @@ trait ZipInputLocationLike[T <: InputLocation[_], Self <: ZipInputLocationLike[T
     def iterator = rootzip.entries.asScala
   }
   override def name = entry.map(_.getName).getOrElse(zip.name + "-unzipped")
-  override def unzip: ZipInputLocation[InputLocation[_]] = usingInputStream { input =>
-    new ZipInputLocation[InputLocation[_]](Locations.temp.randomChild(name).copyFrom(Locations.stream(input)), None)
+  override def unzip: ZipInputLocation[NavigableInputLocation[_]] = usingInputStream { input =>
+    new ZipInputLocation[NavigableInputLocation[_]](Locations.temp.randomChild(name).copyFrom(Locations.stream(input)), None)
   }
 }
 
-case class StreamLocation(val inputStream: InputStream) extends InputLocation[StreamLocation] {
+case class StreamLocation(val inputStream: InputStream) extends NavigableInputLocation[StreamLocation] {
   def raw = "inputStream[" + inputStream + "]"
   def child(child: String): StreamLocation = ???
   def parent: StreamLocation = ???
   def toFile: File = ???
   protected override def unsafeToInputStream: InputStream = inputStream
 }
-case class UrlLocation(url: java.net.URL) extends InputLocation[UrlLocation] {
+case class UrlLocation(url: java.net.URL) extends NavigableInputLocation[UrlLocation] {
   def raw = url.toExternalForm()
   def child(child: String): UrlLocation = ???
   def parent: UrlLocation = ???
@@ -582,8 +540,8 @@ case class UrlLocation(url: java.net.URL) extends InputLocation[UrlLocation] {
   }
   protected override def unsafeToInputStream: InputStream = url.openStream()
 }
-case class TempLocation(temp: File, append: Boolean = false) extends FileLocationLike[TempLocation] {
-  def withAppend: TempLocation = this.copy(append = true)
+case class TempLocation(temp: File, append: Boolean = false) extends FileLocationLike[TempLocation] {self=>
+  override def withAppend: self.type = this.copy(append = true).asInstanceOf[self.type]
   def fileFullPath: String = temp.getAbsolutePath()
   def randomChild(prefix: String = "random", suffix: String = "") = new TempLocation(File.createTempFile(prefix, suffix, toFile))
   override def parent: TempLocation = new TempLocation(new File(parentName))
@@ -606,7 +564,7 @@ object Locations {
     createAbsoluteFile(file.getAbsolutePath())
   def file(file: File, subFile: String): FileLocation =
     createAbsoluteFile(file.getAbsolutePath()).child(subFile)
-  def file(fileFullPath: String, optionalParent: BaseLocation[_]): FileLocation =
+  def file(fileFullPath: String, optionalParent: NavigableBaseLocation[_]): FileLocation =
     file(if (isAbsolute(fileFullPath)) fileFullPath else optionalParent.absolute + fileFullPath)
 
   private def isAbsolute(path: String) = new File(path).isAbsolute()

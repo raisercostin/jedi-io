@@ -26,7 +26,7 @@ class LocationsTest extends FunSuite {
   }
 
   test("unzip") {
-    Locations.classpath("location.zip").unzip.list.toSeq.foreach(x=>println(x.name))
+    Locations.classpath("location.zip").unzip.list.toSeq.foreach(x => println(x.name))
     assertEquals("""ZipInputLocation(ClassPathInputLocation(location.zip),Some(a.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(b.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/))
@@ -48,13 +48,13 @@ ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".rep
     val from = base.child("""photos2""")
     val src = base.child("""photos2/1409153946085.jpg""")
     val baseName = "2014-08-27--18-39-03--------1409153946085.jpg"
-    assertEquals(base.absolute+"""/photos2/1409153946085.jpg""", src.absolute)
-    assertEquals(base.absolute+"""/photos2""", from.absolute)
+    assertEquals(base.absolute + """/photos2/1409153946085.jpg""", src.absolute)
+    assertEquals(base.absolute + """/photos2""", from.absolute)
     //assertEquals("""\1409153946085.jpg""",src.diff(src.absolute,from.absolute).get)
     //assertEquals("""1409153946085.jpg""",src.extractAncestor(from).get)
     assertEquals("""1409153946085.jpg""", src.extractPrefix(from).get.relativePath)
     val destFile = src.extractPrefix(from).map(dest.child).get.withName(_ => baseName)
-    assertEquals(base.absolute+"""/photos2-proposed1-good/2014-08-27--18-39-03--------1409153946085.jpg""", destFile.absolute)
+    assertEquals(base.absolute + """/photos2-proposed1-good/2014-08-27--18-39-03--------1409153946085.jpg""", destFile.absolute)
   }
   test("copy from classpath") {
     val file = Locations.classpath("a b.jpg")
