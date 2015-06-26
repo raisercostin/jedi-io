@@ -37,7 +37,12 @@ pomExtra := (
   </developers>
 )
 
+//eclipse
+EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource
+EclipseKeys.withSource := true
 EclipseKeys.eclipseOutput := Some("target2/eclipse")
+unmanagedSourceDirectories in Compile := (scalaSource in Compile).value :: Nil
+unmanagedSourceDirectories in Test := (scalaSource in Test).value :: Nil
 
 //bintray
 publishMavenStyle := true

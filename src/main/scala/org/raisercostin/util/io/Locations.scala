@@ -275,7 +275,7 @@ trait InputLocation[Self <: InputLocation[Self]] extends AbsoluteBaseLocation[Se
     Try(readContent)
   //Try(existing(toSource).getLines mkString ("\n"))
   //def unzip: ZipInputLocation = ???
-  def unzip: ZipInputLocation[Self] = new ZipInputLocation[Self](this, None)
+  def unzip: ZipInputLocation[InputLocation[_]] = new ZipInputLocation[InputLocation[_]](this, None)
   def copyAsHardLink(dest: OutputLocation[_], overwriteIfAlreadyExists: Boolean = false): Self = { dest.copyFromAsHardLink(this, overwriteIfAlreadyExists); this }
 }
 trait OutputLocation[Self <: OutputLocation[Self]] extends BaseLocation[Self] {this:Self=>
@@ -410,7 +410,7 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocationLike[M
   override def descendants: Iterable[MemoryLocation] = Iterable(this)
   override def size = outStream.size()
 }
-object ClassPathInputLocation {
+object ClassPathInputLocationLike {
   private def getDefaultClassLoader(): ClassLoader = {
     var cl: ClassLoader = null
     try {
@@ -430,10 +430,10 @@ object ClassPathInputLocation {
 /**
  * @see http://www.thinkplexx.com/learn/howto/java/system/java-resource-loading-explained-absolute-and-relative-names-difference-between-classloader-and-class-resource-loading
  */
-case class ClassPathInputLocation(initialResourcePath: String) extends InputLocation[ClassPathInputLocation] {
-  require(initialResourcePath != null)
+trait ClassPathInputLocationLike[Self <: ClassPathInputLocationLike[Self]] extends InputLocation[Self] {self:Self=>
+  def initialResourcePath:String
   def raw = initialResourcePath
-  import ClassPathInputLocation._
+  import ClassPathInputLocationLike._
   val resourcePath = initialResourcePath.stripPrefix("/")
   val resource = {
     val res = getSpecialClassLoader.getResource(resourcePath);
@@ -445,10 +445,8 @@ case class ClassPathInputLocation(initialResourcePath: String) extends InputLoca
   override def absolute: String = toUrl.toURI().getPath() //Try{toFile.getAbsolutePath()}.recover{case e:Throwable => Option(toUrl).map(_.toExternalForm).getOrElse("unfound classpath://" + resourcePath) }.get
   def toFile: File = Try { new File(toUrl.toURI()) }.recoverWith { case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + this, e)) }.get
   protected override def unsafeToInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
-  def child(child: String): ClassPathInputLocation = new ClassPathInputLocation(resourcePath + SEP + child)
-  def parent: ClassPathInputLocation = new ClassPathInputLocation(parentName)
   ///def toWrite = Locations.file(toFile.getAbsolutePath)
-  override def unzip: ZipInputLocation[ClassPathInputLocation] = new ZipInputLocation(this, None)
+  override def unzip: ZipInputLocation[InputLocation[_]] = new ZipInputLocation[InputLocation[_]](this, None)
   override def parentName = {
     val index = initialResourcePath.lastIndexOf("/")
     if (index == -1)
@@ -458,11 +456,12 @@ case class ClassPathInputLocation(initialResourcePath: String) extends InputLoca
   }
   def asFile: FileLocation = Locations.file(toFile)
 }
-
-//trait InOutLocation[Self <: InOutLocation[Self]] extends InputLocation[Self] with OutputLocation[Self]{self:Self=
-case class ZipInputLocation[T <: InputLocation[_]](zip: T, entry: Option[java.util.zip.ZipEntry]) extends InputLocation[ZipInputLocation[T]] {
-//  type ChildLocation = ZipInputLocation
-  def raw = "ZipInputLocation[" + zip + "," + entry + "]"
+case class ClassPathInputLocation(initialResourcePath: String) extends ClassPathInputLocationLike[ClassPathInputLocation]{
+    require(initialResourcePath != null)
+  def child(child: String): ClassPathInputLocation = new ClassPathInputLocation(resourcePath + SEP + child)
+  def parent: ClassPathInputLocation = new ClassPathInputLocation(parentName)
+}
+case class ZipInputLocation[T <: InputLocation[_]](zip: T, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocationLike[T,ZipInputLocation[T]] {
   def parent: ZipInputLocation[T] = ZipInputLocation(zip, Some(rootzip.getEntry(parentName)))
   def child(child: String): ZipInputLocation[T] = entry match {
     case None =>
@@ -470,6 +469,14 @@ case class ZipInputLocation[T <: InputLocation[_]](zip: T, entry: Option[java.ut
     case Some(entry) =>
       ZipInputLocation(zip, Some(rootzip.getEntry(entry.getName() + "/" + child)))
   }
+  override def list: Iterable[ZipInputLocation[T]] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => ZipInputLocation(zip, Some(entry)))
+}
+//TODO fix name&path&unique identifier stuff
+trait ZipInputLocationLike[T <: InputLocation[_],Self <: ZipInputLocationLike[T,Self]] extends InputLocation[ZipInputLocationLike[T,Self]] {self:Self=>
+//  type ChildLocation = ZipInputLocation
+  def zip:T
+  def entry: Option[java.util.zip.ZipEntry]
+  def raw = "ZipInputLocation[" + zip + "," + entry + "]"
 
   def toFile: File = zip.toFile
   protected override def unsafeToInputStream: InputStream = entry match {
@@ -478,17 +485,16 @@ case class ZipInputLocation[T <: InputLocation[_]](zip: T, entry: Option[java.ut
     case Some(entry) =>
       rootzip.getInputStream(entry)
   }
-  override def list: Iterable[ZipInputLocation[T]] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => ZipInputLocation(zip, Some(entry)))
 
-  private lazy val rootzip = new java.util.zip.ZipFile(Try { toFile }.getOrElse(Locations.temp.randomChild(name).copyFrom(zip).toFile))
+  protected lazy val rootzip = new java.util.zip.ZipFile(Try { toFile }.getOrElse(Locations.temp.randomChild(name).copyFrom(zip).toFile))
   //private lazy val rootzip = new java.util.zip.ZipInputStream(zip.unsafeToInputStream)
   import collection.JavaConverters._
   import java.util.zip._
-  private lazy val entries:Iterable[ZipEntry] = new Iterable[ZipEntry]{
+  protected lazy val entries:Iterable[ZipEntry] = new Iterable[ZipEntry]{
     def iterator = rootzip.entries.asScala
   }
   override def name = entry.map(_.getName).getOrElse(zip.name + "-unzipped")
-  def unzip2: ZipInputLocation[TempLocation] = usingInputStream(input => new ZipInputLocation(Locations.temp.randomChild(name).copyFrom(Locations.stream(input)), None))
+  override def unzip: ZipInputLocation[InputLocation[_]] = usingInputStream(input => new ZipInputLocation[InputLocation[_]](Locations.temp.randomChild(name).copyFrom(Locations.stream(input)), None))
 }
 
 case class StreamLocation(val inputStream: InputStream) extends InputLocation[StreamLocation] {

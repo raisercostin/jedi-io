@@ -25,13 +25,14 @@ class LocationsTest extends FunSuite {
   }
 
   test("unzip") {
-    assertEquals("""ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/))
-ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/d.txt))
-ZipInputLocation(ClassPathInputLocation(location.zip),Some(a.txt))
+    Locations.classpath("location.zip").unzip.list.toSeq.foreach(x=>println(x.name))
+    assertEquals("""ZipInputLocation(ClassPathInputLocation(location.zip),Some(a.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(b.txt))
+ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/))
+ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/d.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/e/))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/e/f.txt))
-ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".replaceAll("\r", ""), Locations.classpath("location.zip").unzip.list.mkString("\n"))
+ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".replaceAll("\r", ""), Locations.classpath("location.zip").unzip.list.toSeq.sortBy(_.name).mkString("\n"))
     assertEquals("""a - file content""", Locations.classpath("location.zip").unzip.child("a.txt").readContent)
     assertEquals("""f content""", Locations.classpath("location.zip").unzip.child("c/e/f.txt").readContent)
     assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c)]""", Locations.classpath("location.zip").unzip.child("c").raw)
@@ -46,13 +47,13 @@ ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".rep
     val from = base.child("""photos2""")
     val src = base.child("""photos2\1409153946085.jpg""")
     val baseName = "2014-08-27--18-39-03--------1409153946085.jpg"
-    assertEquals("""d:\personal\photos2\1409153946085.jpg""", src.absolute)
-    assertEquals("""d:\personal\photos2""", from.absolute)
+    assertEquals(base.absolute+"""\photos2\1409153946085.jpg""", src.absolute)
+    assertEquals(base.absolute+"""\photos2""", from.absolute)
     //assertEquals("""\1409153946085.jpg""",src.diff(src.absolute,from.absolute).get)
     //assertEquals("""1409153946085.jpg""",src.extractAncestor(from).get)
     assertEquals("""1409153946085.jpg""", src.extractPrefix(from).relativePath)
     val destFile = dest.child(src.extractPrefix(from)).withName(_ => baseName)
-    assertEquals("""d:\personal\photos2-proposed1-good\2014-08-27--18-39-03--------1409153946085.jpg""", destFile.absolute)
+    assertEquals(base.absolute+"""\photos2-proposed1-good\2014-08-27--18-39-03--------1409153946085.jpg""", destFile.absolute)
   }
   test("copy from classpath") {
     val file = Locations.classpath("a b.jpg")
@@ -70,22 +71,25 @@ ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".rep
     file.copyTo(dest)
     assertTrue(dest.length >= 0)
   }
-  test("unzip the subzip") {
-    assertEquals("""ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/))
-ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/d.txt))
-ZipInputLocation(ClassPathInputLocation(location.zip),Some(a.txt))
+  test("unzip and list location.zip") {
+    assertEquals("""ZipInputLocation(ClassPathInputLocation(location.zip),Some(a.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(b.txt))
+ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/))
+ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/d.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/e/))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/e/f.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".replaceAll("\r", ""),
-      Locations.classpath("location.zip").unzip.list.mkString("\n"))
-    assertEquals("""c/
-c/d.txt
-a.txt
-b.txt
-c/e/
-c/e/f.txt""".replaceAll("\r", ""),
-      Locations.classpath("location.zip").unzip.child("c/subzip.zip").unzip.list.map { _.name }.mkString("\n"))
+      Locations.classpath("location.zip").unzip.list.toSeq.sortBy(_.name).mkString("\n"))
+  }
+  test("unzip and list location.zip/c/subzip.zip") {
+    assertEquals("""inside.txt
+p.txt
+q.txt
+r/
+r/s/
+r/s/v.txt
+r/u.txt""".replaceAll("\r", ""),
+      Locations.classpath("location.zip").unzip.child("c/subzip.zip").unzip.list.toSeq.sortBy(_.name).map { _.name }.mkString("\n"))
   }
   test("parent of relative file") {
     import java.io.File
