@@ -50,23 +50,10 @@ import java.io.Closeable
 //trait NavigableLocation extends NavigableLocationLike[NavigableLocation]
 trait NavigableLocation extends AbsoluteBaseLocation { self =>
   type Repr = self.type
-  type UnzipType = self.type
   protected def repr: Repr = self.asInstanceOf[Repr]
-  protected def reprUnzip: UnzipType = self.asInstanceOf[UnzipType]
-
-  //trait NavigableLocation[Self]{self:Self=>
-  //
-  //  implicit val newNavigableLocation = new LocationFactory[NavigableLocation,NavigableLocation](){
-  //    def apply(child:String):NavigableLocation = ???
-  //  }
-  //  type Self = NavigableLocation
 
   def parent: Repr
-
-  //  def child(child:String):Self //f.apply(child)
-
   def child(child: String): Repr
-
   def child(childText: Option[String]): Repr = childText match {
     case None => repr
     case Some(s) if s.trim.isEmpty => repr
@@ -108,8 +95,6 @@ trait NavigableLocation extends AbsoluteBaseLocation { self =>
     if (ext.length > 0)
       name + "." + ext
     else name
-//}
-//trait NavigableBaseLocation[Self <: NavigableBaseLocation[Self]] extends NavigableLocation[Self] with BaseLocation { self: Self =>
   def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
   }.getOrElse(Iterable()).map(Locations.file(_).asInstanceOf[Repr])
@@ -132,8 +117,6 @@ trait NavigableLocation extends AbsoluteBaseLocation { self =>
   }
 }
 trait BaseLocation {
-  //trait BaseLocation[+Self] extends NavigableLocation[Self]{self:Self=>
-  //  override type Self = BaseLocation
   def raw: String
   def nameAndBefore: String
   def name: String = FilenameUtils.getName(nameAndBefore)
@@ -298,7 +281,6 @@ trait NavigableInputLocation extends InputLocation with NavigableLocation
 //trait NavigableOutputLocationLike[Self <: NavigableOutputLocationLike[Self]] extends OutputLocation with NavigableLocationLike[Self] { self: Self =>
 trait NavigableOutputLocation extends OutputLocation with NavigableLocation { self =>
   override type Repr = self.type
-  override type UnzipType = self.type
 
   def mkdirOnParentIfNecessary: this.type = {
     parent.mkdirIfNecessary
@@ -321,7 +303,6 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
 }
 trait OutputLocation extends AbsoluteBaseLocation{self=>
   type Repr = self.type
-  type UnzipType = self.type
   //trait OutputLocation extends BaseLocation {
   //  override type Self=OutputLocation
   protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
@@ -381,7 +362,6 @@ trait InOutLocation extends NavigableInputLocation with NavigableOutputLocation 
 //trait RelativeLocationLike[Self <: RelativeLocationLike[Self]] extends NavigableLocationLike[Self] { self: Self =>
 trait RelativeLocationLike extends NavigableLocation { self =>
   override type Repr = self.type
-  //override type UnzipType = self.type
   def relativePath: String
   override def nameAndBefore: String = relativePath
   def raw: String = relativePath
@@ -391,7 +371,6 @@ trait RelativeLocationLike extends NavigableLocation { self =>
 case class RelativeLocation(relativePath: String) extends RelativeLocationLike {self=>
   override type Repr = self.type
   //override type Repr = RelativeLocation
-  //override type UnzipType = self.type
   FileSystem.requireRelativePath(relativePath)
   //TODO to remove
   def toFile = ???
@@ -404,7 +383,6 @@ case class RelativeLocation(relativePath: String) extends RelativeLocationLike {
 //trait FileLocationLike[Self <: FileLocationLike[Self]] extends InOutLocationLike[Self] { self: Self =>
 trait FileLocationLike extends InOutLocation { self =>
   override type Repr = self.type
-  override type UnzipType = self.type
   //  override type ChildLocation = FileLocationLike
   def fileFullPath: String
   def append: Boolean
@@ -425,7 +403,6 @@ trait FileLocationLike extends InOutLocation { self =>
 //case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike[FileLocation] with NavigableInputLocation {self=>
 case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike {self=>
   override type Repr = self.type
-  override type UnzipType = self.type
   //  override type ChildLocation=FileLocation
   override def parent: Repr = new FileLocation(parentName).asInstanceOf[Repr]
   override def child(child: String): Repr = new FileLocation(toPath.resolve(checkedChild(child)).toFile.getAbsolutePath).asInstanceOf[Repr]
@@ -433,7 +410,6 @@ case class FileLocation(fileFullPath: String, append: Boolean = false) extends F
 }
 case class MemoryLocation(val memoryName: String) extends RelativeLocationLike with InOutLocation {self=>
   override type Repr = self.type
-  override type UnzipType = self.type
   //  type ChildLocation = MemoryLocation
   override def nameAndBefore: String = absolute
   def relativePath: String = memoryName
@@ -509,7 +485,6 @@ case class ClassPathInputLocation(initialResourcePath: String) extends ClassPath
 }
 case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocationLike {self=>
   override type Repr = self.type
-  override type UnzipType = self.type
   def parent: Repr = ZipInputLocation(zip, Some(rootzip.getEntry(parentName))).asInstanceOf[Repr]
   def child(child: String): Repr = (entry match {
     case None =>
@@ -523,7 +498,6 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
 //trait ZipInputLocationLike[T <: NavigableInputLocation, Self <: ZipInputLocationLike[T, Self]] extends NavigableInputLocation { self: Self =>
 trait ZipInputLocationLike extends NavigableInputLocation { self =>
   override type Repr = self.type
-  override type UnzipType = self.type
   //  type ChildLocation = ZipInputLocation
   def zip: InputLocation
   def entry: Option[java.util.zip.ZipEntry]
