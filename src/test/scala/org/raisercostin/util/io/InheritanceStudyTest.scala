@@ -100,6 +100,7 @@ class InheritanceStudyTest extends FunSuite {
     E().op6.doE
 
     F().op7.doF
+    List(1,2,3).filter(_>1)
 
     /**
      * Output:
