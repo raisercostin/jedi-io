@@ -62,6 +62,13 @@ package test {
     def doE: Unit = println("doE")
     override def op6: self.type = { println("E.op6"); self }
   }
+  /**@see TraversableLike and Traversable*/
+  trait FLike[+Repr]{
+    def op7: Repr = { println("FLike.op7"); this.asInstanceOf[Repr] }
+  }
+  case class F() extends FLike[F]{
+    def doF: Unit = println("F.doF")
+  }
 }
 
 @RunWith(classOf[JUnitRunner])
@@ -91,6 +98,8 @@ class InheritanceStudyTest extends FunSuite {
     C().op6.doC
     DCase2().op6.doD
     E().op6.doE
+
+    F().op7.doF
 
     /**
      * Output:
