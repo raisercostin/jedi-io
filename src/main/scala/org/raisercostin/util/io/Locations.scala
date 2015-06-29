@@ -33,7 +33,6 @@ import Locations._
 import java.io.IOException
 import scala.annotation.tailrec
 import java.io.Closeable
-
 /**
  * Should take into consideration several composable/ortogonal aspects:
  * - end of line: win,linux,osx - internal standard: \n
@@ -43,11 +42,206 @@ import java.io.Closeable
  *
  * In principle should be agnostic to these aspects and only at runtime will depend on the local environment.
  */
-//
-//trait LocationFactory[-From, +To] {
-//  def apply(child:String) : To
-//}
-//trait NavigableLocation extends NavigableLocationLike[NavigableLocation]
+trait BaseLocation {
+  def raw: String
+  def nameAndBefore: String
+  def name: String = FilenameUtils.getName(nameAndBefore)
+  def extension: String = FilenameUtils.getExtension(nameAndBefore)
+  def baseName: String = FilenameUtils.getBaseName(nameAndBefore)
+  def mimeType = mimeTypeFromName
+  def mimeTypeFromName = MimeTypeDetectors.mimeTypeFromName(nameAndBefore)
+
+  def decoder = {
+    import java.nio.charset.Charset
+    import java.nio.charset.CodingErrorAction
+    val decoder = Charset.forName("UTF-8").newDecoder()
+    decoder.onMalformedInput(CodingErrorAction.IGNORE)
+    decoder
+  }
+  def standard(selector: this.type => String): String = FileSystem.standard(selector(this))
+  def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
+  //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
+
+  def inspect(message: (this.type) => Any): this.type = {
+    message(this)
+    this
+  }
+}
+trait AbsoluteBaseLocation extends BaseLocation{
+  def toUrl: java.net.URL = toFile.toURI.toURL
+  def toFile: File
+  def toPath: Path = toFile.toPath
+  def toPath(subFile: String): Path = toPath.resolve(subFile)
+  //import org.apache.commons.io.input.BOMInputStream
+  //import org.apache.commons.io.IOUtils
+  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
+  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
+
+
+  override def mimeType = mimeTypeFromName.orElse(mimeTypeFromContent)
+  /**To read data you should read the inputstream*/
+  def mimeTypeFromContent = MimeTypeDetectors.mimeTypeFromContent(toPath)
+
+  def size = toFile.length()
+  def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
+  def mkdirIfNecessary: this.type = {
+    FileUtils.forceMkdir(toFile)
+    this
+  }
+  def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
+    Locations.file(pathInRaw).parent.traverse
+  else
+    new FileVisitor.TraversePath(toPath)
+  def traverseFiles: Traversable[Path] = if (exists) traverse.map { case (file, attr) => file } else Traversable()
+
+  def traverseWithDir = new FileVisitor.TraversePath(toPath, true)
+  protected def using[A <% AutoCloseable, B](resource: A)(f: A => B): B = {
+    import scala.language.reflectiveCalls
+    try f(resource) finally resource.close()
+  }
+  import scala.language.implicitConversions
+  implicit def toAutoCloseable(source: scala.io.BufferedSource): AutoCloseable = new AutoCloseable {
+    override def close() = source.close()
+  }
+
+  def hasDirs = RichPath.wrapPath(toPath).list.find(_.toFile.isDirectory).nonEmpty
+  def isFile = toFile.isFile
+  def exists = toFile.exists
+  def nonExisting(process: (this.type) => Any): this.type = {
+    if (!exists) process(this)
+    this
+  }
+
+  def existing: this.type =
+    if (toFile.exists)
+      this
+    else
+      throw new RuntimeException("[" + this + "] doesn't exist!")
+  def existingOption: Option[this.type] =
+    if (exists)
+      Some(this)
+    else
+      None
+  def existing(source: BufferedSource) = {
+    //if (source.nonEmpty)
+    val hasNext = Try { source.hasNext }
+    //println(s"$absolute hasNext=$hasNext")
+    val hasNext2 = hasNext.recover {
+      case ex: Throwable =>
+        throw new RuntimeException("[" + this + "] doesn't exist!")
+    }
+    //hasNext might be false if is empty
+    //    if (!hasNext2.get)
+    //      throw new RuntimeException("[" + self + "] doesn't have next!")
+    source
+  }
+  def nameAndBefore: String = absolute
+  def length: Long = toFile.length()
+  def absolute: String = standard(_.absolutePlatformDependent)
+  def isAbsolute = toFile.isAbsolute()
+  /**Gets only the path part (without drive name on windows for example), and without the name of file*/
+  def path: String = FilenameUtils.getPath(absolute)
+}
+
+trait InputLocation extends AbsoluteBaseLocation{
+  protected def unsafeToInputStream: InputStream = new FileInputStream(absolute)
+  protected def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
+  protected def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
+  def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStream)(op)
+  def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
+  def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
+
+  def readLines: Iterable[String] = traverseLines.toIterable
+  def traverseLines: Traversable[String] = new Traversable[String] {
+    def foreach[U](f: String => U): Unit = {
+      usingSource { x => x.getLines().foreach(f) }
+    }
+  }
+
+  //def child(child: String): InputLocation
+  //def parent: InputLocation.Self
+  def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
+  def copyToIfNotExists(dest: OutputLocation): this.type = { dest.existingOption.map(_.copyFrom(this)); this }
+  def copyTo(dest: OutputLocation):this.type = copyToOutputLocation(dest)
+  def copyTo(dest: NavigableOutputLocation):this.type = {
+    dest.mkdirOnParentIfNecessary
+    copyToOutputLocation(dest)
+  }
+  private def copyToOutputLocation(dest: OutputLocation):this.type = {
+    usingInputStream { source =>
+      dest.usingOutputStream { output =>
+        IOUtils.copyLarge(source, output)
+      }
+    }
+    this
+    //overwrite
+    //    FileUtils.copyInputStreamToFile(unsafeToInputStream, dest.toOutputStream)
+    //    IOUtils.copyLarge(unsafeToInputStream, dest.toOutputStream)
+  }
+  def readContent = {
+    // Read a file into a string
+    //    import rapture._
+    //    import core._, io._, net._, uri._, json._, codec._
+    //    import encodings.`UTF-8`
+    //    val src = uri"http://rapture.io/sample.json".slurp[Char]
+    //existing(toSource).getLines mkString ("\n")
+    usingReader { reader =>
+      try { IOUtils.toString(reader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
+    }
+  }
+  def readContentAsText: Try[String] =
+    Try(readContent)
+  //Try(existing(toSource).getLines mkString ("\n"))
+  //def unzip: ZipInputLocation = ???
+  def copyAsHardLink(dest: OutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+    dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
+    this
+  }
+  def unzip: ZipInputLocation = new ZipInputLocation(this, None)
+}
+trait OutputLocation extends AbsoluteBaseLocation{self=>
+  type Repr = self.type
+  //trait OutputLocation extends BaseLocation {
+  //  override type Self=OutputLocation
+  protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
+  protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream, "UTF-8"))
+  protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream, StandardCharsets.UTF_8), true)
+
+  def usingOutputStream[T](op: OutputStream => T): T = using(unsafeToOutputStream)(op)
+  def usingWriter[T](op: Writer => T): T = using(unsafeToWriter)(op)
+  def usingPrintWriter[T](op: PrintWriter => T): T = using(unsafeToPrintWriter)(op)
+
+  def append: Boolean
+  def moveTo(dest: OutputLocation): this.type = {
+    FileUtils.moveFile(toFile, dest.toFile)
+    this
+  }
+  def deleteIfExists: Repr = {
+    if (exists) {
+      logger.info(s"delete existing $absolute")
+      ApacheFileUtils.forceDelete(toPath)
+    }
+    this
+  }
+  def writeContent(content: String): this.type = { usingPrintWriter(_.print(content)); this }
+  def appendContent(content: String) = withAppend.writeContent(content)
+  def withAppend: self.type
+  def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
+  def copyFromAsSymlink(src: InputLocation) = Files.createSymbolicLink(toPath, src.toPath)
+  def copyFromAsHardLink(src: InputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+    if (overwriteIfAlreadyExists) {
+      Files.createLink(toPath, src.toPath)
+    } else {
+      if (exists) {
+        throw new RuntimeException("Destination file " + this + " already exists.")
+      } else {
+        Files.createLink(toPath, src.toPath)
+      }
+    }
+    this
+  }
+}
+
 trait NavigableLocation extends AbsoluteBaseLocation { self =>
   type Repr = self.type
   protected def repr: Repr = self.asInstanceOf[Repr]
@@ -116,162 +310,6 @@ trait NavigableLocation extends AbsoluteBaseLocation { self =>
     findUniqueName(repr, 1)
   }
 }
-trait BaseLocation {
-  def raw: String
-  def nameAndBefore: String
-  def name: String = FilenameUtils.getName(nameAndBefore)
-  def extension: String = FilenameUtils.getExtension(nameAndBefore)
-  def baseName: String = FilenameUtils.getBaseName(nameAndBefore)
-  /**To read data you should read the inputstream*/
-  def mimeType = mimeTypeFromName
-  def mimeTypeFromName = MimeTypeDetectors.mimeTypeFromName(nameAndBefore)
-
-  def decoder = {
-    import java.nio.charset.Charset
-    import java.nio.charset.CodingErrorAction
-    val decoder = Charset.forName("UTF-8").newDecoder()
-    decoder.onMalformedInput(CodingErrorAction.IGNORE)
-    decoder
-  }
-  //import org.apache.commons.io.input.BOMInputStream
-  //import org.apache.commons.io.IOUtils
-  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
-  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
-
-  def standard(selector: this.type => String): String = FileSystem.standard(selector(this))
-  def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
-  //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
-
-  def inspect(message: (this.type) => Any): this.type = {
-    message(this)
-    this
-  }
-}
-trait AbsoluteBaseLocation extends BaseLocation{
-  def toUrl: java.net.URL = toFile.toURI.toURL
-  def toFile: File
-  def toPath: Path = toFile.toPath
-  def toPath(subFile: String): Path = toPath.resolve(subFile)
-
-  override def mimeType = mimeTypeFromName.orElse(mimeTypeFromContent)
-  def mimeTypeFromContent = MimeTypeDetectors.mimeTypeFromContent(toPath)
-
-  def size = toFile.length()
-  def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
-  def mkdirIfNecessary: this.type = {
-    FileUtils.forceMkdir(toFile)
-    this
-  }
-  def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
-    Locations.file(pathInRaw).parent.traverse
-  else
-    new FileVisitor.TraversePath(toPath)
-  def traverseFiles: Traversable[Path] = if (exists) traverse.map { case (file, attr) => file } else Traversable()
-
-  def traverseWithDir = new FileVisitor.TraversePath(toPath, true)
-  protected def using[A <% AutoCloseable, B](resource: A)(f: A => B): B = {
-    import scala.language.reflectiveCalls
-    try f(resource) finally resource.close()
-  }
-  import scala.language.implicitConversions
-  implicit def toAutoCloseable(source: scala.io.BufferedSource): AutoCloseable = new AutoCloseable {
-    override def close() = source.close()
-  }
-
-  def hasDirs = RichPath.wrapPath(toPath).list.find(_.toFile.isDirectory).nonEmpty
-  def isFile = toFile.isFile
-  def exists = toFile.exists
-  def nonExisting(process: (this.type) => Any): this.type = {
-    if (!exists) process(this)
-    this
-  }
-
-  def existing: this.type =
-    if (toFile.exists)
-      this
-    else
-      throw new RuntimeException("[" + this + "] doesn't exist!")
-  def existingOption: Option[this.type] =
-    if (exists)
-      Some(this)
-    else
-      None
-  def existing(source: BufferedSource) = {
-    //if (source.nonEmpty)
-    val hasNext = Try { source.hasNext }
-    //println(s"$absolute hasNext=$hasNext")
-    val hasNext2 = hasNext.recover {
-      case ex: Throwable =>
-        throw new RuntimeException("[" + this + "] doesn't exist!")
-    }
-    //hasNext might be false if is empty
-    //    if (!hasNext2.get)
-    //      throw new RuntimeException("[" + self + "] doesn't have next!")
-    source
-  }
-  def nameAndBefore: String = absolute
-  def length: Long = toFile.length()
-  def absolute: String = standard(_.absolutePlatformDependent)
-  def isAbsolute = toFile.isAbsolute()
-  /**Gets only the path part (without drive name on windows for example), and without the name of file*/
-  def path: String = FilenameUtils.getPath(absolute)
-}
-trait InputLocation extends AbsoluteBaseLocation{
-  protected def unsafeToInputStream: InputStream = new FileInputStream(absolute)
-  protected def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
-  protected def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
-  def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStream)(op)
-  def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
-  def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
-
-  def readLines: Iterable[String] = traverseLines.toIterable
-  def traverseLines: Traversable[String] = new Traversable[String] {
-    def foreach[U](f: String => U): Unit = {
-      usingSource { x => x.getLines().foreach(f) }
-    }
-  }
-
-  //def child(child: String): InputLocation
-  //def parent: InputLocation.Self
-  def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
-  def copyToIfNotExists(dest: OutputLocation): this.type = { dest.existingOption.map(_.copyFrom(this)); this }
-  def copyTo(dest: OutputLocation):this.type = copyToOutputLocation(dest)
-  def copyTo(dest: NavigableOutputLocation):this.type = {
-    dest.mkdirOnParentIfNecessary
-    copyToOutputLocation(dest)
-  }
-  private def copyToOutputLocation(dest: OutputLocation):this.type = {
-    usingInputStream { source =>
-      dest.usingOutputStream { output =>
-        IOUtils.copyLarge(source, output)
-      }
-    }
-    this
-    //overwrite
-    //    FileUtils.copyInputStreamToFile(unsafeToInputStream, dest.toOutputStream)
-    //    IOUtils.copyLarge(unsafeToInputStream, dest.toOutputStream)
-  }
-  def readContent = {
-    // Read a file into a string
-    //    import rapture._
-    //    import core._, io._, net._, uri._, json._, codec._
-    //    import encodings.`UTF-8`
-    //    val src = uri"http://rapture.io/sample.json".slurp[Char]
-    //existing(toSource).getLines mkString ("\n")
-    usingReader { reader =>
-      try { IOUtils.toString(reader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
-    }
-  }
-  def readContentAsText: Try[String] =
-    Try(readContent)
-  //Try(existing(toSource).getLines mkString ("\n"))
-  //def unzip: ZipInputLocation = ???
-  def copyAsHardLink(dest: OutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
-    dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
-    this
-  }
-  def unzip: ZipInputLocation = new ZipInputLocation(this, None)
-}
 //trait NavigableInputLocationLike[Self <: NavigableInputLocationLike[Self]] extends InputLocation with NavigableLocationLike[Self] { self: Self =>
 //}
 //trait NavigableInputLocation extends NavigableInputLocationLike[NavigableInputLocation]
@@ -301,48 +339,6 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
   }
   def asInput: NavigableInputLocation
 }
-trait OutputLocation extends AbsoluteBaseLocation{self=>
-  type Repr = self.type
-  //trait OutputLocation extends BaseLocation {
-  //  override type Self=OutputLocation
-  protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
-  protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream, "UTF-8"))
-  protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream, StandardCharsets.UTF_8), true)
-
-  def usingOutputStream[T](op: OutputStream => T): T = using(unsafeToOutputStream)(op)
-  def usingWriter[T](op: Writer => T): T = using(unsafeToWriter)(op)
-  def usingPrintWriter[T](op: PrintWriter => T): T = using(unsafeToPrintWriter)(op)
-
-  def append: Boolean
-  def moveTo(dest: OutputLocation): this.type = {
-    FileUtils.moveFile(toFile, dest.toFile)
-    this
-  }
-  def deleteIfExists: Repr = {
-    if (exists) {
-      logger.info(s"delete existing $absolute")
-      ApacheFileUtils.forceDelete(toPath)
-    }
-    this
-  }
-  def writeContent(content: String): this.type = { usingPrintWriter(_.print(content)); this }
-  def appendContent(content: String) = withAppend.writeContent(content)
-  def withAppend: self.type
-  def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
-  def copyFromAsSymlink(src: InputLocation) = Files.createSymbolicLink(toPath, src.toPath)
-  def copyFromAsHardLink(src: InputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
-    if (overwriteIfAlreadyExists) {
-      Files.createLink(toPath, src.toPath)
-    } else {
-      if (exists) {
-        throw new RuntimeException("Destination file " + this + " already exists.")
-      } else {
-        Files.createLink(toPath, src.toPath)
-      }
-    }
-    this
-  }
-}
 
 object ApacheFileUtils {
   def forceDelete(path: Path) = try {
@@ -356,10 +352,8 @@ object ApacheFileUtils {
         throw e
   }
 }
-//trait InOutLocationLike[Self <: InOutLocationLike[Self]] extends NavigableInputLocationLike[Self] with NavigableOutputLocationLike[Self] { self: Self =>
-trait InOutLocation extends NavigableInputLocation with NavigableOutputLocation { self =>
-}
-//trait RelativeLocationLike[Self <: RelativeLocationLike[Self]] extends NavigableLocationLike[Self] { self: Self =>
+trait NavigableInOutLocation extends NavigableInputLocation with NavigableOutputLocation
+
 trait RelativeLocationLike extends NavigableLocation { self =>
   override type Repr = self.type
   def relativePath: String
@@ -370,7 +364,6 @@ trait RelativeLocationLike extends NavigableLocation { self =>
 }
 case class RelativeLocation(relativePath: String) extends RelativeLocationLike {self=>
   override type Repr = self.type
-  //override type Repr = RelativeLocation
   FileSystem.requireRelativePath(relativePath)
   //TODO to remove
   def toFile = ???
@@ -380,15 +373,10 @@ case class RelativeLocation(relativePath: String) extends RelativeLocationLike {
     new RelativeLocation(if (relativePath.isEmpty) child else FileSystem.addChild(relativePath, child)).asInstanceOf[Repr]
   }
 }
-//trait FileLocationLike[Self <: FileLocationLike[Self]] extends InOutLocationLike[Self] { self: Self =>
-trait FileLocationLike extends InOutLocation { self =>
+trait FileLocationLike extends NavigableInOutLocation { self =>
   override type Repr = self.type
-  //  override type ChildLocation = FileLocationLike
   def fileFullPath: String
   def append: Boolean
-
-  //  val a=Map(1 -> "a", 2 -> "b").values
-
   override def parentName: String = toFile.getParentFile.getAbsolutePath
   def raw = fileFullPath
   def asInput: NavigableInputLocation = self
@@ -400,17 +388,14 @@ trait FileLocationLike extends InOutLocation { self =>
   //import org.raisercostin.util.MimeTypesUtils2
   def asFile: Repr = self
 }
-//case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike[FileLocation] with NavigableInputLocation {self=>
 case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike {self=>
   override type Repr = self.type
-  //  override type ChildLocation=FileLocation
   override def parent: Repr = new FileLocation(parentName).asInstanceOf[Repr]
   override def child(child: String): Repr = new FileLocation(toPath.resolve(checkedChild(child)).toFile.getAbsolutePath).asInstanceOf[Repr]
   override def withAppend: self.type = self.copy(append = true).asInstanceOf[self.type]
 }
-case class MemoryLocation(val memoryName: String) extends RelativeLocationLike with InOutLocation {self=>
+case class MemoryLocation(val memoryName: String) extends RelativeLocationLike with NavigableInOutLocation {self=>
   override type Repr = self.type
-  //  type ChildLocation = MemoryLocation
   override def nameAndBefore: String = absolute
   def relativePath: String = memoryName
   override def raw = memoryName
@@ -451,7 +436,7 @@ object ClassPathInputLocationLike {
 /**
  * @see http://www.thinkplexx.com/learn/howto/java/system/java-resource-loading-explained-absolute-and-relative-names-difference-between-classloader-and-class-resource-loading
  */
-trait ClassPathInputLocationLike[Self <: ClassPathInputLocationLike[Self]] extends NavigableInputLocation { self: Self =>
+trait ClassPathInputLocationLike extends NavigableInputLocation { self =>
   def initialResourcePath: String
   def raw = initialResourcePath
   import ClassPathInputLocationLike._
@@ -477,7 +462,7 @@ trait ClassPathInputLocationLike[Self <: ClassPathInputLocationLike[Self]] exten
   }
   def asFile: FileLocation = Locations.file(toFile)
 }
-case class ClassPathInputLocation(initialResourcePath: String) extends ClassPathInputLocationLike[ClassPathInputLocation] {self=>
+case class ClassPathInputLocation(initialResourcePath: String) extends ClassPathInputLocationLike {self=>
   override type Repr = self.type
   require(initialResourcePath != null)
   def child(child: String): Repr = new ClassPathInputLocation(FileSystem.addChild(resourcePath, child)).asInstanceOf[Repr]
@@ -495,10 +480,8 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
   override def list: Iterable[Repr] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => ZipInputLocation(zip, Some(entry)).asInstanceOf[Repr])
 }
 //TODO fix name&path&unique identifier stuff
-//trait ZipInputLocationLike[T <: NavigableInputLocation, Self <: ZipInputLocationLike[T, Self]] extends NavigableInputLocation { self: Self =>
 trait ZipInputLocationLike extends NavigableInputLocation { self =>
   override type Repr = self.type
-  //  type ChildLocation = ZipInputLocation
   def zip: InputLocation
   def entry: Option[java.util.zip.ZipEntry]
   def raw = "ZipInputLocation[" + zip + "," + entry + "]"
@@ -531,11 +514,8 @@ case class StreamLocation(val inputStream: InputStream) extends NavigableInputLo
   def toFile: File = ???
   protected override def unsafeToInputStream: InputStream = inputStream
 }
-case class UrlLocation(url: java.net.URL) extends NavigableInputLocation {self=>
-  override type Repr = self.type
+case class UrlLocation(url: java.net.URL) extends InputLocation {self=>
   def raw = url.toExternalForm()
-  def child(child: String): Repr = ???
-  def parent: Repr = ???
   def toFile: File = ???
   import java.net._
   override def length: Long = {
