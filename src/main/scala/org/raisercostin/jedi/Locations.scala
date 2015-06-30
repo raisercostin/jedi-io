@@ -1,12 +1,10 @@
-package org.raisercostin.util.io
+package org.raisercostin.jedi
 
 import java.nio.file.Paths
 import java.io.File
 import java.nio.file.Path
-import org.apache.commons.io.FileUtils
 import java.io.FileOutputStream
 import java.io.OutputStream
-import org.apache.commons.io.FilenameUtils
 import java.io.InputStream
 import scala.collection.generic.CanBuildFrom
 import scala.io.BufferedSource
@@ -25,7 +23,6 @@ import scala.util.Success
 import scala.util.Failure
 import java.util.regex.Pattern
 import scala.util.Failure
-import org.apache.commons.io.IOUtils
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.Files
 import java.security.AccessController
@@ -33,6 +30,8 @@ import Locations._
 import java.io.IOException
 import scala.annotation.tailrec
 import java.io.Closeable
+import org.apache.commons.io._
+
 /**
  * Should take into consideration several composable/ortogonal aspects:
  * - end of line: win,linux,osx - internal standard: \n

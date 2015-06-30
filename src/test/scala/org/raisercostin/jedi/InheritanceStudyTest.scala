@@ -1,4 +1,5 @@
-package org.raisercostin.util.io
+package org.raisercostin.jedi
+
 import org.scalatest._
 import org.junit.runner.RunWith
 import org.junit.Assert._
@@ -74,7 +75,7 @@ package test {
 @RunWith(classOf[JUnitRunner])
 class InheritanceStudyTest extends FunSuite {
   import org.scalatest.Matchers._
-  import org.raisercostin.util.io.test._
+  import org.raisercostin.jedi.test._
 
   test("inheritance") {
     println("---op")

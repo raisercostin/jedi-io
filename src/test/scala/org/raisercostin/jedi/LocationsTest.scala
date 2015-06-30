@@ -1,14 +1,19 @@
-package org.raisercostin.util.io
+package org.raisercostin.jedi
+import org.raisercostin.jedi.Locations._
 import org.scalatest._
 import org.junit.runner.RunWith
 import org.junit.Assert._
 import org.scalatest.junit.JUnitRunner
+
 import scala.util.Try
+
 import java.util.regex.Pattern.Loop
+
 import Locations._
 
 @RunWith(classOf[JUnitRunner])
 class LocationsTest extends FunSuite {
+
   import org.scalatest.Matchers._
   test("bug - test spaces in classpath filename") {
     val file = Locations.classpath("a b.jpg")
@@ -93,6 +98,7 @@ r/u.txt""".replaceAll("\r", ""),
       Locations.classpath("location.zip").unzip.child("c/subzip.zip").unzip.list.toSeq.sortBy(_.name).map { _.name }.mkString("\n"))
   }
   test("parent of relative file") {
+
     import java.io.File
     assertTrue(new java.io.File(".").getCanonicalPath.length > "src".length)
     assertTrue(new File("src").getAbsolutePath().length > "src".length)
@@ -132,10 +138,12 @@ r/u.txt""".replaceAll("\r", ""),
     assertEquals("img.jpg", Locations.relative("a/b/img.jpg").extractPrefix(Locations.relative("a/b")).get.relativePath)
     assertEquals("b/img.jpg", Locations.relative("a\\b\\img.jpg").extractPrefix(Locations.relative("a")).get.relativePath)
   }
+
   import scala.io.Codec
-  import java.nio.charset.Charset
-  import java.nio.charset.CodingErrorAction
-  import java.nio.charset.MalformedInputException
+
+import java.nio.charset.Charset
+import java.nio.charset.CodingErrorAction
+import java.nio.charset.MalformedInputException
 
   //bug
   ignore("get lines from utf-8 file with BOM") {
@@ -163,7 +171,8 @@ r/u.txt""".replaceAll("\r", ""),
     assertEquals(s2, text2)
   }
   test("get lines from utf-8 file with BOM - low level implementation") {
-    import org.apache.commons.io.input.BOMInputStream
+
+import org.apache.commons.io.input.BOMInputStream
     val is = getClass.getResourceAsStream("/fileWithBom.txt")
     val bis = new BOMInputStream(is, false)
     println(bis.getBOM())

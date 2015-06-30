@@ -1,12 +1,11 @@
-package org.raisercostin.util.io
+package org.raisercostin.jedi
 
 import java.io.{ IOException, File, FilenameFilter, InputStream, FileInputStream, OutputStream, FileOutputStream }
 import java.util.regex.Pattern
+
 import RichFile._
 
 object RichFile {
-
-  import org.raisercostin.util.io.FileLike
   implicit def wrapFile(file: File) = new RichFile(file)
   implicit def toFile(file: String) = new File(file)
 
