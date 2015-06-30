@@ -37,7 +37,7 @@ trait FileVisitor {
   /*
 ProjectHome foreach {
   // use case to seamlessly deconstruct the tuple
-  case (file, _) => if (!file.toString.contains(".svn")) println(File)
+  case (file, _) => if (!file.toString.contains(".svn")) p rintln(File)
 }
 */
 }

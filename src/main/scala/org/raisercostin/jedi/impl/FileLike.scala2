@@ -1,4 +1,4 @@
-package org.raisercostin.jedi
+package org.raisercostin.jedi2
 
 import java.io.{ InputStream, OutputStream }
 

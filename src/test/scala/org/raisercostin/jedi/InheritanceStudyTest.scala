@@ -8,6 +8,9 @@ import scala.util.Try
 import java.util.regex.Pattern.Loop
 
 package test {
+  object Logger{
+    val LOG = org.slf4j.LoggerFactory.getLogger(MimeTypeDetectors.getClass)
+  }
   //How can I define an inherited operation that returns the current type (and not current type instance) in scala?
   //I already tried to return this.type but in case I need to create a new instance will not work.
   //object Test {
@@ -15,60 +18,62 @@ package test {
   trait A { self =>
     type Return //= A
     //return current instance type
-    def op: this.type = { println("opA"); this }
+    def op: this.type = { log("opA"); this }
     //return current type (but must be overriden)
-    def op2: A = { println("op2A"); this }
+    def op2: A = { log("op2A"); this }
     //return current type (without the need to override)
-    def op3[T >: A]: T = { println("opA"); this }
-    //def op4[T <: A]: T = { println("opA"); this }
-    //def op5: Return = { println("opA"); this }
-    def op6: self.type = { println("opA"); self }
+    def op3[T >: A]: T = { log("opA"); this }
+    //def op4[T <: A]: T = { log("opA"); this }
+    //def op5: Return = { log("opA"); this }
+    def op6: self.type = { log("opA"); self }
+
+    def log(msg: String) = Logger.LOG.debug(msg)
   }
   case class B() extends A { self =>
-    def doB: Unit = println("doB")
+    def doB: Unit = log("doB")
 
     override def op: this.type = {
-      println("opB");
+      log("opB");
       this
       //new B() - compilation error: type mismatch;  found: B  required: B.this.type
     }
     override def op2: B = {
-      println("op2B");
+      log("op2B");
       new B()
       //here it works
     }
     override def op3[T >: B]: B = {
-      println("op3B");
+      log("op3B");
       //here it works
       new B()
     }
     type Return = B
-    def op5: Return = { println("opA"); this }
-    override def op6: self.type = { println("op6B"); self }
+    def op5: Return = { log("opA"); this }
+    override def op6: self.type = { log("op6B"); self }
   }
   //Inherits both op2 and op3 from A but op2 and op3 need to return a C type
   case class C() extends A {
     type Return = C
-    def doC: Unit = println("doC")
-    def op5: Return = { println("opA"); this }
+    def doC: Unit = log("doC")
+    def op5: Return = { log("opA"); this }
   }
   //  case class DCase[Self <: D[Self]]() extends A { self: Self =>
   //  }
   trait D[Self <: D[Self]] extends A { self: Self =>
-    def doD: Unit = println("doD")
-    override def op6: self.type = { println("D.op6"); self }
+    def doD: Unit = log("doD")
+    override def op6: self.type = { log("D.op6"); self }
   }
   case class DCase2() extends D[DCase2]
   case class E() extends A { self =>
-    def doE: Unit = println("doE")
-    override def op6: self.type = { println("E.op6"); self }
+    def doE: Unit = log("doE")
+    override def op6: self.type = { log("E.op6"); self }
   }
   /**@see TraversableLike and Traversable*/
-  trait FLike[+Repr]{
-    def op7: Repr = { println("FLike.op7"); this.asInstanceOf[Repr] }
+  trait FLike[+Repr] extends A {
+    def op7: Repr = { log("FLike.op7"); this.asInstanceOf[Repr] }
   }
-  case class F() extends FLike[F]{
-    def doF: Unit = println("F.doF")
+  case class F() extends FLike[F] {
+    def doF: Unit = log("F.doF")
   }
 }
 
@@ -76,32 +81,32 @@ package test {
 class InheritanceStudyTest extends FunSuite {
   import org.scalatest.Matchers._
   import org.raisercostin.jedi.test._
-
+  def log(msg: String) = Logger.LOG.debug(msg)
   test("inheritance") {
-    println("---op")
+    log("---op")
     B().op.doB
     C().op.doC
 
-    println("---op2")
+    log("---op2")
     B().op2.doB
     //C().op2.doC //compilation error => value doC is not a member of A
 
-    println("---op3")
+    log("---op3")
     B().op3.doB
     //C().op3.doC //compilation error => value doC is not a member of type parameter T
 
-    println("---op5")
+    log("---op5")
     B().op5.doB
     C().op5.doC
 
-    println("---op6")
+    log("---op6")
     B().op6.doB
     C().op6.doC
     DCase2().op6.doD
     E().op6.doE
 
     F().op7.doF
-    List(1,2,3).filter(_>1)
+    List(1, 2, 3).filter(_ > 1)
 
     /**
      * Output:

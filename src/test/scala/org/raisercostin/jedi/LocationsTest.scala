@@ -18,27 +18,29 @@ class LocationsTest extends FunSuite {
   test("bug - test spaces in classpath filename") {
     val file = Locations.classpath("a b.jpg")
     assertEquals("a b.jpg", file.resourcePath)
-    assertEquals("/a%20b.jpg", file.toUrl.toString().takeRight(10))
-    assertEquals("/a%20b.jpg", file.toUrl.toExternalForm().takeRight(10))
-    assertEquals("/a%20b.jpg", file.toUrl.toURI().toString().takeRight(10))
-    assertEquals("/a%20b.jpg", file.toUrl.toURI().toURL().toString().takeRight(10))
-    assertEquals("/a%20b.jpg", file.toUrl.toURI().toASCIIString().takeRight(10))
+    val last = "/a%20b.jpg".length
+    assertEquals("/a%20b.jpg", file.toUrl.toString().takeRight(last))
+    assertEquals("/a%20b.jpg", file.toUrl.toExternalForm().takeRight(last))
+    assertEquals("/a%20b.jpg", file.toUrl.toURI().toString().takeRight(last))
+    assertEquals("/a%20b.jpg", file.toUrl.toURI().toURL().toString().takeRight(last))
+    assertEquals("/a%20b.jpg", file.toUrl.toURI().toASCIIString().takeRight(last))
     assertEquals("a%20b.jpg", new java.io.File(file.toUrl.getFile()).getName())
     assertEquals("a b.jpg", new java.io.File(file.toUrl.toURI()).getName())
     assertEquals("a b.jpg", file.toFile.getName())
-    assertEquals("a b.jpg", file.absolute.takeRight(7))
+    assertEquals("a b.jpg", file.absolute.takeRight("a b.jpg".length))
     assertEquals("a b.jpg", file.name)
   }
 
   test("unzip") {
-    Locations.classpath("location.zip").unzip.list.toSeq.foreach(x => println(x.name))
+    //Locations.classpath("location.zip").unzip.list.toSeq.foreach(x => pri ntln(x.name))
     assertEquals("""ZipInputLocation(ClassPathInputLocation(location.zip),Some(a.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(b.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/d.txt))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/e/))
 ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/e/f.txt))
-ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".replaceAll("\r", ""), Locations.classpath("location.zip").unzip.list.toSeq.sortBy(_.name).mkString("\n"))
+ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".replaceAll("\r", ""),
+      Locations.classpath("location.zip").unzip.list.toSeq.sortBy(_.name).mkString("\n"))
     assertEquals("""a - file content""", Locations.classpath("location.zip").unzip.child("a.txt").readContent)
     assertEquals("""f content""", Locations.classpath("location.zip").unzip.child("c/e/f.txt").readContent)
     assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c)]""", Locations.classpath("location.zip").unzip.child("c").raw)
@@ -112,11 +114,13 @@ r/u.txt""".replaceAll("\r", ""),
   }
   test("parent of relative location") {
     assertEquals("2013", Locations.relative("""2013/2013-05-01 - trip to Monschau""").parentName)
-    assertEquals("""2013/some space/second space""", Locations.relative("""2013/2013-05-01 - trip to Monschau""").parent.child("some space").child("second space").relativePath)
+    assertEquals("""2013/some space/second space""", Locations.relative("""2013/2013-05-01 - trip to Monschau""").
+        parent.child("some space").child("second space").relativePath)
     assertEquals("""2013""", Locations.file(".").child(Locations.relative("""2013/2013-05-01 - trip to Monschau""")).parent.name)
   }
   test("bug with trailing child fiels") {
-    Try { Locations.file(""".""").child("2013-05-01 - trip to ") }.toString should startWith("Failure(java.lang.IllegalArgumentException: requirement failed: Child [2013-05-01 - trip to ] has trailing spaces)")
+    Try { Locations.file(""".""").child("2013-05-01 - trip to ") }.toString should
+      startWith("Failure(java.lang.IllegalArgumentException: requirement failed: Child [2013-05-01 - trip to ] has trailing spaces)")
   }
   test("current folder") {
     Locations.current("target").toString should not include ("./target")
@@ -141,9 +145,9 @@ r/u.txt""".replaceAll("\r", ""),
 
   import scala.io.Codec
 
-import java.nio.charset.Charset
-import java.nio.charset.CodingErrorAction
-import java.nio.charset.MalformedInputException
+  import java.nio.charset.Charset
+  import java.nio.charset.CodingErrorAction
+  import java.nio.charset.MalformedInputException
 
   //bug
   ignore("get lines from utf-8 file with BOM") {
@@ -159,8 +163,8 @@ import java.nio.charset.MalformedInputException
     assertEquals(17, result.size)
   }
   test("read from resources in other jars") {
-    //println(com.gravity.goose.text.HashUtils.getClass().getClassLoader())
-    //println(Locations.getClass.getClassLoader)
+    //p rintln(com.gravity.goose.text.HashUtils.getClass().getClassLoader())
+    //p rintln(Locations.getClass.getClassLoader)
     val s1 = Locations.stream(Locations.getClass.getClassLoader.getResourceAsStream("META-INF/maven/org.slf4j/slf4j-api/pom.properties")).readContentAsText.get
     val text = Locations.classpath("META-INF/maven/org.slf4j/slf4j-api/pom.properties").readContentAsText.get
     assertEquals(s1, text)
@@ -171,12 +175,11 @@ import java.nio.charset.MalformedInputException
     assertEquals(s2, text2)
   }
   test("get lines from utf-8 file with BOM - low level implementation") {
-
-import org.apache.commons.io.input.BOMInputStream
+    import org.apache.commons.io.input.BOMInputStream
     val is = getClass.getResourceAsStream("/fileWithBom.txt")
     val bis = new BOMInputStream(is, false)
-    println(bis.getBOM())
-    println(bis.getBOMCharsetName())
+    //p rintln(bis.getBOM())
+    //p rintln(bis.getBOMCharsetName())
     val decoder = Charset.forName("UTF-8").newDecoder()
     decoder.onMalformedInput(CodingErrorAction.IGNORE)
     val result = scala.io.Source.fromInputStream(bis)(Codec(decoder)).getLines

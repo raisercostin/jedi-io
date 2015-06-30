@@ -70,6 +70,7 @@ case object MimeType6 extends MimeTypeNameDetector {
 }
 
 object MimeTypeDetectors {
+  private final val LOG = org.slf4j.LoggerFactory.getLogger(MimeTypeDetectors.getClass)
   type Detector = String
   private object MimeTypeDetectorRegistry {
     var detectorsSeq: Seq[MimeTypeDetector] = Seq()
@@ -79,7 +80,7 @@ object MimeTypeDetectors {
   }
   import MimeTypeDetectorRegistry._
   def register(mimeTypeDetector: MimeTypeDetector) = {
-    println("register " + mimeTypeDetector)
+    LOG.debug("register " + mimeTypeDetector)
     detectorsSeq = mimeTypeDetector +: detectors
     this
   }
@@ -89,5 +90,6 @@ object MimeTypeDetectors {
 
   //def getMimeTypeWithDefault(path: Path): MimeType = mimeTypeFromContent(path).getOrElse(MimeType("application/octet-stream"))
   def getMimeType(path: Path): Option[MimeType] = detectors.view.flatMap { _.mimeType(path) }.headOption
-  def getMimeTypeWithDetector(path: Path): Option[Tuple2[MimeType, MimeTypeDetector]] = detectors.view.map { x => (x.mimeType(path), x) }.filter(_._1.isDefined).headOption.map(x => x._1.get -> x._2)
+  def getMimeTypeWithDetector(path: Path): Option[Tuple2[MimeType, MimeTypeDetector]] =
+    detectors.view.map { x => (x.mimeType(path), x) }.filter(_._1.isDefined).headOption.map(x => x._1.get -> x._2)
 }

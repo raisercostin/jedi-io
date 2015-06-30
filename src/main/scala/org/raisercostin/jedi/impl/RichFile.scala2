@@ -1,4 +1,4 @@
-package org.raisercostin.jedi
+package org.raisercostin.jedi2
 
 import java.io.{ IOException, File, FilenameFilter, InputStream, FileInputStream, OutputStream, FileOutputStream }
 import java.util.regex.Pattern
@@ -66,9 +66,11 @@ class RichFile(file: File) extends FileLike[File] {
    */
   def relativize(child: File): String = {
     // Note: toURI encodes file paths, getPath decodes them
-    var path = UriUtils.relativize(file.toURI, child.toURI).getPath
-    if (path endsWith "/") path = path.substring(0, path.length() - 1)
-    return path
+    val path = UriUtils.relativize(file.toURI, child.toURI).getPath
+    if (path endsWith "/")
+      path.substring(0, path.length() - 1)
+    else
+      path
   }
 
   /**
