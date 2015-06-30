@@ -507,10 +507,8 @@ trait ZipInputLocationLike extends NavigableInputLocation { self =>
   }
 }
 
-case class StreamLocation(val inputStream: InputStream) extends NavigableInputLocation {
+case class StreamLocation(val inputStream: InputStream) extends InputLocation {
   def raw = "inputStream[" + inputStream + "]"
-  def child(child: String): Repr = ???
-  def parent: Repr = ???
   def toFile: File = ???
   protected override def unsafeToInputStream: InputStream = inputStream
 }
