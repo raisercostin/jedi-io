@@ -317,16 +317,6 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
     parent.mkdirIfNecessary
     this
   }
-  private def rename(renamer: String => String) = {
-    val newName = renamer(baseName)
-    if (newName == baseName) {
-      //p rintln(s"ignore [${absolute}] to [${absolute}]")
-    } else {
-      val dest = parent.child(withExtension2(newName, extension))
-      //p rintln(s"move [${absolute}] to [${dest.absolute}]")
-      FileUtils.moveFile(toFile, dest.toFile)
-    }
-  }
   def deleteOrRenameIfExists: Repr = {
     Try { deleteIfExists }.recover { case _ => renamedIfExists }.get
   }
@@ -367,6 +357,18 @@ trait FileLocationLike extends NavigableInOutLocation { self =>
   def checkedChild(child: String): String = { require(!child.endsWith(" "), "Child [" + child + "] has trailing spaces"); child }
   //import org.raisercostin.util.MimeTypesUtils2
   def asFile: Repr = self
+  def renamed(renamer: String => String):Try[Repr] = Try{
+    val newName = renamer(baseName)
+    if (newName == baseName) {
+      //p rintln(s"ignore [${absolute}] to [${absolute}]")
+      this
+    } else {
+      val dest = parent.child(withExtension2(newName, extension))
+      //p rintln(s"move [${absolute}] to [${dest.absolute}]")
+      FileUtils.moveFile(toFile, dest.toFile)
+      dest
+    }
+  }
 }
 case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike {self=>
   override type Repr = self.type
