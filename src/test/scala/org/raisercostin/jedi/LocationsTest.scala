@@ -185,4 +185,7 @@ r/u.txt""".replaceAll("\r", ""),
     val result = scala.io.Source.fromInputStream(bis)(Codec(decoder)).getLines
     assertEquals(2, result.size)
   }
+  test("mimeTypeFromName for MemoryLocation") {
+    Locations.memory("file.jpg").mimeType.get.mimeType shouldBe "image/jpeg"
+  }
 }

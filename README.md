@@ -43,10 +43,22 @@ For more samples see [LocationsTest.scala](src/test/scala/org/raisercostin/util/
  ```
  resolvers += "raisercostin repository" at "http://dl.bintray.com/raisercostin/maven"
  ```
- 
+
 ## Development ##
+Projects that are using jedi-io:
+ - https://github.com/raisercostin/ownit
+ - https://github.com/raisercostin/my-scala-scripts (see here a script for bulk uploading/importing maven artefacts from a repository/svn/folder to bintray)
+
  - to release
 
  ```
  sbt> release skip-tests
  ```
+
+### Roadmap
+ - investigate
+   - scala arm - http://jsuereth.com/scala-arm/continuations.html
+   - scala io - https://github.com/scala-incubator/scala-io
+   - spray - 
+   - akka streams -
+ - make it async
