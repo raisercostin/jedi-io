@@ -55,3 +55,12 @@ releaseCrossBuild := false
 //bintray&release
 //bintray doesn't like snapshot versions - https://github.com/softprops/bintray-sbt/issues/12
 releaseNextVersion := { ver => sbtrelease.Version(ver).map(_.bumpMinor.string).getOrElse(sbtrelease.versionFormatError) }
+
+//coverage: https://github.com/scoverage/sbt-scoverage and https://github.com/non/spire/blob/master/.travis.yml
+//instrumentSettings
+//ScoverageKeys.minimumCoverage := 60
+//ScoverageKeys.failOnMinimumCoverage := false
+//ScoverageKeys.highlighting := {
+//  if (scalaBinaryVersion.value == "2.10") false
+//  else false
+//}
