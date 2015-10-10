@@ -561,4 +561,5 @@ object Locations {
   def current(relative: String): FileLocation = file(new File(new File("."), relative).getCanonicalPath())
 
   implicit val unixAndWindowsToStandard = FileSystem.unixAndWindowsToStandard
+  def userHome:FileLocation = file(System.getProperty("user.home"))
 }
