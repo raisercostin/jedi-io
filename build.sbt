@@ -3,7 +3,8 @@ name := "jedi-io"
 description := "Scala fluent file utility library"
 homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
-scalaVersion := "2.10.5"
+//scalaVersion := "2.10.5"
+scalaVersion := "2.11.2"
 //crossScalaVersions := Seq(scalaVersion.value, "2.11.4")
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
