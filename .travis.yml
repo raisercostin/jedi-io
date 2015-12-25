@@ -15,8 +15,8 @@ script:
   - find $HOME/.sbt -name "*.lock" | xargs rm
 
 scala:
-#  - 2.11.1
-  - 2.10.4
+  - 2.11.2
+#  - 2.10.4
 #  - 2.9.3
 jdk:
   - oraclejdk8
