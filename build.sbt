@@ -3,7 +3,8 @@ name := "jedi-io"
 description := "Scala fluent file utility library"
 homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
-scalaVersion := "2.10.5"
+//scalaVersion := "2.10.5"
+scalaVersion := "2.11.2"
 //crossScalaVersions := Seq(scalaVersion.value, "2.11.4")
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
@@ -45,7 +46,7 @@ unmanagedSourceDirectories in Test := (scalaSource in Test).value :: Nil
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
 //bintray
-publishMavenStyle := true
+publishMavenStyle := false
 bintrayPackageLabels := Seq("scala", "io", "nio", "file", "path", "stream", "writer")
 
 //release plugin
@@ -55,3 +56,12 @@ releaseCrossBuild := false
 //bintray&release
 //bintray doesn't like snapshot versions - https://github.com/softprops/bintray-sbt/issues/12
 releaseNextVersion := { ver => sbtrelease.Version(ver).map(_.bumpMinor.string).getOrElse(sbtrelease.versionFormatError) }
+
+//coverage: https://github.com/scoverage/sbt-scoverage and https://github.com/non/spire/blob/master/.travis.yml
+//instrumentSettings
+//ScoverageKeys.minimumCoverage := 60
+//ScoverageKeys.failOnMinimumCoverage := false
+//ScoverageKeys.highlighting := {
+//  if (scalaBinaryVersion.value == "2.10") false
+//  else false
+//}

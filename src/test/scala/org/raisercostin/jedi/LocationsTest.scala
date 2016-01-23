@@ -188,4 +188,7 @@ r/u.txt""".replaceAll("\r", ""),
   test("use home file") {
     Locations.userHome.child(".jedi-io").mkdirIfNecessary.deleteIfExists
   }
+  test("mimeTypeFromName for MemoryLocation") {
+    Locations.memory("file.jpg").mimeType.get.mimeType shouldBe "image/jpeg"
+  }
 }

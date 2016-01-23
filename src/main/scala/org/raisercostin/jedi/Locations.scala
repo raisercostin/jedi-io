@@ -379,6 +379,7 @@ case class FileLocation(fileFullPath: String, append: Boolean = false) extends F
 case class MemoryLocation(val memoryName: String) extends RelativeLocationLike with NavigableInOutLocation {self=>
   override type Repr = self.type
   override def nameAndBefore: String = absolute
+  override def absolutePlatformDependent: String = memoryName
   def relativePath: String = memoryName
   override def raw = memoryName
   def asInput: MemoryLocation = this

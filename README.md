@@ -3,6 +3,7 @@
 [![Download](https://api.bintray.com/packages/raisercostin/maven/jedi-io/images/download.svg)](https://bintray.com/raisercostin/maven/jedi-io/_latestVersion)
 [![Build Status](https://travis-ci.org/raisercostin/jedi-io.svg?branch=master)](https://travis-ci.org/raisercostin/jedi-io)
 [![Codacy Badge](https://www.codacy.com/project/badge/5cc4b6b21f694317ab8beec05342c7b5)](https://www.codacy.com/app/raisercostin/jedi-io)
+[![codecov.io](http://codecov.io/github/raisercostin/jedi-io/coverage.svg?branch=master)](http://codecov.io/github/raisercostin/jedi-io?branch=master)
 
 # Jedi IO offers Input/output locations #
 
@@ -43,10 +44,22 @@ For more samples see [LocationsTest.scala](src/test/scala/org/raisercostin/util/
  ```
  resolvers += "raisercostin repository" at "http://dl.bintray.com/raisercostin/maven"
  ```
- 
+
 ## Development ##
+Projects that are using jedi-io:
+ - https://github.com/raisercostin/ownit
+ - https://github.com/raisercostin/my-scala-scripts (see here a script for bulk uploading/importing maven artefacts from a repository/svn/folder to bintray)
+
  - to release
 
  ```
  sbt> release skip-tests
  ```
+
+### Roadmap
+ - investigate
+   - scala arm - http://jsuereth.com/scala-arm/continuations.html
+   - scala io - https://github.com/scala-incubator/scala-io
+   - spray - 
+   - akka streams -
+ - make it async
