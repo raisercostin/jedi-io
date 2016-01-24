@@ -6,7 +6,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 import scala.Traversable
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.io.BufferedSource
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
@@ -52,8 +52,7 @@ trait AbsoluteBaseLocation extends BaseLocation{
   }
   private def listPath(glob: String): List[Path] = {
     val stream = Files.newDirectoryStream(toPath, glob)
-    import scala.collection.JavaConversions.iterableAsScalaIterable
-    try stream.toList finally stream.close
+    try stream.asScala.toList finally stream.close
   }
 
   def hasDirs = listPath("*").find(_.toFile.isDirectory).nonEmpty

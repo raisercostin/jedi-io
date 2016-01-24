@@ -132,3 +132,4 @@ releaseNextVersion := { ver => sbtrelease.Version(ver).map(_.bumpMinor.string).g
 //  if (scalaBinaryVersion.value == "2.10") false
 //  else false
 //}
+scapegoatVersion := "1.1.0"
