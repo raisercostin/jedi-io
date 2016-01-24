@@ -560,7 +560,7 @@ case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
   }
   println(file)
   def withProtocol(protocol:String):VfsLocation = {
-    val newUrl = protocol+":"+file.getURL.toString
+    val newUrl = protocol+":"+file.getURL.toString+"!/"
     println("new "+newUrl)
     VfsLocation(newUrl)
   }
