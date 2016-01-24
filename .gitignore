@@ -24,3 +24,5 @@ project/plugins/project/
 
 /.idea
 /.scalastyle
+/.cache-main
+/.cache-tests
