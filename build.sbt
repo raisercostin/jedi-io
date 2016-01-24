@@ -4,7 +4,7 @@ description := "Scala fluent file utility library"
 homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
 //scalaVersion := "2.10.5"
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.7"
 //crossScalaVersions := Seq(scalaVersion.value, "2.11.4")
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
 	,"org.scalatest" %% "scalatest" % "2.2.4" % "test"
 	,"junit" % "junit" % "4.10" % "test"
 	,"org.slf4j" % "slf4j-simple" % "1.7.5" % "test"
+	,"org.apache.commons" % "commons-vfs2" % "2.0"
 )
 
 // This is an example.  bintray-sbt requires licenses to be specified

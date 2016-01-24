@@ -31,6 +31,8 @@ import java.io.IOException
 import scala.annotation.tailrec
 import java.io.Closeable
 import org.apache.commons.io._
+import org.apache.commons.vfs2.VFS
+import org.apache.commons.vfs2.FileObject
 
 /**
  * Should take into consideration several composable/ortogonal aspects:
@@ -116,7 +118,7 @@ trait AbsoluteBaseLocation extends BaseLocation{
   }
 
   def existing: this.type =
-    if (toFile.exists)
+    if (exists)
       this
     else
       throw new RuntimeException("[" + this + "] doesn't exist!")
@@ -289,15 +291,15 @@ trait NavigableLocation extends AbsoluteBaseLocation { self =>
     else name
   def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
-  }.getOrElse(Iterable()).map(buildNew)
+  }.getOrElse(Iterable()).map(buildNewFile)
   def descendants: Iterable[Repr] = {
     val all: Iterable[File] = Option(existing).map { x =>
       traverse.map(_._1.toFile).toIterable
     }.getOrElse(Iterable[File]())
-    all.map(buildNew)
+    all.map(buildNewFile)
   }
 
-  def buildNew(x: File): Repr = Locations.file(x)
+  def buildNewFile(x: File): Repr = Locations.file(x)
   def renamedIfExists: Repr = {
     @tailrec
     def findUniqueName(destFile: Repr, counter: Int): Repr =
@@ -524,6 +526,45 @@ case class TempLocation(temp: File, append: Boolean = false) extends FileLocatio
   override def parent: Repr = new TempLocation(new File(parentName))
   override def child(child: String): Repr = new TempLocation(toPath.resolve(checkedChild(child)).toFile)
 }
+object VfsLocation{
+  private val fsManager = VFS.getManager()
+  def apply(url: String):VfsLocation = VfsLocation(fsManager.resolveFile(url))
+}
+case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
+  override type Repr = self.type
+  def raw = file.getName.getPath
+  def fileFullPath: String = file.getName.getPath
+  override def parent: Repr = buildNew(file.getParent)
+  override def child(child: String): Repr = buildNew(file.getChild(child))
+  def buildNew(x: FileObject): Repr = new VfsLocation(x)
+  override def exists:Boolean = file.exists
+  override def list: Iterable[Repr] = Option(existing).map { x =>
+    Option(x.file.getChildren).map(_.toIterable).getOrElse(Iterable(x.file))
+  }.getOrElse(Iterable()).map(buildNew)
+//TODO to remove as not beeing abstract enough
+  def toFile: java.io.File = ???
+  def asInput: NavigableInputLocation = self
+  def append: Boolean = ???
+  def withAppend: Repr = ???
+  override def nameAndBefore: String = raw
+  override def name:String = file.getName.getBaseName
+  def external:VfsLocation = {
+    var all = file.getURL.toExternalForm
+    all = all.dropWhile { x => x!=':' }.drop(1)
+    all = all.reverse.dropWhile{x=>x!='!'}.drop(1).reverse
+    VfsLocation(all);
+  }
+  override def absolute:String = file.getName.getExtension
+  override def toString = {
+    "VfsLocation[url="+file.getURL+"]"
+  }
+  println(file)
+  def withProtocol(protocol:String):VfsLocation = {
+    val newUrl = protocol+":"+file.getURL.toString
+    println("new "+newUrl)
+    VfsLocation(newUrl)
+  }
+}
 /**
  * file(*) - will refer to the absolute path passed as parameter or to a file relative to current directory new File(".") which should be the same as System.getProperty("user.dir") .
  * TODO: file separator agnosticisim: use an internal standard convention indifferent of the "outside" OS convention: Win,Linux,OsX
@@ -554,6 +595,7 @@ object Locations {
   }
   def memory(memoryName: String): MemoryLocation =
     new MemoryLocation(memoryName)
+  def vfs(url: String): VfsLocation = VfsLocation(url)
   def stream(stream: InputStream): StreamLocation = new StreamLocation(stream)
   def url(url: java.net.URL): UrlLocation = new UrlLocation(url)
   def temp: TempLocation = TempLocation(tmpdir)
