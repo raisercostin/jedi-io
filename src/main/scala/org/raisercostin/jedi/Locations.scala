@@ -564,6 +564,7 @@ case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
     println("new "+newUrl)
     VfsLocation(newUrl)
   }
+  override def unsafeToInputStream = file.getContent.getInputStream
 }
 /**
  * file(*) - will refer to the absolute path passed as parameter or to a file relative to current directory new File(".") which should be the same as System.getProperty("user.dir") .

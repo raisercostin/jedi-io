@@ -39,8 +39,16 @@ class VfsLocationsTest extends FunSuite {
     println(subzip)
     subzip.list.map(_.name) shouldBe ArrayBuffer("r","p.txt","inside.txt","q.txt")
   }
-  test("vfs sftp via vfs") {
-    val vfs = Locations.vfs("http://stackoverflow.com/questions/9661214/uri-for-nested-zip-files-in-apaches-common-vfs")
-    vfs.list.map(_.name) shouldBe ArrayBuffer("r","p.txt","inside.txt","q.txt")
+  test("vfs http") {
+    val vfs = Locations.vfs("http://google.com")
+    vfs.readContentAsText.get.take(10) shouldBe "<!doctype "
   }
+  test("vfs https") {
+    val vfs = Locations.vfs("https://google.com")
+    vfs.readContentAsText.get.take(10) shouldBe "<!doctype "
+  }
+//  test("vfs webdav") {
+//    val vfs = Locations.vfs("webdav://demo:demo@web.crushftp.com/demo/")
+//    vfs.list.map(_.name) shouldBe ArrayBuffer("r","p.txt","inside.txt","q.txt")
+//  }
 }
