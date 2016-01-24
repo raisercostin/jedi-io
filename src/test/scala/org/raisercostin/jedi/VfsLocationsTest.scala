@@ -47,8 +47,8 @@ class VfsLocationsTest extends FunSuite {
     val vfs = Locations.vfs("https://google.com")
     vfs.readContentAsText.get.take(10) shouldBe "<!doctype "
   }
-//  test("vfs webdav") {
-//    val vfs = Locations.vfs("webdav://demo:demo@web.crushftp.com/demo/")
-//    vfs.list.map(_.name) shouldBe ArrayBuffer("r","p.txt","inside.txt","q.txt")
-//  }
+  ignore("vfs webdav") {
+    val vfs = Locations.vfs("webdav://demo:demo@www.crushftp.com/demo/")
+    vfs.list.map(_.name) shouldBe ArrayBuffer("r","p.txt","inside.txt","q.txt")
+  }
 }
