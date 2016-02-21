@@ -46,7 +46,7 @@ unmanagedSourceDirectories in Test := (scalaSource in Test).value :: Nil
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
 //bintray
-publishMavenStyle := false
+publishMavenStyle := true
 bintrayPackageLabels := Seq("scala", "io", "nio", "file", "path", "stream", "writer")
 
 //release plugin
