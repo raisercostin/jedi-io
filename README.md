@@ -32,6 +32,8 @@ The main purpose of this project is to provide uniform, fluent access to various
 
 For more samples see [LocationsTest.scala](src/test/scala/org/raisercostin/util/io/LocationsTest.scala)
 
+## Done
+- integrate apache commons vfs via Locations.vfs("...")
 
 ## How to use ##
  - from sbt
@@ -49,7 +51,8 @@ For more samples see [LocationsTest.scala](src/test/scala/org/raisercostin/util/
 Projects that are using jedi-io:
  - https://github.com/raisercostin/ownit
  - https://github.com/raisercostin/my-scala-scripts (see here a script for bulk uploading/importing maven artefacts from a repository/svn/folder to bintray)
-
+ - to configure release
+     ```bintrayChangeCredentials```
  - to release
 
  ```
