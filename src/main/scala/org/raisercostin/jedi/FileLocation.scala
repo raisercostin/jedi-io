@@ -5,11 +5,12 @@ import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
-
 import scala.util.Try
-
 import org.apache.commons.io.FileUtils
-
+import org.apache.commons.io.monitor.FileAlterationObserver
+import org.apache.commons.io.monitor.FileAlterationMonitor
+import org.apache.commons.io.monitor.FileAlterationListenerAdaptor
+import org.slf4j.LoggerFactory
 trait FileLocationLike extends NavigableInOutLocation { self =>
   override type Repr = self.type
   def fileFullPath: String
@@ -36,6 +37,30 @@ trait FileLocationLike extends NavigableInOutLocation { self =>
       dest
     }
   }
+  //TODO replace by stream (future)
+  def watch(listener: FileLocation => Unit):FileMonitor = {
+        val observer = new FileAlterationObserver(toFile);
+        val pollingInterval = 1000 //millis
+        val monitor = new FileAlterationMonitor(pollingInterval);
+        val fileListener = new FileAlterationListenerAdaptor() {
+          override def onFileCreate(file:File) = {
+            val location = Locations.file(file)
+            try{
+              listener(location)
+            }catch{
+              case e:Throwable =>
+                LoggerFactory.getLogger(classOf[FileLocation]).error(s"Processing of [$location] failed.",e)
+            }
+          }
+        }
+        observer.addListener(fileListener)
+        monitor.addObserver(observer)
+        monitor.start()
+        FileMonitor(monitor)
+  }
+}
+case class FileMonitor(private val monitor:FileAlterationMonitor){
+  def stop() = monitor.stop()
 }
 case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike {self=>
   override type Repr = self.type
