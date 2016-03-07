@@ -76,11 +76,16 @@ trait NavigableLocation extends AbsoluteBaseLocation { self =>
   def buildNewFile(x: File): Repr = Locations.file(x)
   def renamedIfExists: Repr = {
     @tailrec
-    def findUniqueName(destFile: Repr, counter: Int): Repr =
-      if (destFile.exists)
-        findUniqueName(destFile.withBaseName { baseName: String => (baseName + "-" + counter) }, counter + 1)
+    def findUniqueName(destFile: Repr, counter: Int): Repr = {
+      val renamed = destFile.withBaseName { baseName: String => (baseName + "-" + counter) }
+      if (renamed.exists)
+        findUniqueName(destFile, counter + 1)
       else
-        destFile
-    findUniqueName(repr, 1)
+        renamed
+    }
+    if (repr.exists)
+      findUniqueName(repr, 1)
+    else
+      repr
   }
 }
