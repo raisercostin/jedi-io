@@ -5,7 +5,7 @@ homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
 //scalaVersion := "2.10.5"
 scalaVersion := "2.11.8"
-crossScalaVersions := Seq(scalaVersion.value, "2.10.6")
+crossScalaVersions := Seq(scalaVersion.value, "2.10.6"/*, "2.12.0-M3"*/)
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
 libraryDependencies ++= Seq(
