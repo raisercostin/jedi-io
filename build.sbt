@@ -4,8 +4,8 @@ description := "Scala fluent file utility library"
 homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
 //scalaVersion := "2.10.5"
-scalaVersion := "2.11.7"
-//crossScalaVersions := Seq(scalaVersion.value, "2.11.4")
+scalaVersion := "2.11.8"
+crossScalaVersions := Seq(scalaVersion.value, "2.10.6")
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
 libraryDependencies ++= Seq(
@@ -120,7 +120,7 @@ bintrayPackageLabels := Seq("scala", "io", "nio", "file", "path", "stream", "wri
 
 //release plugin
 //version is commented since the version is in version.sbt
-releaseCrossBuild := false
+releaseCrossBuild := true
 
 //bintray&release
 //bintray doesn't like snapshot versions - https://github.com/softprops/bintray-sbt/issues/12
@@ -134,4 +134,4 @@ releaseNextVersion := { ver => sbtrelease.Version(ver).map(_.bumpMinor.string).g
 //  if (scalaBinaryVersion.value == "2.10") false
 //  else false
 //}
-scapegoatVersion := "1.1.0"
+//scapegoatVersion := "1.1.0"
