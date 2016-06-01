@@ -8,13 +8,10 @@ import java.io.PrintWriter
 import java.io.Writer
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
-
-import org.apache.commons.io.FileUtils
-
 import Locations.logger
+import scala.annotation.tailrec
 
 
 trait OutputLocation extends AbsoluteBaseLocation{self=>

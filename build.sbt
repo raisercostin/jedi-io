@@ -3,8 +3,8 @@ name := "jedi-io"
 description := "Scala fluent file utility library"
 homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
-//scalaVersion := "2.10.5"
-scalaVersion := "2.11.8"
+scalaVersion := "2.10.6"
+//scalaVersion := "2.11.8"
 crossScalaVersions := Seq(scalaVersion.value, "2.10.6"/*, "2.12.0-M3"*/)
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
 	//optional
 	,"commons-httpclient" % "commons-httpclient" % "3.1"
 	//,"org.apache.jackrabbit" % "jackrabbit-webdav" % "1.5.2"
+	,"org.kohsuke" % "file-leak-detector" % "1.8"
 )
 
 /*

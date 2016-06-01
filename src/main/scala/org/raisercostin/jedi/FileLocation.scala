@@ -38,10 +38,9 @@ trait FileLocationLike extends NavigableInOutLocation { self =>
     }
   }
   //TODO replace by stream (future)
-  def watch(listener: FileLocation => Unit):FileMonitor = {
+  def watch(pollingIntervalInMillis:Long=1000, listener: FileLocation => Unit):FileMonitor = {
         val observer = new FileAlterationObserver(toFile);
-        val pollingInterval = 1000 //millis
-        val monitor = new FileAlterationMonitor(pollingInterval);
+        val monitor = new FileAlterationMonitor(pollingIntervalInMillis);
         val fileListener = new FileAlterationListenerAdaptor() {
           override def onFileCreate(file:File) = {
             val location = Locations.file(file)

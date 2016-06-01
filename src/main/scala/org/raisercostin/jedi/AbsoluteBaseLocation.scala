@@ -4,16 +4,15 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-
 import scala.Traversable
 import scala.collection.JavaConverters._
 import scala.io.BufferedSource
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 import scala.util.Try
-
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.{FileUtils=>CommonsFileUtils}
 import org.apache.commons.io.FilenameUtils
+import org.raisercostin.jedi.MimeTypeDetectors
 
 trait AbsoluteBaseLocation extends BaseLocation{
   def toUrl: java.net.URL = toFile.toURI.toURL
@@ -32,7 +31,7 @@ trait AbsoluteBaseLocation extends BaseLocation{
   def size = toFile.length()
   def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
   def mkdirIfNecessary: this.type = {
-    FileUtils.forceMkdir(toFile)
+    CommonsFileUtils.forceMkdir(toFile)
     this
   }
   def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
