@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
 	,"commons-httpclient" % "commons-httpclient" % "3.1" % "optional"
 	//,"org.apache.jackrabbit" % "jackrabbit-webdav" % "1.5.2"
 	,"org.kohsuke" % "file-leak-detector" % "1.8" % "optional"
+	,"io.reactivex" %% "rxscala" % "0.26.5"
 )
 
 /*
