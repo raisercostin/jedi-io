@@ -9,7 +9,7 @@ import scala.util.Try
 import org.raisercostin.jedi.impl.ResourceUtil
 import sun.net.www.protocol.file.FileURLConnection
 
-case class UrlLocation(url: java.net.URL) extends InputLocation { self =>
+case class UrlLocation(url: java.net.URL, agent:Option[String] = None) extends InputLocation { self =>
   def raw = url.toExternalForm()
   override def toUrl: java.net.URL = url
   override def nameAndBefore: String = url.getPath
@@ -23,6 +23,8 @@ case class UrlLocation(url: java.net.URL) extends InputLocation { self =>
       f.close()
   } {
     case conn: HttpURLConnection =>
+      //User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36
+      agent.foreach(agent=>conn.setRequestProperty("User-Agent", agent))
       conn.setRequestMethod("HEAD")
       conn.getInputStream
       val len = conn.getContentLengthLong()
@@ -35,4 +37,7 @@ case class UrlLocation(url: java.net.URL) extends InputLocation { self =>
       len
   }
   protected override def unsafeToInputStream: InputStream = url.openStream()
+
+  def withAgent(newAgent: String) = this.copy(agent = Some(newAgent))
+  def withoutAgent = this.copy(agent = None)
 }

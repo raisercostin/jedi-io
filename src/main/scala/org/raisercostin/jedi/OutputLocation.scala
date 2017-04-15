@@ -38,6 +38,14 @@ trait OutputLocation extends AbsoluteBaseLocation{self=>
     }
     this
   }
+  def delete: Repr = {
+    if (exists)
+      deleteIfExists
+    else
+      throw new RuntimeException("File " + this + " doesn't exists!")
+    this
+  }
+
   def writeContent(content: String): this.type = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type

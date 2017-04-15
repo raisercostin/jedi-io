@@ -14,11 +14,11 @@ import org.scalatest.Matchers._
 
 @RunWith(classOf[JUnitRunner])
 class UrlLocationTest extends FunSuite with BaseLocationTest {
-  
+
   def location = Locations.url("""http://google.com/index.html""")
   test("length should be not null") {
-    assertEquals(346622,Locations.classpath("""a b.jpg""").length)
-    assertEquals(346622,Locations.classpath("""a b.jpg""").asUrl.length)
+    assertEquals(346622, Locations.classpath("""a b.jpg""").length)
+    assertEquals(346622, Locations.classpath("""a b.jpg""").asUrl.length)
   }
 
   test("basename, extension, name for urls") {
@@ -68,5 +68,18 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     val dest = Locations.temp.child("dest")
     val dest2 = file.copyTo(dest.renamedIfExists)
     assertEquals("<!doctype", dest2.readContentAsText.get.take(9))
+  }
+  test("copy from url then delete without problems since the stream should be closed") {
+    val file = Locations.url("""http://google.com/""")
+    val dest = Locations.temp.child("dest")
+    val dest2 = dest.renamedIfExists.copyFrom(file)
+    assertEquals("<!doctype", dest2.readContentAsText.get.take(9))
+    val dest3 = Locations.file(dest2.absolute)
+    dest3.delete
+  }
+  test("download with special agent") {
+    //"Server returned HTTP response code: 403 for URL: http://www.restograf.ro/wp-content/uploads/2015/08/french.jpg"
+    val file = Locations.url("""http://www.restograf.ro/wp-content/uploads/2015/08/french.jpg""").withAgent("a")
+    assertEquals(45418,file.readContentAsText.get.length)
   }
 }
