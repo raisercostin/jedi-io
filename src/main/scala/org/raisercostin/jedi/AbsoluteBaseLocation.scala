@@ -71,6 +71,11 @@ trait AbsoluteBaseLocation extends BaseLocation{
       Some(this)
     else
       None
+  def nonExistingOption: Option[this.type] =
+    if (exists)
+      None
+    else
+      Some(this)
   def existing(source: BufferedSource) = {
     //if (source.nonEmpty)
     val hasNext = Try { source.hasNext }

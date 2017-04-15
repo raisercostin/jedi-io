@@ -26,7 +26,7 @@ trait InputLocation extends AbsoluteBaseLocation{
   }
 
   def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
-  def copyToIfNotExists(dest: OutputLocation): this.type = { dest.existingOption.map(_.copyFrom(this)); this }
+  def copyToIfNotExists(dest: OutputLocation): this.type = { dest.nonExistingOption.map(_.copyFrom(this)); this }
   def copyTo(dest: OutputLocation):this.type = copyToOutputLocation(dest)
   def copyTo(dest: NavigableOutputLocation):this.type = {
     dest.mkdirOnParentIfNecessary
