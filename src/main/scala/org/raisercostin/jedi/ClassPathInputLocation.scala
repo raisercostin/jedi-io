@@ -8,19 +8,8 @@ import scala.util.Try
 object ClassPathInputLocationLike {
   private def getDefaultClassLoader(): ClassLoader = {
     Try { Thread.currentThread().getContextClassLoader }.toOption.getOrElse(classOf[System].getClassLoader)
-    //    var cl: ClassLoader = null
-    //    try {
-    //      cl = Thread.currentThread().getContextClassLoader
-    //    } catch {
-    //      case ex: Throwable =>
-    //    }
-    //    if (cl == null) {
-    //      cl = classOf[System].getClassLoader
-    //    }
-    //    cl
   }
   private def getSpecialClassLoader(): ClassLoader =
-    //Option(Thread.currentThread().getContextClassLoader).orElse
     (Option(classOf[ClassPathInputLocation].getClassLoader)).orElse(Option(classOf[ClassLoader].getClassLoader)).get
 }
 /**
@@ -57,4 +46,6 @@ case class ClassPathInputLocation(initialResourcePath: String) extends ClassPath
   require(initialResourcePath != null)
   def child(child: String): Repr = new ClassPathInputLocation(FileSystem.addChild(resourcePath, child))
   def parent: Repr = new ClassPathInputLocation(parentName)
+
+  def asUrl:UrlLocation = Locations.url("file:"+absolute)
 }

@@ -5,6 +5,7 @@ import java.nio.charset.CodingErrorAction
 import org.apache.commons.io.FilenameUtils
 trait BaseLocation {
   def raw: String
+  /**A part of the location that will be used to retrieve name, baseName, extension.*/
   def nameAndBefore: String
   def name: String = FilenameUtils.getName(nameAndBefore)
   def extension: String = FilenameUtils.getExtension(nameAndBefore)

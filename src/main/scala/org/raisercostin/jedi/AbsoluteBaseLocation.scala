@@ -12,7 +12,6 @@ import scala.language.reflectiveCalls
 import scala.util.Try
 import org.apache.commons.io.{FileUtils=>CommonsFileUtils}
 import org.apache.commons.io.FilenameUtils
-import org.raisercostin.jedi.MimeTypeDetectors
 
 trait AbsoluteBaseLocation extends BaseLocation{
   def toUrl: java.net.URL = toFile.toURI.toURL

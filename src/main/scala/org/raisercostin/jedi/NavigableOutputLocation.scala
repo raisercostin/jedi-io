@@ -20,7 +20,7 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
       FileUtils.moveFile(toFile, dest.toFile)
       this
     }catch{
-      case _ =>
+      case _ : Exception =>
         moveToRenamedIfExists(dest.renamedIfExists)
     }
   }

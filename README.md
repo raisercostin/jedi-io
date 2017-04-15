@@ -66,3 +66,7 @@ Projects that are using jedi-io:
    - spray - 
    - akka streams -
  - make it async
+
+### Backlog
+ - Locations.url("file://...") should create a FileLocation?
+ - 
