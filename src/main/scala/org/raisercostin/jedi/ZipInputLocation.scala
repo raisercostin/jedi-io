@@ -7,8 +7,10 @@ import scala.Iterable
 import scala.util.Try
 case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocationLike {self=>
   override type Repr = self.type
-  def parent: Repr = ZipInputLocation(zip, Some(rootzip.getEntry(parentName)))
-  def child(child: String): Repr = (entry match {
+  override def build(path:String): Repr = ???
+  override def parent: Repr = ZipInputLocation(zip, Some(rootzip.getEntry(parentName)))
+  override def childName(child:String):String = ???
+  override def child(child: String): Repr = (entry match {
     case None =>
       ZipInputLocation(zip, Some(rootzip.getEntry(child)))
     case Some(entry) =>

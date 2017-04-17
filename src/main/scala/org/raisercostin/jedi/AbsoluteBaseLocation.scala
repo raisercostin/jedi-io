@@ -13,18 +13,13 @@ import scala.util.Try
 import org.apache.commons.io.{FileUtils=>CommonsFileUtils}
 import org.apache.commons.io.FilenameUtils
 
-trait AbsoluteBaseLocation extends BaseLocation{
+trait AbsoluteBaseLocation extends BaseLocation with FileResolvedLocationState{
   def toUrl: java.net.URL = toFile.toURI.toURL
-  //import org.apache.commons.io.input.BOMInputStream
-  //import org.apache.commons.io.IOUtils
-  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
-  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
 
   override def mimeType = mimeTypeFromName.orElse(mimeTypeFromContent)
   /**To read data you should read the inputstream*/
   def mimeTypeFromContent = MimeTypeDetectors.mimeTypeFromContent(toPath)
 
-  def toFile: File
   def toPath: Path = toFile.toPath
   def toPath(subFile: String): Path = toPath.resolve(subFile)
   def size = toFile.length()

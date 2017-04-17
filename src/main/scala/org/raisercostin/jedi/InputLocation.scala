@@ -11,6 +11,11 @@ import scala.util.Try
 import org.apache.commons.io.IOUtils
 
 trait InputLocation extends AbsoluteBaseLocation{
+  //import org.apache.commons.io.input.BOMInputStream
+  //import org.apache.commons.io.IOUtils
+  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
+  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
+
   protected def unsafeToInputStream: InputStream = new FileInputStream(absolute)
   protected def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
   protected def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)

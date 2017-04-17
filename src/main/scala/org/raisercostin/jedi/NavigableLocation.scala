@@ -13,15 +13,21 @@ import scala.util.Try
 import org.apache.commons.io.FilenameUtils
 
 import Locations.relative
+import org.raisercostin.jedi.impl.JediFileSystem
 
-
-trait NavigableLocation extends AbsoluteBaseLocation { self =>
+trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   type Repr = self.type
   protected def repr: Repr = toRepr(self)
-  implicit protected def toRepr[T<:NavigableLocation](location:T):Repr = location.asInstanceOf[Repr]
+  implicit protected def toRepr[T<:BaseNavigableLocation](location:T):Repr = location.asInstanceOf[Repr]
+  def build(path:String): Repr 
 
-  def parent: Repr
-  def child(child: String): Repr
+  def parent: Repr = build(parentName)
+  def child(child: String): Repr = build(childName(child))
+  def childName(child:String):String = {
+    require(child.trim.nonEmpty, s"An empty child [$child] cannot be added.")
+    JediFileSystem.addChild(raw, child)
+  }
+
   def child(childText: Option[String]): Repr = childText match {
     case None => repr
     case Some(s) if s.trim.isEmpty => repr
@@ -45,10 +51,10 @@ trait NavigableLocation extends AbsoluteBaseLocation { self =>
   }
   def parentName: String = //toFile.getParentFile.getAbsolutePath
     Option(FilenameUtils.getFullPathNoEndSeparator(nameAndBefore)).getOrElse("")
-  def extractPrefix(ancestor: NavigableLocation): Try[RelativeLocation] =
-    extractAncestor(ancestor).map(x => relative(FileSystem.constructPath(x))(FileSystem.identityFormatter))
-  def extractAncestor(ancestor: NavigableLocation): Try[Seq[String]] =
-    diff(nameAndBefore, ancestor.nameAndBefore).map { FileSystem.splitPartialPath }
+  def extractPrefix(ancestor: BaseNavigableLocation): Try[RelativeLocation] =
+    extractAncestor(ancestor).map(x => relative(JediFileSystem.constructPath(x))(JediFileSystem.identityFormatter))
+  def extractAncestor(ancestor: BaseNavigableLocation): Try[Seq[String]] =
+    diff(nameAndBefore, ancestor.nameAndBefore).map { JediFileSystem.splitPartialPath }
   def diff(text: String, prefix: String) =
     if (text.startsWith(prefix))
       Success(text.substring(prefix.length))
@@ -63,6 +69,13 @@ trait NavigableLocation extends AbsoluteBaseLocation { self =>
     if (ext.length > 0)
       name + "." + ext
     else name
+}
+trait NavigableLocation extends AbsoluteBaseLocation with BaseNavigableLocation{ self =>
+  override type Repr = self.type
+  //TODO review these
+  override protected def repr: Repr = toRepr2(self)
+  implicit protected def toRepr2[T<:NavigableLocation](location:T):Repr = location.asInstanceOf[Repr]
+
   def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
   }.getOrElse(Iterable()).map(buildNewFile)

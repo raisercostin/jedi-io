@@ -36,7 +36,11 @@ case class UrlLocation(url: java.net.URL, agent:Option[String] = None) extends I
       if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
       len
   }
-  protected override def unsafeToInputStream: InputStream = url.openStream()
+  protected override def unsafeToInputStream: InputStream = {
+    val conn = url.openConnection()
+    agent.foreach(agent=>conn.setRequestProperty("User-Agent", agent))
+    conn.getInputStream
+  }
 
   def withAgent(newAgent: String) = this.copy(agent = Some(newAgent))
   def withoutAgent = this.copy(agent = None)

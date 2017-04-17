@@ -12,6 +12,11 @@ case class TempLocation(temp: File, append: Boolean = false) extends FileLocatio
   def fileFullPath: String = temp.getAbsolutePath()
   def randomChild(prefix: String = "random", suffix: String = "") = new TempLocation(File.createTempFile(prefix, suffix, toFile))
   def randomFolderChild(prefix: String = "random") = new TempLocation(Files.createTempDirectory(prefix).toFile)
-  override def parent: Repr = new TempLocation(new File(parentName))
-  override def child(child: String): Repr = new TempLocation(toPath.resolve(checkedChild(child)).toFile)
+  override def childName(child:String):String = childFile(child).getAbsolutePath
+  override def build(path:String): Repr = new TempLocation(new File(path),append)
+
+  //optimized not to convert back and forth to the external format
+  override def child(child: String): Repr = new TempLocation(childFile(child))
+
+  private def childFile(child:String) = toPath.resolve(checkedChild(child)).toFile
 }

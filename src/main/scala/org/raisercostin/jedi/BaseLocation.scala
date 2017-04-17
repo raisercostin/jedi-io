@@ -3,6 +3,8 @@ package org.raisercostin.jedi
 import java.nio.charset.CodingErrorAction
 
 import org.apache.commons.io.FilenameUtils
+import org.raisercostin.jedi.impl.JediFileSystem
+
 trait BaseLocation {
   def raw: String
   /**A part of the location that will be used to retrieve name, baseName, extension.*/
@@ -20,7 +22,7 @@ trait BaseLocation {
     decoder.onMalformedInput(CodingErrorAction.IGNORE)
     decoder
   }
-  def standard(selector: this.type => String): String = FileSystem.standard(selector(this))
+  def standard(selector: this.type => String): String = JediFileSystem.standard(selector(this))
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
   //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
 

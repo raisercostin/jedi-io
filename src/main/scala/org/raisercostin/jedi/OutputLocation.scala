@@ -16,8 +16,6 @@ import scala.annotation.tailrec
 
 trait OutputLocation extends AbsoluteBaseLocation{self=>
   type Repr = self.type
-  //trait OutputLocation extends BaseLocation {
-  //  override type Self=OutputLocation
   protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
   protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream, "UTF-8"))
   protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream, StandardCharsets.UTF_8), true)

@@ -5,6 +5,8 @@ import java.io.InputStream
 
 import scala.util.Failure
 import scala.util.Try
+import org.raisercostin.jedi.impl.JediFileSystem
+
 object ClassPathInputLocationLike {
   private def getDefaultClassLoader(): ClassLoader = {
     Try { Thread.currentThread().getContextClassLoader }.toOption.getOrElse(classOf[System].getClassLoader)
@@ -44,8 +46,6 @@ trait ClassPathInputLocationLike extends NavigableInputLocation { self =>
 case class ClassPathInputLocation(initialResourcePath: String) extends ClassPathInputLocationLike {self=>
   override type Repr = self.type
   require(initialResourcePath != null)
-  def child(child: String): Repr = new ClassPathInputLocation(FileSystem.addChild(resourcePath, child))
-  def parent: Repr = new ClassPathInputLocation(parentName)
-
+  def build(path:String): Repr = new ClassPathInputLocation(path)
   def asUrl:UrlLocation = Locations.url("file:"+absolute)
 }

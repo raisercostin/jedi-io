@@ -1,4 +1,4 @@
-package org.raisercostin.jedi
+package org.raisercostin.jedi.impl
 
 import java.io.File
 import java.util.regex.Pattern
@@ -11,30 +11,34 @@ import java.util.regex.Pattern
  */
 trait FileSystemFormatter {
   def standard(path: String): String
+  def inverse: FileSystemFormatter
 }
 
-object FileSystem {
-  protected val SEP = File.separator
-  protected val SEP_STANDARD = "/"
-  protected final val WINDOWS_SEPARATOR = "\\"
+object FileSystemFormatter {
+  def apply(separator: String) = SimpleFileSystemFormatter(JediFileSystem.SEP_STANDARD, separator)
+}
+
+case class SimpleFileSystemFormatter(from: String, to: String) extends FileSystemFormatter {
+  override def standard(path: String): String = path.replaceAllLiterally(from, to)
+  def inverse: FileSystemFormatter = SimpleFileSystemFormatter(to, from)
+}
+
+object JediFileSystem {
+  final val SEP = File.separator
+  final val SEP_STANDARD = "/"
+  final val WINDOWS_SEPARATOR = "\\"
   val identityFormatter = new FileSystemFormatter() {
     def standard(path: String): String = path
+    def inverse: FileSystemFormatter = this
   }
-  val unixAndWindowsToStandard = new FileSystemFormatter() {
-    def standard(path: String): String = path.replaceAllLiterally(WINDOWS_SEPARATOR, SEP_STANDARD)
-  }
-  //
-  //  implicit val standardFileSystem = new StandardFileSystem
-  //}
-  //
-  //trait FileSystem {
-  //import FileSystem._
+  val unixAndWindowsToStandard = SimpleFileSystemFormatter(WINDOWS_SEPARATOR, SEP_STANDARD)
+
   def standard(path: String): String = path.replaceAllLiterally(SEP, SEP_STANDARD)
   def requireStandad(path: String) = {
     //TODO: test that the file is not in a form specific to windows or other non linux(standard) way
   }
   def requireRelativePath(path: String) =
-    require(!path.startsWith(FileSystem.SEP_STANDARD), s"The relative path $path shouldn't start with file separator [${SEP_STANDARD}].")
+    require(!path.startsWith(JediFileSystem.SEP_STANDARD), s"The relative path $path shouldn't start with file separator [${SEP_STANDARD}].")
   def splitRelativePath(path: String): Array[String] = {
     requireRelativePath(path)
     splitPartialPath(path)
@@ -43,6 +47,6 @@ object FileSystem {
     path.split(Pattern.quote(SEP_STANDARD)).filterNot(_.trim.isEmpty)
   }
   def constructPath(names: Seq[String]): String = names.foldLeft("")((x, y) => (if (x.isEmpty) "" else (x + SEP_STANDARD)) + y)
-  def addChild(path: String, child: String): String = path + FileSystem.SEP_STANDARD + child
+  def addChild(path: String, child: String): String = path + JediFileSystem.SEP_STANDARD + child
   def normalize(path: String): String = path.replaceAllLiterally(SEP, SEP_STANDARD)
 }

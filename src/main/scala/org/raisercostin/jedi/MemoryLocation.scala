@@ -24,6 +24,7 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocationLike w
   protected override def unsafeToOutputStream: OutputStream = outStream
   protected override def unsafeToInputStream: InputStream = new ByteArrayInputStream(outStream.toByteArray())
   override def child(child: String): Repr = ???
+  override def build(path:String): Repr = new MemoryLocation(path)
   override def parent: Repr = ???
   override def withAppend: this.type = ???
   override def length: Long = outStream.size()
@@ -31,4 +32,5 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocationLike w
   override def exists = true
   override def descendants: Iterable[Repr] = Iterable(this)
   override def size = outStream.size()
+  override def childName(child:String):String = ???
 }

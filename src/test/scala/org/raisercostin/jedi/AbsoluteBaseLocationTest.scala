@@ -8,9 +8,10 @@ import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 
 trait AbsoluteBaseLocationTest extends FunSuite {
-  def location: AbsoluteBaseLocation
+  def location[T<:AbsoluteBaseLocation]: T
 
   test("length should be not null") {
     assertTrue(location.length > 0)
+    assertTrue(location.absolute.length > 0)
   }
 }

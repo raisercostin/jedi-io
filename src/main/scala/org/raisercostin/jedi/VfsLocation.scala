@@ -12,9 +12,11 @@ case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
   override type Repr = self.type
   def raw = file.getName.getPath
   def fileFullPath: String = file.getName.getPath
+  override def build(path:String): Repr = ???//new VfsLocation(file)
+  def buildNew(x: FileObject): Repr = new VfsLocation(x)
   override def parent: Repr = buildNew(file.getParent)
   override def child(child: String): Repr = buildNew(file.getChild(child))
-  def buildNew(x: FileObject): Repr = new VfsLocation(x)
+  override def childName(child:String):String = file.getChild(child).getName.getPath
   override def exists:Boolean = file.exists
   override def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.file.getChildren).map(_.toIterable).getOrElse(Iterable(x.file))

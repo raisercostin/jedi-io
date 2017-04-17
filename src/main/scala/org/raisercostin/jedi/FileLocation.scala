@@ -95,7 +95,7 @@ case class DirectoryDeleted(file: File) extends FileAlterated
 
 case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike { self =>
   override type Repr = self.type
-  override def parent: Repr = new FileLocation(parentName)
-  override def child(child: String): Repr = new FileLocation(toPath.resolve(checkedChild(child)).toFile.getAbsolutePath)
+  def build(path:String): Repr = new FileLocation(path)
+  override def childName(child:String):String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
   override def withAppend: Repr = self.copy(append = true)
 }

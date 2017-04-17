@@ -6,6 +6,7 @@ import java.nio.file.Path
 
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
+import org.raisercostin.jedi.impl.{FileSystemFormatter,JediFileSystem}
 
 /**
  * Should take into consideration several composable/ortogonal aspects:
@@ -18,6 +19,16 @@ import scala.language.reflectiveCalls
  */
 trait NavigableInputLocation extends InputLocation with NavigableLocation
 trait NavigableInOutLocation extends NavigableInputLocation with NavigableOutputLocation
+
+/**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
+trait LocationState
+/**Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that 
+ * are available in offline mode.*/
+trait UnresolvedLocationState extends LocationState
+/**Trait to mark if a location is resolved to a file system.*/
+trait FileResolvedLocationState extends LocationState {
+  def toFile: File
+}
 
 /**
  * file(*) - will refer to the absolute path passed as parameter or to a file relative to current directory new File(".") which should be the same as System.getProperty("user.dir") .
@@ -55,9 +66,9 @@ object Locations {
   def url(url: String): UrlLocation = UrlLocation(new java.net.URL(url))
   def temp: TempLocation = TempLocation(tmpdir)
   private val tmpdir = new File(System.getProperty("java.io.tmpdir"))
-  def relative(path: String = "")(implicit fsf: FileSystemFormatter = unixAndWindowsToStandard): RelativeLocation = RelativeLocation(fsf.standard(path))
+  def relative(path: String = "")(implicit fsf: FileSystemFormatter = JediFileSystem.unixAndWindowsToStandard): RelativeLocation = RelativeLocation(fsf.standard(path))
   def current(relative: String): FileLocation = file(new File(new File("."), relative).getCanonicalPath())
 
-  implicit val unixAndWindowsToStandard = FileSystem.unixAndWindowsToStandard
+  implicit val unixAndWindowsToStandard = JediFileSystem.unixAndWindowsToStandard
   def userHome:FileLocation = file(System.getProperty("user.home"))
 }
