@@ -55,7 +55,7 @@ object Locations {
   def url(url: String): UrlLocation = UrlLocation(new java.net.URL(url))
   def temp: TempLocation = TempLocation(tmpdir)
   private val tmpdir = new File(System.getProperty("java.io.tmpdir"))
-  def relative(path: String = "")(implicit fsf: FileSystemFormatter): RelativeLocation = RelativeLocation(fsf.standard(path))
+  def relative(path: String = "")(implicit fsf: FileSystemFormatter = unixAndWindowsToStandard): RelativeLocation = RelativeLocation(fsf.standard(path))
   def current(relative: String): FileLocation = file(new File(new File("."), relative).getCanonicalPath())
 
   implicit val unixAndWindowsToStandard = FileSystem.unixAndWindowsToStandard
