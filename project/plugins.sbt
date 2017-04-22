@@ -15,3 +15,7 @@ addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.7.0")
 addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "3.0.0")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.0")
 //addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.4")
+
+//tools
+addSbtPlugin("com.gilt" % "sbt-dependency-graph-sugar" % "0.8.2")
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")

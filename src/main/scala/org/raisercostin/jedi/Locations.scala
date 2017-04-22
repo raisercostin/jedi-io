@@ -25,8 +25,9 @@ trait LocationState
 /**Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that 
  * are available in offline mode.*/
 trait UnresolvedLocationState extends LocationState
+trait ResolvedLocationState extends LocationState
 /**Trait to mark if a location is resolved to a file system.*/
-trait FileResolvedLocationState extends LocationState {
+trait FileResolvedLocationState extends ResolvedLocationState with FileVersionedLocation{self:AbsoluteBaseLocation =>
   def toFile: File
 }
 

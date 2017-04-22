@@ -69,4 +69,8 @@ Projects that are using jedi-io:
 
 ### Backlog
  - Locations.url("file://...") should create a FileLocation?
- - 
+ - add FileStore
+### Resources
+ - http://javapapers.com/java/file-attributes-using-java-nio/
+ - https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html
+ - http://www.javacodex.com/More-Examples/1/8

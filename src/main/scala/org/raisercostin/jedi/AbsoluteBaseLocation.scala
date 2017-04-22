@@ -12,6 +12,7 @@ import scala.language.reflectiveCalls
 import scala.util.Try
 import org.apache.commons.io.{FileUtils=>CommonsFileUtils}
 import org.apache.commons.io.FilenameUtils
+import java.nio.file.attribute.FileOwnerAttributeView
 
 trait AbsoluteBaseLocation extends BaseLocation with FileResolvedLocationState{
   def toUrl: java.net.URL = toFile.toURI.toURL
@@ -89,4 +90,24 @@ trait AbsoluteBaseLocation extends BaseLocation with FileResolvedLocationState{
   def isAbsolute = toFile.isAbsolute()
   /**Gets only the path part (without drive name on windows for example), and without the name of file*/
   def path: String = FilenameUtils.getPath(absolute)
+  def attributes:FileAttributes = FileAttributes(this)
+}
+/**
+ * See http://javapapers.com/java/file-attributes-using-java-nio/
+ */
+case class FileAttributes(location:AbsoluteBaseLocation){
+  def basic:BasicFileAttributes = Files.readAttributes(location.toPath,classOf[BasicFileAttributes])
+  def inode = {
+    //code from http://www.javacodex.com/More-Examples/1/8
+    val all = basic.fileKey().toString()
+    all.substring(all.indexOf("ino=")+4,all.indexOf(")"))
+  }
+  def owner:FileOwnerAttributeView = Files.getFileAttributeView(location.toPath,classOf[FileOwnerAttributeView])
+  def toMap:Map[String,Any] = {
+    val b = basic
+    Map[String,Any]("creationTime" -> b.creationTime(),
+        "lastAccessTime" -> b.lastAccessTime(),
+        "lastModifiedTime" -> b.lastModifiedTime()
+       )
+  }
 }
