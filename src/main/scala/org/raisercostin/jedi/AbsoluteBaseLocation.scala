@@ -7,14 +7,12 @@ import java.nio.file.attribute.BasicFileAttributes
 import scala.Traversable
 import scala.collection.JavaConverters._
 import scala.io.BufferedSource
-import scala.language.implicitConversions
-import scala.language.reflectiveCalls
 import scala.util.Try
-import org.apache.commons.io.{FileUtils=>CommonsFileUtils}
+import org.apache.commons.io.{ FileUtils => CommonsFileUtils }
 import org.apache.commons.io.FilenameUtils
-import java.nio.file.attribute.FileOwnerAttributeView
+import java.nio.file.FileStore
 
-trait AbsoluteBaseLocation extends BaseLocation with FileResolvedLocationState{
+trait AbsoluteBaseLocation extends BaseLocation with FileResolvedLocationState {
   def toUrl: java.net.URL = toFile.toURI.toURL
 
   override def mimeType = mimeTypeFromName.orElse(mimeTypeFromContent)
@@ -90,24 +88,45 @@ trait AbsoluteBaseLocation extends BaseLocation with FileResolvedLocationState{
   def isAbsolute = toFile.isAbsolute()
   /**Gets only the path part (without drive name on windows for example), and without the name of file*/
   def path: String = FilenameUtils.getPath(absolute)
-  def attributes:FileAttributes = FileAttributes(this)
+  def attributes: FileAttributes = FileAttributes(this)
 }
 /**
- * See http://javapapers.com/java/file-attributes-using-java-nio/
+ * See 
+ * - http://javapapers.com/java/file-attributes-using-java-nio/
+ * - https://jakubstas.com/links-nio-2
+ * - http://www.java2s.com/Tutorials/Java/Java_io/1000__Java_nio_File_Attributes.htm
+ * - https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html
+ * - http://cr.openjdk.java.net/~alanb/7017446/webrev/test/java/nio/file/Files/FileAttributes.java-.html
  */
-case class FileAttributes(location:AbsoluteBaseLocation){
-  def basic:BasicFileAttributes = Files.readAttributes(location.toPath,classOf[BasicFileAttributes])
-  def inode = {
+case class FileAttributes(location: AbsoluteBaseLocation) {
+  import java.nio.file.attribute.FileOwnerAttributeView
+  //  import java.nio.file.attribute.PosixFileAttributes
+  //  import sun.nio.fs.WindowsFileAttributes
+  //  import java.nio.file.attribute.DosFileAttributes
+  //  import com.sun.nio.zipfs.ZipFileAttributes
+  
+  def basic: BasicFileAttributes = Files.readAttributes(location.toPath, classOf[BasicFileAttributes])
+  //  private def zip:ZipFileAttributes = Files.readAttributes(location.toPath,classOf[ZipFileAttributes])
+  //  private def dos:DosFileAttributes = Files.readAttributes(location.toPath,classOf[DosFileAttributes])
+  //  def windows:WindowsFileAttributes = Files.readAttributes(location.toPath,classOf[WindowsFileAttributes])
+  //  private def posix:PosixFileAttributes = Files.readAttributes(location.toPath,classOf[PosixFileAttributes])
+
+  //  def aclView:AclFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[AclFileAttributeView])
+  //  def basicView:BasicFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[BasicFileAttributeView])
+  //  def dosView:DosFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[DosFileAttributeView])
+  //  def fileView:FileAttributeView = Files.getFileAttributeView(location.toPath,classOf[FileAttributeView])
+  //  def fileStoreView:FileStoreAttributeView = Files.getFileAttributeView(location.toPath,classOf[FileStoreAttributeView])
+  //  def posixFileView:PosixFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[PosixFileAttributeView])
+  //  def userDefinedView:UserDefinedFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[UserDefinedFileAttributeView])
+
+  def inode:Option[String] = {
     //code from http://www.javacodex.com/More-Examples/1/8
-    val all = basic.fileKey().toString()
-    all.substring(all.indexOf("ino=")+4,all.indexOf(")"))
+    Option(basic.fileKey()).map(_.toString()).map(all=>
+        all.substring(all.indexOf("ino=") + 4, all.indexOf(")")))
   }
-  def owner:FileOwnerAttributeView = Files.getFileAttributeView(location.toPath,classOf[FileOwnerAttributeView])
-  def toMap:Map[String,Any] = {
-    val b = basic
-    Map[String,Any]("creationTime" -> b.creationTime(),
-        "lastAccessTime" -> b.lastAccessTime(),
-        "lastModifiedTime" -> b.lastModifiedTime()
-       )
+  def owner: FileOwnerAttributeView = Files.getFileAttributeView(location.toPath, classOf[FileOwnerAttributeView])
+  def toMap: Map[String, Object] = {
+    Files.readAttributes(location.toPath, "*").asScala.toMap
   }
+  def fileStore: FileStore = Files.getFileStore(location.toPath);
 }

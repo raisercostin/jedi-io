@@ -24,8 +24,33 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
     assertNotNull(location.attributes.owner.getOwner())
   }
   test("inode on linux sistems") {
+    //println("inodedos="+location.attributes.dos.fileKey())
+    //println("inodeposix="+location.attributes.posix.fileKey())
     println("inode="+location.attributes.inode)
-    println(location.attributes.basic.fileKey().toString())
+    println("uniqueId="+location.uniqueId)
+    println(location.attributes.basic.fileKey())
     assertNotNull(location.attributes.inode)
+  }
+  test("hardlinks should be detected with same uniqueId") {
+    val dest = Locations.temp.randomFolderChild("test").child(location.name)
+    location.copyAsHardLink(dest,true)
+    val uniqueIdSrc = location.canonicalOverSymLinks
+    val uniqueIdDest = dest.canonicalOverSymLinks
+    assertNotNull(uniqueIdSrc)
+    assertNotNull(uniqueIdDest)
+    //This cannot be waranted in jdk8 on windows.
+    //assertEquals(uniqueIdSrc,uniqueIdDest)
+  }
+  test("hardlinks on same drive") {
+    val dest = Locations.temp.randomFolderChild("test").child(location.name)
+    location.copyAsHardLink(dest,true)
+    val dest2 = dest.parent.child(location.name).renamedIfExists
+    dest.copyAsHardLink(dest2,true)
+    val uniqueIdSrc = dest.canonicalOverSymLinks
+    val uniqueIdDest = dest2.canonicalOverSymLinks
+    assertNotNull(uniqueIdSrc)
+    assertNotNull(uniqueIdDest)
+    //This cannot be waranted in jdk8 on windows.
+    //assertEquals(uniqueIdSrc,uniqueIdDest)
   }
 }

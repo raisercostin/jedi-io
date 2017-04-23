@@ -19,14 +19,14 @@ class VersionedLocationTest extends FunSuite {
     println("version="+newlocation.version)
     println("etag="+newlocation.etag)
     assertEquals(40, newlocation.etag.size)
-    assertEquals(24, newlocation.version.size)
+    assertEquals(56, newlocation.version.size)
   }
   test("compute etag for classpath file") {
     val location = Locations.classpath("a b.jpg").asFile
     println("version="+location.version)
     println("etag="+location.etag)
     assertEquals(40, location.etag.size)
-    assertEquals(29, location.version.size)
+    assertEquals(61, location.version.size)
   }
   test("compute etags"){
     assertEquals(40, newlocation.etag.size)
