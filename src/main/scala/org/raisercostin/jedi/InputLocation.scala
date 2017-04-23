@@ -64,5 +64,9 @@ trait InputLocation extends AbsoluteBaseLocation{
     dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
     this
   }
+  def copyAsSymLink(dest: OutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+    dest.copyFromAsSymLink(this, overwriteIfAlreadyExists);
+    this
+  }
   def unzip: ZipInputLocation = new ZipInputLocation(this, None)
 }

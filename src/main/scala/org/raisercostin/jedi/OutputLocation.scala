@@ -48,7 +48,18 @@ trait OutputLocation extends AbsoluteBaseLocation{self=>
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type
   def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
-  def copyFromAsSymlink(src: InputLocation) = Files.createSymbolicLink(toPath, src.toPath)
+  def copyFromAsSymLink(src: InputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+    if (overwriteIfAlreadyExists) {
+      Files.createSymbolicLink(toPath, src.toPath)
+    } else {
+      if (exists) {
+        throw new RuntimeException("Destination file " + this + " already exists.")
+      } else {
+        Files.createSymbolicLink(toPath, src.toPath)
+      }
+    }
+    this
+  }
   def copyFromAsHardLink(src: InputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
     if (overwriteIfAlreadyExists) {
       Files.createLink(toPath, src.toPath)
