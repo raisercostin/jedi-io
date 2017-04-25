@@ -1,21 +1,15 @@
-cache:
-  directories:
-    - $HOME/.m2/repository
-    - $HOME/.sbt
-    - $HOME/.ivy2
-
 language: scala
 
 script: 
   - sbt ++$TRAVIS_SCALA_VERSION compile test:compile
 #  - sbt ++$TRAVIS_SCALA_VERSION test
-  - sbt ++$TRAVIS_SCALA_VERSION coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION coverage test coverageReport
 
   # Trick to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
 
 scala:
-  - 2.11.2
+  - 2.11.8
 #  - 2.10.4
 #  - 2.9.3
 jdk:
@@ -24,3 +18,10 @@ jdk:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.sbt
+    - $HOME/.ivy2
+
