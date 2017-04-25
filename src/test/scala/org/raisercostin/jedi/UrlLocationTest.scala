@@ -83,4 +83,10 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
       withAgent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
     assertEquals(45418, url.readContentAsText.get.length)
   }
+  //TODO start a server with a redirect http://doc.akka.io/docs/akka-http/current/scala/http/introduction.html#using-akka-http
+  test("download following redirects") {
+    val url = Locations.url("""http://www.altshop.ro/poze_produse/83096/mari/televizor-led-philips-32phh4309-88-seria-phh4309-81cm-negru-hd-ready_0.jpg""").
+      withAgent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
+    assertEquals(35127, url.readContentAsText.get.length)
+  }
 }
