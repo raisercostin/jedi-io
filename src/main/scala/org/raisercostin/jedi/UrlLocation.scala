@@ -48,7 +48,7 @@ case class UrlLocation(url: java.net.URL, agent: Option[String] = None, allowedR
         (conn.getResponseCode, conn.getHeaderField("Location")) match {
           case (200, _) =>
             conn.getInputStream
-          case (code, location) if allowedRedirects > redirects.size && location.nonEmpty && location != raw =>
+          case (code, location) if allowedRedirects > redirects.size && location!=null && location.nonEmpty && location != raw =>
             conn.disconnect()
             UrlLocation(new java.net.URL(location), agent, allowedRedirects, this +: redirects).unsafeToInputStream
           case (code, _) =>
