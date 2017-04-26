@@ -89,4 +89,23 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
       withAgent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
     assertEquals(35127, url.readContentAsText.get.length)
   }
+  test("download following redirects with a 302") {
+    val url = Locations.url("""http://httpstat.us/302""")
+      .withBrowserHeader
+      .withoutRedirect
+    assertEquals("302 Found", url.readContentAsText.get)
+  }
+  test("download following redirects with a 302 then a 200") {
+    val url = Locations.url("""http://httpstat.us/302""")
+      .withBrowserHeader
+    val text = url.readContentAsText
+    println(text)
+    assertEquals(6979, text.get.length)
+  }
+  test("download following redirects with a 302 then a 404 error") {
+    val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1152_0.jpeg""")
+      .withBrowserHeader
+    println(url.readContentAsText)
+    assertEquals(6979, url.readContentAsText.get.length)
+  }
 }

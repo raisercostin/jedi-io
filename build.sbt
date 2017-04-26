@@ -15,12 +15,13 @@ libraryDependencies ++= Seq(
 	,"junit" % "junit" % "4.10" % "test"
 	,"org.slf4j" % "slf4j-simple" % "1.7.5" % "test"
 	,"org.apache.commons" % "commons-vfs2" % "2.1" % "optional"
-  ,"commons-httpclient" % "commons-httpclient" % "3.1" % "optional"
-  ,"commons-codec" % "commons-codec" % "1.10" % "optional"
-  //,"org.apache.httpcomponents" % "httpclient" % "4.0" % "optional" //next versions of httpclient but not used by commons-vfs2
+  	,"commons-httpclient" % "commons-httpclient" % "3.1" % "optional"
+  	,"commons-codec" % "commons-codec" % "1.10" % "optional"
+  	//,"org.apache.httpcomponents" % "httpclient" % "4.0" % "optional" //next versions of httpclient but not used by commons-vfs2
 	//,"org.apache.jackrabbit" % "jackrabbit-webdav" % "1.5.2"
 	,"org.kohsuke" % "file-leak-detector" % "1.8" % "optional"
 	,"io.reactivex" %% "rxscala" % "0.26.5"
+	,"org.scalaj" %% "scalaj-http" % "2.3.0"
 )
 
 /*

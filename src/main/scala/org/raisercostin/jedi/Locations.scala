@@ -37,6 +37,7 @@ trait FileResolvedLocationState extends ResolvedLocationState with FileVersioned
  * The output will be the same irrespective of the machine that the code is running on. @see org.apache.commons.io.FilenameUtils.getFullPathNoEndSeparator
  */
 object Locations {
+  System.setProperty("sun.net.http.allowRestrictedHeaders", "true")
   val logger = org.slf4j.LoggerFactory.getLogger("locations")
   def classpath(resourcePath: String): ClassPathInputLocation =
     new ClassPathInputLocation(resourcePath)
