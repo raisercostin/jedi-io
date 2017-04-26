@@ -102,10 +102,11 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     println(text)
     assertEquals(6979, text.get.length)
   }
-  test("download following redirects with a 302 then a 404 error") {
-    val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1152_0.jpeg""")
-      .withBrowserHeader
-    println(url.readContentAsText)
-    assertEquals(6979, url.readContentAsText.get.length)
-  }
+//  
+//  test("download following redirects with a 302 then a 404 error") {
+//    val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1152_0.jpeg""")
+//      .withBrowserHeader
+//    println(url.readContentAsText)
+//    assertEquals(6979, url.readContentAsText.get.length)
+//  }
 }
