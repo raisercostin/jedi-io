@@ -108,12 +108,13 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
   }
   test("slow connection") {
     val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1682_0.jpeg""")
-    val resp = url.readContentAsText.failed.map{case e:HttpStatusException => e}.get
+    val resp = url.withoutAgent.readContentAsText.failed.map{case e:HttpStatusException => e}.get
     assert(resp.code===403)
   }  
   test("download following redirects with a 302 then a 404 error") {
     val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1682_0.jpeg""")
     val resp = url.withBrowserHeader.readContentAsText.failed.map{case e:HttpStatusException => e}.get
+    //resp.printStackTrace()
     assert(resp.code===404)
   }
 }

@@ -17,11 +17,13 @@ import org.raisercostin.jedi.impl.QueryStringUrlFunc
 import java.net.HttpURLConnection
 import scala.util.Failure
 import java.io.IOException
-
-case class HttpConfig(header: Map[String, String] = Map(), agent: Option[String] = None, allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000, useScalaJHttp:Boolean = true) {
+object HttpConfig{
+  val defaultConfig:HttpConfig = HttpConfig().withBrowserHeader
+}
+case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000, useScalaJHttp:Boolean = true) {
   def followRedirects = allowedRedirects > 0
   def configureConnection(conn: HttpURLConnection): Unit = {
-    agent.foreach(agent => conn.setRequestProperty("User-Agent", agent))
+    //agent.foreach(agent => conn.setRequestProperty("User-Agent", agent))
     header.foreach(element => conn.setRequestProperty(element._1, element._2))
     conn.setInstanceFollowRedirects(followRedirects)
     conn.setConnectTimeout(connectionTimeout)
@@ -42,9 +44,11 @@ case class HttpConfig(header: Map[String, String] = Map(), agent: Option[String]
   //Http.configure(_ setFollowRedirects true)(q OK as.String)
   //"Connection" -> "Keep-Alive", "Cookie" -> cookies)
   def withJavaImpl:HttpConfig = this.copy(useScalaJHttp = false)
+  def withAgent(newAgent: String) = this.copy(header = header + ("User-Agent" -> newAgent))
+  def withoutAgent = this.copy(header = header - "User-Agent")
 }
 
-case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig()) extends InputLocation { self =>
+case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig.defaultConfig) extends InputLocation { self =>
   def raw = url.toExternalForm()
   //TODO dump intermediate requests/responses
   override def toUrl: java.net.URL = url
@@ -147,15 +151,16 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
    * http://stackoverflow.com/questions/15834350/httpurlconnection-closing-io-streams
    */
   def closeStream(stream: =>InputStream) = Try {
-    stream.close
+    if(stream != null)
+      stream.close
   }.recover { case e => SlfLogger.log.debug("Couldn't close input/error stream to " + this, e) }
   //  def closeCurrentSession(conn: HttpURLConnection) = Seq(
   //    //conn.disconnect()
   //    Try { conn.getInputStream.close() }, Try { conn.getErrorStream.close() }).collect { case Failure(e) => e }.map(e => SlfLogger.log.info("Couldn't close input/error stream to " + this, e))
 
   def withSensibleAgent = withAgent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
-  def withAgent(newAgent: String) = this.copy(config = config.copy(agent = Some(newAgent)))
-  def withoutAgent = this.copy(config = config.copy(agent = None))
+  def withAgent(newAgent: String) = this.copy(config = config.withAgent(newAgent))
+  def withoutAgent = this.copy(config = config.withoutAgent)
   def withBrowserHeader = this.copy(config = config.withBrowserHeader)
   def withoutRedirect = this.copy(config = config.copy(allowedRedirects = 0))
   def resolved: ResolvedUrlLocation = ResolvedUrlLocation(this)
@@ -164,4 +169,4 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
 //TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.  
 case class ResolvedUrlLocation(location: UrlLocation) {
 }
-case class HttpStatusException(message:String, code:Int, url:UrlLocation) extends IOException
+case class HttpStatusException(message:String, code:Int, url:UrlLocation) extends IOException(message)
