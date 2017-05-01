@@ -119,13 +119,14 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     assert(resp.code === 404)
   }
   test("test multiple urls") {
-    """https://www.altshop.ro/poze_produse/52984/mari/tetier%C4%83-7-inch-pni-hm700a-b-negru-cu-fermoar_0.jpg""".stripMargin.lines.map(urlString => {
+    val res = """https://www.altshop.ro/poze_produse/52984/mari/tetier%C4%83-7-inch-pni-hm700a-b-negru-cu-fermoar_0.jpg""".stripMargin.lines.map(urlString => {
       val url = Locations.url(urlString)
       (url, url.readContentAsText.map(_.length))
     }).map {
       case (url, res) =>
         println(s"\n*******************\n\n$url\n\n" + res)
         res
-    }.collect { case Failure(e) => e }.size
+    }.collect { case Failure(e) => e }
+    assert(res.size === 0, "No error should be thrown here.")
   }
 }
