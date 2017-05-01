@@ -102,6 +102,9 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
       .withBrowserHeader
     val text = url.readContentAsText
     assertEquals(6979, text.get.length)
+    val text2 = url.withJavaImpl.readContentAsText
+    assertEquals(6979, text2.get.length)
+    assert(text.get === text2.get)
   }
   test("slow connection") {
     val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1682_0.jpeg""")

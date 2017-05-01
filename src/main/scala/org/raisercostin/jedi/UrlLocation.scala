@@ -41,6 +41,7 @@ case class HttpConfig(header: Map[String, String] = Map(), agent: Option[String]
   //MIsid 20b3258abfd25dfda1d9a2a04088f577
   //Http.configure(_ setFollowRedirects true)(q OK as.String)
   //"Connection" -> "Keep-Alive", "Cookie" -> cookies)
+  def withJavaImpl:HttpConfig = this.copy(useScalaJHttp = false)
 }
 
 case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig()) extends InputLocation { self =>
@@ -158,6 +159,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   def withBrowserHeader = this.copy(config = config.withBrowserHeader)
   def withoutRedirect = this.copy(config = config.copy(allowedRedirects = 0))
   def resolved: ResolvedUrlLocation = ResolvedUrlLocation(this)
+  def withJavaImpl = this.copy(config = config.withJavaImpl)
 }
 //TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.  
 case class ResolvedUrlLocation(location: UrlLocation) {
