@@ -16,8 +16,9 @@ import scalaj.http.HttpConstants
 import org.raisercostin.jedi.impl.QueryStringUrlFunc
 import java.net.HttpURLConnection
 import scala.util.Failure
+import java.io.IOException
 
-case class HttpConfig(header: Map[String, String] = Map(), agent: Option[String] = None, allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000) {
+case class HttpConfig(header: Map[String, String] = Map(), agent: Option[String] = None, allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000, useScalaJHttp:Boolean = true) {
   def followRedirects = allowedRedirects > 0
   def configureConnection(conn: HttpURLConnection): Unit = {
     agent.foreach(agent => conn.setRequestProperty("User-Agent", agent))
@@ -70,10 +71,12 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
       if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
       len
   }
-  protected override def unsafeToInputStream: InputStream = {
-    //unsafeToInputStreamUsingScalaJHttp
-    unsafeToInputStreamUsingJava
-  }
+  protected override def unsafeToInputStream: InputStream =
+    if(config.useScalaJHttp)
+      unsafeToInputStreamUsingScalaJHttp
+    else
+      unsafeToInputStreamUsingJava
+
   private def createRequester(url: String) = {
     import scalaj.http.Http
     import scalaj.http.HttpOptions
@@ -88,7 +91,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
           SlfLogger.log.info(s"ResponseHeaders for $raw:\n    " + conn.getHeaderFields.asScala.mkString("\n    "))
       },
       params = Nil,
-      headers = Seq("User-Agent" -> "scalaj-http/1.0"),
+      headers = config.header.toSeq,//agent.map(ag=>Seq("User-Agent" -> ag)).getOrElse(Seq()),//"scalaj-http/1.0"),
       options = HttpConstants.defaultOptions,
       proxyConfig = None,
       charset = HttpConstants.utf8,
@@ -103,7 +106,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   def unsafeToInputStreamUsingScalaJHttp: InputStream = {
     createRequester(raw).withUnclosedConnection.exec {
       case (code, map, stream) =>
-        handleCode(code, map.getOrElse("Location", Seq()).headOption.getOrElse(null), stream, map)
+        handleCode(code, map.getOrElse("Location", Seq()).headOption.getOrElse(null), stream, Try{map})
         stream
     }.body
   }
@@ -117,14 +120,14 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
         SlfLogger.log.info("header:\n" + config.header.mkString("\n    "))
         SlfLogger.log.info(s"RequestHeaders for $raw:\n    " + conn.getRequestProperties.asScala.mkString("\n    "))
         //if (SlfLogger.log.isDebugEnabled())
-        SlfLogger.log.info(s"ResponseHeaders for $raw:\n    " + conn.getHeaderFields.asScala.mkString("\n    "))
-        handleCode(conn.getResponseCode, conn.getHeaderField("Location"), conn.getInputStream, conn.getHeaderFields.asScala.toMap)
+        SlfLogger.log.info(s"ResponseHeaders for $raw:\n    " + Try{conn.getHeaderFields.asScala.mkString("\n    ")})
+        handleCode(conn.getResponseCode, conn.getHeaderField("Location"), {conn.getInputStream}, Try{conn.getHeaderFields.asScala.toMap})
       case conn =>
         conn.getInputStream
     }
   }
 
-  def handleCode(code: Int, location: String, stream: InputStream, map: => Map[String, _]): InputStream =
+  def handleCode(code: Int, location: String, stream: =>InputStream, map: => Try[Map[String, _]]): InputStream =
     (code, location) match {
       case (200, _) =>
         stream
@@ -134,17 +137,17 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
         UrlLocation(new java.net.URL(location), this +: redirects, config).unsafeToInputStream
       case (code, _) =>
         closeStream(stream)
-        throw new RuntimeException(s"Got $code response from $this. A 200 code is needed to get an InputStream. The header is\n    " + map.mkString("\n    ")
-          + " After " + redirects.size + " redirects:\n    " + redirects.mkString("\n    "))
+        throw new HttpStatusException(s"Got $code response from $this. A 200 code is needed to get an InputStream. The header is\n    " + map.getOrElse(Map()).mkString("\n    ")
+          + " After " + redirects.size + " redirects:\n    " + redirects.mkString("\n    "),code,this)
     }
   /**
    * Shouldn't disconnect as it "Indicates that other requests to the server are unlikely in the near future."
    * We should just close() on the input/output/error streams
    * http://stackoverflow.com/questions/15834350/httpurlconnection-closing-io-streams
    */
-  def closeStream(stream: InputStream) = Try {
+  def closeStream(stream: =>InputStream) = Try {
     stream.close
-  }.recover { case e => SlfLogger.log.info("Couldn't close input/error stream to " + this, e) }
+  }.recover { case e => SlfLogger.log.debug("Couldn't close input/error stream to " + this, e) }
   //  def closeCurrentSession(conn: HttpURLConnection) = Seq(
   //    //conn.disconnect()
   //    Try { conn.getInputStream.close() }, Try { conn.getErrorStream.close() }).collect { case Failure(e) => e }.map(e => SlfLogger.log.info("Couldn't close input/error stream to " + this, e))
@@ -159,3 +162,4 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
 //TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.  
 case class ResolvedUrlLocation(location: UrlLocation) {
 }
+case class HttpStatusException(message:String, code:Int, url:UrlLocation) extends IOException

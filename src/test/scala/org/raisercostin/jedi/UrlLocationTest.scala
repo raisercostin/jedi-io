@@ -11,6 +11,7 @@ import java.util.regex.Pattern.Loop
 
 import Locations._
 import org.scalatest.Matchers._
+import java.io.FileNotFoundException
 
 @RunWith(classOf[JUnitRunner])
 class UrlLocationTest extends FunSuite with BaseLocationTest {
@@ -93,25 +94,23 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     val url = Locations.url("""http://httpstat.us/302""")
       .withBrowserHeader
       .withoutRedirect
-    assertEquals("302 Found", url.readContentAsText.get)
+    val thrown:HttpStatusException = url.readContentAsText.failed.map{case e:HttpStatusException => e}.get
+    assert(thrown.code===302)
   }
   test("download following redirects with a 302 then a 200") {
     val url = Locations.url("""http://httpstat.us/302""")
       .withBrowserHeader
     val text = url.readContentAsText
-    println(text)
     assertEquals(6979, text.get.length)
   }
   test("slow connection") {
     val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1682_0.jpeg""")
-    val text = url.readContentAsText
-    println(text)
-    assertEquals(6979, text.get.length)
+    val resp = url.readContentAsText.failed.map{case e:HttpStatusException => e}.get
+    assert(resp.code===403)
   }  
   test("download following redirects with a 302 then a 404 error") {
-    val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1152_0.jpeg""")
-      .withBrowserHeader
-    println(url.readContentAsText)
-    assertEquals(6979, url.readContentAsText.get.length)
+    val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1682_0.jpeg""")
+    val resp = url.withBrowserHeader.readContentAsText.failed.map{case e:HttpStatusException => e}.get
+    assert(resp.code===404)
   }
 }
