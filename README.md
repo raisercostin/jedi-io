@@ -1,16 +1,21 @@
-# Status
+# Jedi IO
 
+## Status
 [![Download](https://api.bintray.com/packages/raisercostin/maven/jedi-io/images/download.svg)](https://bintray.com/raisercostin/maven/jedi-io/_latestVersion)
 [![Build Status](https://travis-ci.org/raisercostin/jedi-io.svg?branch=master)](https://travis-ci.org/raisercostin/jedi-io)
 [![Codacy Badge](https://www.codacy.com/project/badge/5cc4b6b21f694317ab8beec05342c7b5)](https://www.codacy.com/app/raisercostin/jedi-io)
-<!--[![codecov.io](http://codecov.io/github/raisercostin/jedi-io/coverage.svg?branch=master)](http://codecov.io/github/raisercostin/jedi-io?branch=master)-->
 [![codecov](https://codecov.io/gh/raisercostin/jedi-io/branch/master/graph/badge.svg)](https://codecov.io/gh/raisercostin/jedi-io)
+<!--[![codecov.io](http://codecov.io/github/raisercostin/jedi-io/coverage.svg?branch=master)](http://codecov.io/github/raisercostin/jedi-io?branch=master)-->
 
-# Jedi IO offers Input/output locations #
-
+## Description
+Uniform, fluent access to files, urls and other resources API from java and scala.
 The main purpose of this project is to provide uniform, fluent access to various input and output data locations.
 
-## Samples ##
+## Features
+- integrate apache commons vfs via Locations.vfs("...")
+
+# Usage
+## Samples
  ```
 	//Reading from a file:
 	Locations.file("/home/costin/myfile.txt").readContent
@@ -33,10 +38,7 @@ The main purpose of this project is to provide uniform, fluent access to various
 
 For more samples see [LocationsTest.scala](src/test/scala/org/raisercostin/util/io/LocationsTest.scala)
 
-## Done
-- integrate apache commons vfs via Locations.vfs("...")
-
-## How to use ##
+## Library
  - from sbt
 
  ```
@@ -48,7 +50,8 @@ For more samples see [LocationsTest.scala](src/test/scala/org/raisercostin/util/
  resolvers += "raisercostin repository" at "http://dl.bintray.com/raisercostin/maven"
  ```
 
-## Development ##
+# Development
+
 Projects that are using jedi-io:
  - https://github.com/raisercostin/ownit
  - https://github.com/raisercostin/my-scala-scripts (see here a script for bulk uploading/importing maven artefacts from a repository/svn/folder to bintray)
@@ -60,7 +63,7 @@ Projects that are using jedi-io:
  sbt> release skip-tests
  ```
 
-### Roadmap
+## Roadmap
  - investigate
    - scala arm - http://jsuereth.com/scala-arm/continuations.html
    - scala io - https://github.com/scala-incubator/scala-io
@@ -68,10 +71,11 @@ Projects that are using jedi-io:
    - akka streams -
  - make it async
 
-### Backlog
+## Backlog
  - Locations.url("file://...") should create a FileLocation?
  - add FileStore
-### Resources
+
+## Resources
  - http://javapapers.com/java/file-attributes-using-java-nio/
  - https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html
  - http://www.javacodex.com/More-Examples/1/8
