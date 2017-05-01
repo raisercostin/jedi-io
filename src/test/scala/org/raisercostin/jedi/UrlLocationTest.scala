@@ -12,6 +12,7 @@ import java.util.regex.Pattern.Loop
 import Locations._
 import org.scalatest.Matchers._
 import java.io.FileNotFoundException
+import scala.util.Failure
 
 @RunWith(classOf[JUnitRunner])
 class UrlLocationTest extends FunSuite with BaseLocationTest {
@@ -94,8 +95,8 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     val url = Locations.url("""http://httpstat.us/302""")
       .withBrowserHeader
       .withoutRedirect
-    val thrown:HttpStatusException = url.readContentAsText.failed.map{case e:HttpStatusException => e}.get
-    assert(thrown.code===302)
+    val thrown: HttpStatusException = url.readContentAsText.failed.map { case e: HttpStatusException => e }.get
+    assert(thrown.code === 302)
   }
   test("download following redirects with a 302 then a 200") {
     val url = Locations.url("""http://httpstat.us/302""")
@@ -108,13 +109,23 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
   }
   test("slow connection") {
     val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1682_0.jpeg""")
-    val resp = url.withoutAgent.readContentAsText.failed.map{case e:HttpStatusException => e}.get
-    assert(resp.code===403)
-  }  
+    val resp = url.withoutAgent.readContentAsText.failed.map { case e: HttpStatusException => e }.get
+    assert(resp.code === 403)
+  }
   test("download following redirects with a 302 then a 404 error") {
     val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1682_0.jpeg""")
-    val resp = url.withBrowserHeader.readContentAsText.failed.map{case e:HttpStatusException => e}.get
+    val resp = url.withBrowserHeader.readContentAsText.failed.map { case e: HttpStatusException => e }.get
     //resp.printStackTrace()
-    assert(resp.code===404)
+    assert(resp.code === 404)
+  }
+  test("test multiple urls") {
+    """https://www.altshop.ro/poze_produse/52984/mari/tetier%C4%83-7-inch-pni-hm700a-b-negru-cu-fermoar_0.jpg""".stripMargin.lines.map(urlString => {
+      val url = Locations.url(urlString)
+      (url, url.readContentAsText.map(_.length))
+    }).map {
+      case (url, res) =>
+        println(s"\n*******************\n\n$url\n\n" + res)
+        res
+    }.collect { case Failure(e) => e }.size
   }
 }

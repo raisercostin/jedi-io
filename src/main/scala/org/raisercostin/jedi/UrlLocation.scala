@@ -17,10 +17,12 @@ import org.raisercostin.jedi.impl.QueryStringUrlFunc
 import java.net.HttpURLConnection
 import scala.util.Failure
 import java.io.IOException
-object HttpConfig{
-  val defaultConfig:HttpConfig = HttpConfig().withBrowserHeader
+object HttpConfig {
+  val defaultConfig: HttpConfig = HttpConfig(header = Map(
+    "User-Agent" -> "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
+    "Accept" -> "*/*"))
 }
-case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000, useScalaJHttp:Boolean = true) {
+case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000, useScalaJHttp: Boolean = true) {
   def followRedirects = allowedRedirects > 0
   def configureConnection(conn: HttpURLConnection): Unit = {
     //agent.foreach(agent => conn.setRequestProperty("User-Agent", agent))
@@ -43,7 +45,7 @@ case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int
   //MIsid 20b3258abfd25dfda1d9a2a04088f577
   //Http.configure(_ setFollowRedirects true)(q OK as.String)
   //"Connection" -> "Keep-Alive", "Cookie" -> cookies)
-  def withJavaImpl:HttpConfig = this.copy(useScalaJHttp = false)
+  def withJavaImpl: HttpConfig = this.copy(useScalaJHttp = false)
   def withAgent(newAgent: String) = this.copy(header = header + ("User-Agent" -> newAgent))
   def withoutAgent = this.copy(header = header - "User-Agent")
 }
@@ -77,7 +79,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
       len
   }
   protected override def unsafeToInputStream: InputStream =
-    if(config.useScalaJHttp)
+    if (config.useScalaJHttp)
       unsafeToInputStreamUsingScalaJHttp
     else
       unsafeToInputStreamUsingJava
@@ -96,7 +98,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
           SlfLogger.log.info(s"ResponseHeaders for $raw:\n    " + conn.getHeaderFields.asScala.mkString("\n    "))
       },
       params = Nil,
-      headers = config.header.toSeq,//agent.map(ag=>Seq("User-Agent" -> ag)).getOrElse(Seq()),//"scalaj-http/1.0"),
+      headers = config.header.toSeq, //agent.map(ag=>Seq("User-Agent" -> ag)).getOrElse(Seq()),//"scalaj-http/1.0"),
       options = HttpConstants.defaultOptions,
       proxyConfig = None,
       charset = HttpConstants.utf8,
@@ -111,7 +113,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   def unsafeToInputStreamUsingScalaJHttp: InputStream = {
     createRequester(raw).withUnclosedConnection.exec {
       case (code, map, stream) =>
-        handleCode(code, map.getOrElse("Location", Seq()).headOption.getOrElse(null), stream, Try{map})
+        handleCode(code, map.getOrElse("Location", Seq()).headOption.getOrElse(null), stream, Try { map })
         stream
     }.body
   }
@@ -125,14 +127,14 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
         SlfLogger.log.info("header:\n" + config.header.mkString("\n    "))
         SlfLogger.log.info(s"RequestHeaders for $raw:\n    " + conn.getRequestProperties.asScala.mkString("\n    "))
         //if (SlfLogger.log.isDebugEnabled())
-        SlfLogger.log.info(s"ResponseHeaders for $raw:\n    " + Try{conn.getHeaderFields.asScala.mkString("\n    ")})
-        handleCode(conn.getResponseCode, conn.getHeaderField("Location"), {conn.getInputStream}, Try{conn.getHeaderFields.asScala.toMap})
+        SlfLogger.log.info(s"ResponseHeaders for $raw:\n    " + Try { conn.getHeaderFields.asScala.mkString("\n    ") })
+        handleCode(conn.getResponseCode, conn.getHeaderField("Location"), { conn.getInputStream }, Try { conn.getHeaderFields.asScala.toMap })
       case conn =>
         conn.getInputStream
     }
   }
 
-  def handleCode(code: Int, location: String, stream: =>InputStream, map: => Try[Map[String, _]]): InputStream =
+  def handleCode(code: Int, location: String, stream: => InputStream, map: => Try[Map[String, _]]): InputStream =
     (code, location) match {
       case (200, _) =>
         stream
@@ -143,15 +145,15 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
       case (code, _) =>
         closeStream(stream)
         throw new HttpStatusException(s"Got $code response from $this. A 200 code is needed to get an InputStream. The header is\n    " + map.getOrElse(Map()).mkString("\n    ")
-          + " After " + redirects.size + " redirects:\n    " + redirects.mkString("\n    "),code,this)
+          + " After " + redirects.size + " redirects:\n    " + redirects.mkString("\n    "), code, this)
     }
   /**
    * Shouldn't disconnect as it "Indicates that other requests to the server are unlikely in the near future."
    * We should just close() on the input/output/error streams
    * http://stackoverflow.com/questions/15834350/httpurlconnection-closing-io-streams
    */
-  def closeStream(stream: =>InputStream) = Try {
-    if(stream != null)
+  def closeStream(stream: => InputStream) = Try {
+    if (stream != null)
       stream.close
   }.recover { case e => SlfLogger.log.debug("Couldn't close input/error stream to " + this, e) }
   //  def closeCurrentSession(conn: HttpURLConnection) = Seq(
@@ -169,4 +171,4 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
 //TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.  
 case class ResolvedUrlLocation(location: UrlLocation) {
 }
-case class HttpStatusException(message:String, code:Int, url:UrlLocation) extends IOException(message)
+case class HttpStatusException(message: String, code: Int, url: UrlLocation) extends IOException(message)
