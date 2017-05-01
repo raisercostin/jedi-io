@@ -7,6 +7,7 @@ import java.nio.file.Path
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 import org.raisercostin.jedi.impl.{FileSystemFormatter,JediFileSystem}
+import org.raisercostin.jedi.impl.Predef2
 
 /**
  * Should take into consideration several composable/ortogonal aspects:
@@ -54,7 +55,7 @@ object Locations {
 
   private def isAbsolute(path: String) = new File(path).isAbsolute()
   private def createAbsoluteFile(path: String) = {
-    require(path != null, "Path should not be null")
+    Predef2.requireArgNotNull(path, "path")
     if (isAbsolute(path))
       new FileLocation(path)
     else

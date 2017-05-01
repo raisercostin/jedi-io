@@ -6,6 +6,7 @@ import java.io.InputStream
 import scala.util.Failure
 import scala.util.Try
 import org.raisercostin.jedi.impl.JediFileSystem
+import org.raisercostin.jedi.impl.Predef2
 
 object ClassPathInputLocationLike {
   private def getDefaultClassLoader(): ClassLoader = {
@@ -24,7 +25,7 @@ trait ClassPathInputLocationLike extends NavigableInputLocation { self =>
   val resourcePath = initialResourcePath.stripPrefix("/")
   val resource = {
     val res = getSpecialClassLoader.getResource(resourcePath);
-    require(res != null, s"Couldn't get a stream from $self");
+    Predef2.requireNotNull(res, s"Couldn't get a stream from $self");
     res
   }
   override def toUrl: java.net.URL = resource
@@ -45,7 +46,7 @@ trait ClassPathInputLocationLike extends NavigableInputLocation { self =>
 }
 case class ClassPathInputLocation(initialResourcePath: String) extends ClassPathInputLocationLike {self=>
   override type Repr = self.type
-  require(initialResourcePath != null)
+  Predef2.requireArgNotNull(initialResourcePath,"initialResourcePath")
   def build(path:String): Repr = new ClassPathInputLocation(path)
   def asUrl:UrlLocation = Locations.url("file:"+absolute)
 }
