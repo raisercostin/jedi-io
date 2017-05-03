@@ -13,6 +13,16 @@ The main purpose of this project is to provide uniform, fluent access to various
 
 ## Features
 - integrate apache commons vfs via Locations.vfs("...")
+- UrlLocation transparently manages
+  - handle redirects
+  - good RequestHeader defaults
+  - reuse already opened HttpConnections
+  - use proxy if using scalaj/http library
+  - manage backpresure from server
+    - [TODO] connection timeout temporarly
+    - [TODO] maximum connections/ip-hostname? for a specified timeframe?
+    - [TODO] delay between requests to same server
+  - [TODO] non-blocking IO returning Future/Observable ?
 
 # Usage
 ## Samples

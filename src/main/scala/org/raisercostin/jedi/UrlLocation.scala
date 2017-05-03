@@ -49,7 +49,9 @@ case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int
   def withAgent(newAgent: String) = this.copy(header = header + ("User-Agent" -> newAgent))
   def withoutAgent = this.copy(header = header - "User-Agent")
 }
-
+/**
+ * See here for good behaviour: https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/
+ */
 case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig.defaultConfig) extends InputLocation { self =>
   def raw = url.toExternalForm()
   //TODO dump intermediate requests/responses
@@ -156,9 +158,6 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
     if (stream != null)
       stream.close
   }.recover { case e => SlfLogger.log.debug("Couldn't close input/error stream to " + this, e) }
-  //  def closeCurrentSession(conn: HttpURLConnection) = Seq(
-  //    //conn.disconnect()
-  //    Try { conn.getInputStream.close() }, Try { conn.getErrorStream.close() }).collect { case Failure(e) => e }.map(e => SlfLogger.log.info("Couldn't close input/error stream to " + this, e))
 
   def withSensibleAgent = withAgent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
   def withAgent(newAgent: String) = this.copy(config = config.withAgent(newAgent))
