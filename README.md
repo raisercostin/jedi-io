@@ -23,6 +23,24 @@ The main purpose of this project is to provide uniform, fluent access to various
     - [TODO] maximum connections/ip-hostname? for a specified timeframe?
     - [TODO] delay between requests to same server
   - [TODO] non-blocking IO returning Future/Observable ?
+- Version and Etag that is changed if file is changed. A change version/tag doesn't warranty a change in file content.
+- Types of Locations
+  - Abstract Locations
+    - InputLocation - locations that can be read
+    - OutputLocation - locations that can be written
+    - InOutLocation - location that can be read/written 
+    - RelativeLocation - part of a location. Cannot be resolved to some content.
+    - NavigableLocation - location for which you can find parent/childrens/descendants.
+    - VersionedLocation - location trait with Version/Etag/UniqueId 
+  - Fizical Locations
+    - FileLocation
+    - MemoryLocation - read/write in memory content - useful for tests.
+    - ClasspathLocation - InputLocation from classpath.
+    - Stream Location - location from a InputStream. Might not be reopened.
+    - TempLocation - location in the temporary file system.
+    - UrlLocation - location from a url. Follows redirects if needed
+    - VfsLocation - location based on [Apache-Vfs library](https://commons.apache.org/proper/commons-vfs/filesystems.html)
+    - ZipInputLocation - location around zip files
 
 # Usage
 ## Samples
@@ -73,17 +91,19 @@ Projects that are using jedi-io:
  sbt> release skip-tests
  ```
 
-## Roadmap
+## Backlog
+ - make it async
+ - make a small 2panel file manager - see trolCommander
+ - Locations.url("file://...") should create a FileLocation?
+ - add FileStore
+ - AddHttpsWritable via vfs - http://detailfocused.blogspot.ro/2009/06/add-plugin-for-apache-vfs.html
+ - add Locations:
+   - StreamProviderLocation - location that knows how to open a stream
  - investigate
    - scala arm - http://jsuereth.com/scala-arm/continuations.html
    - scala io - https://github.com/scala-incubator/scala-io
    - spray - 
    - akka streams -
- - make it async
-
-## Backlog
- - Locations.url("file://...") should create a FileLocation?
- - add FileStore
 
 ## Resources
  - http://javapapers.com/java/file-attributes-using-java-nio/

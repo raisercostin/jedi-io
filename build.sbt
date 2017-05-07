@@ -11,9 +11,9 @@ scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 libraryDependencies ++= Seq(
 	"commons-io" % "commons-io" % "2.4"
 	,"org.slf4j" % "slf4j-api" % "1.7.5"
-	,"org.scalatest" %% "scalatest" % "2.2.4" % "test"
-	,"junit" % "junit" % "4.10" % "test"
-	,"org.slf4j" % "slf4j-simple" % "1.7.5" % "test"
+	,"org.scalatest" %% "scalatest" % "3.0.1" % Test
+	,"junit" % "junit" % "4.10" % Test
+	,"org.slf4j" % "slf4j-simple" % "1.7.5" % Test
 	,"org.apache.commons" % "commons-vfs2" % "2.1" % "optional"
   	,"commons-httpclient" % "commons-httpclient" % "3.1" % "optional"
   	,"commons-codec" % "commons-codec" % "1.10" % "optional"
