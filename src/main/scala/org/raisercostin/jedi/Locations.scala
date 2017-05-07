@@ -18,8 +18,9 @@ import org.raisercostin.jedi.impl.Predef2
  *
  * In principle should be agnostic to these aspects and only at runtime will depend on the local environment.
  */
+trait InOutLocation extends InputLocation with OutputLocation
 trait NavigableInputLocation extends InputLocation with NavigableLocation
-trait NavigableInOutLocation extends NavigableInputLocation with NavigableOutputLocation
+trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation
 
 /**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
 trait LocationState
@@ -27,10 +28,6 @@ trait LocationState
  * are available in offline mode.*/
 trait UnresolvedLocationState extends LocationState
 trait ResolvedLocationState extends LocationState
-/**Trait to mark if a location is resolved to a file system.*/
-trait FileResolvedLocationState extends ResolvedLocationState with FileVersionedLocation{self:AbsoluteBaseLocation =>
-  def toFile: File
-}
 
 /**
  * file(*) - will refer to the absolute path passed as parameter or to a file relative to current directory new File(".") which should be the same as System.getProperty("user.dir") .

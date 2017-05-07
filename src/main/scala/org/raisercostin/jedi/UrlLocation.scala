@@ -53,6 +53,7 @@ case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int
  * See here for good behaviour: https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/
  */
 case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig.defaultConfig) extends InputLocation { self =>
+  def exists = ???
   def raw = url.toExternalForm()
   //TODO dump intermediate requests/responses
   override def toUrl: java.net.URL = url
@@ -80,7 +81,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
       if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
       len
   }
-  protected override def unsafeToInputStream: InputStream =
+  override def unsafeToInputStream: InputStream =
     if (config.useScalaJHttp)
       unsafeToInputStreamUsingScalaJHttp
     else

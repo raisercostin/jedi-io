@@ -56,7 +56,7 @@ trait VersionedLocation extends ResolvedLocationState {
   def weakETag: String = throw new RuntimeException("Is not clear how to compute them.")
 }
 
-trait FileVersionedLocation extends VersionedLocation { self: AbsoluteBaseLocation =>
+trait FileVersionedLocation extends VersionedLocation { self: FileAbsoluteBaseLocation =>
   def uniqueId: String = attributes.inode.getOrElse(DigestUtils.sha1Hex(canonicalOverSymLinks))
   def canonical = toFile.getCanonicalPath
   def canonicalOverSymLinks = {

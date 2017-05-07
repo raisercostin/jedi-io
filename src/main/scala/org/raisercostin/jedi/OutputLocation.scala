@@ -13,10 +13,10 @@ import scala.language.reflectiveCalls
 import Locations.logger
 import scala.annotation.tailrec
 
-
+//TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation{self=>
   type Repr = self.type
-  protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
+  protected def unsafeToOutputStream: OutputStream
   protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream, "UTF-8"))
   protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream, StandardCharsets.UTF_8), true)
 
@@ -25,17 +25,8 @@ trait OutputLocation extends AbsoluteBaseLocation{self=>
   def usingPrintWriter[T](op: PrintWriter => T): T = using(unsafeToPrintWriter)(op)
 
   def append: Boolean
-  def moveTo(dest: OutputLocation): this.type = {
-    FileUtils.moveFile(toFile, dest.toFile)
-    this
-  }
-  def deleteIfExists: Repr = {
-    if (exists) {
-      logger.info(s"delete existing $absolute")
-      impl.ApacheFileUtils.forceDelete(toPath)
-    }
-    this
-  }
+  def moveTo(dest: OutputLocation): this.type = ???
+  def deleteIfExists: Repr = ???
   def delete: Repr = {
     if (exists)
       deleteIfExists
@@ -48,7 +39,24 @@ trait OutputLocation extends AbsoluteBaseLocation{self=>
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type
   def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
-  def copyFromAsSymLink(src: InputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+}
+trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation{
+  protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
+   override def moveTo(dest: OutputLocation): this.type = dest match {
+    case d:FileOutputLocation=>
+      FileUtils.moveFile(toFile, d.toFile)
+      this
+    case _ =>
+      ???
+  }
+  override def deleteIfExists: Repr = {
+    if (exists) {
+      logger.info(s"delete existing $absolute")
+      impl.ApacheFileUtils.forceDelete(toPath)
+    }
+    this
+  }
+ def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
     if (overwriteIfAlreadyExists) {
       Files.createSymbolicLink(toPath, src.toPath)
     } else {
@@ -60,7 +68,7 @@ trait OutputLocation extends AbsoluteBaseLocation{self=>
     }
     this
   }
-  def copyFromAsHardLink(src: InputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+  def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
     if (overwriteIfAlreadyExists) {
       Files.createLink(toPath, src.toPath)
     } else {

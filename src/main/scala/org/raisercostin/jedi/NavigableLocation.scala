@@ -70,7 +70,7 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
       name + "." + ext
     else name
 }
-trait NavigableLocation extends AbsoluteBaseLocation with BaseNavigableLocation{ self =>
+trait NavigableLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation{ self =>
   override type Repr = self.type
   //TODO review these
   override protected def repr: Repr = toRepr2(self)

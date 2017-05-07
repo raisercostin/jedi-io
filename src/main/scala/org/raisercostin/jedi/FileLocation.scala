@@ -14,7 +14,7 @@ import rx.lang.scala.Observable
 import rx.lang.scala.Subscription
 import scala.util.control.NonFatal
 
-trait FileLocationLike extends NavigableInOutLocation { self =>
+trait FileLocationLike extends NavigableInOutLocation with FileInputLocation with FileOutputLocation{ self =>
   override type Repr = self.type
   def fileFullPath: String
   def append: Boolean
@@ -23,7 +23,7 @@ trait FileLocationLike extends NavigableInOutLocation { self =>
   def asInput: NavigableInputLocation = self
   lazy val toFile: File = new File(fileFullPath)
   override def toPath: Path = Paths.get(fileFullPath)
-  protected override def unsafeToInputStream: InputStream = new FileInputStream(toFile)
+  override def unsafeToInputStream: InputStream = new FileInputStream(toFile)
   //should not throw exception but return Try?
   def checkedChild(child: String): String = { require(!child.endsWith(" "), "Child [" + child + "] has trailing spaces"); child }
   //import org.raisercostin.util.MimeTypesUtils2

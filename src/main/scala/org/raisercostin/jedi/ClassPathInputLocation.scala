@@ -33,7 +33,7 @@ trait ClassPathInputLocationLike extends NavigableInputLocation { self =>
   override def absolute: String = toUrl.toURI().getPath()
   //Try{toFile.getAbsolutePath()}.recover{case e:Throwable => Option(toUrl).map(_.toExternalForm).getOrElse("unfound classpath://" + resourcePath) }.get
   def toFile: File = Try { new File(toUrl.toURI()) }.recoverWith { case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + self, e)) }.get
-  protected override def unsafeToInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
+  override def unsafeToInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
   ///def toWrite = Locations.file(toFile.getAbsolutePath)
   override def parentName = {
     val index = initialResourcePath.lastIndexOf("/")

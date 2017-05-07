@@ -10,15 +10,15 @@ import scala.util.Try
 
 import org.apache.commons.io.IOUtils
 
-trait InputLocation extends AbsoluteBaseLocation{
-  //import org.apache.commons.io.input.BOMInputStream
-  //import org.apache.commons.io.IOUtils
-  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
-  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
-
-  def unsafeToInputStream: InputStream = new FileInputStream(absolute)
+trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation{  
+  def unsafeToInputStream: InputStream
   def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
   def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
+  def bytes: Array[Byte] = {
+    //TODO implement
+    ???//IOUtils.readFully(x$1, x$2)
+  }
+
   def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStream)(op)
   def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
   def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
@@ -30,7 +30,6 @@ trait InputLocation extends AbsoluteBaseLocation{
     }
   }
 
-  def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
   def copyToIfNotExists(dest: OutputLocation): this.type = { dest.nonExistingOption.map(_.copyFrom(this)); this }
   def copyTo(dest: OutputLocation):this.type = copyToOutputLocation(dest)
   def copyTo(dest: NavigableOutputLocation):this.type = {
@@ -60,13 +59,23 @@ trait InputLocation extends AbsoluteBaseLocation{
     Try(readContent)
   //Try(existing(toSource).getLines mkString ("\n"))
   //def unzip: ZipInputLocation = ???
-  def copyAsHardLink(dest: OutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+  def unzip: ZipInputLocation = new ZipInputLocation(this, None)
+  def cached(implicit cacheParent:CacheParent):CachedLocation[this.type] = CachedLocation(cacheParent.cacheFor(this),this)
+}
+trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with VersionedLocation{
+  //import org.apache.commons.io.input.BOMInputStream
+  //import org.apache.commons.io.IOUtils
+  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
+  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
+
+  def unsafeToInputStream: InputStream = new FileInputStream(absolute)
+  override def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
+  def copyAsHardLink(dest: FileOutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
     dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
     this
   }
-  def copyAsSymLink(dest: OutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+  def copyAsSymLink(dest: FileOutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
     dest.copyFromAsSymLink(this, overwriteIfAlreadyExists);
     this
   }
-  def unzip: ZipInputLocation = new ZipInputLocation(this, None)
 }

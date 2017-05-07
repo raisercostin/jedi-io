@@ -17,6 +17,10 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
       ZipInputLocation(zip, Some(rootzip.getEntry(entry.getName() + "/" + child)))
   })
   override def list: Iterable[Repr] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => toRepr(ZipInputLocation(zip, Some(entry))))
+  override def toFile = zip match {
+    case zip:FileAbsoluteBaseLocation => zip.toFile
+    case _ => println(zip.toString()); ???
+  }
 }
 //TODO fix name&path&unique identifier stuff
 trait ZipInputLocationLike extends NavigableInputLocation { self =>
@@ -25,8 +29,8 @@ trait ZipInputLocationLike extends NavigableInputLocation { self =>
   def entry: Option[java.util.zip.ZipEntry]
   def raw = "ZipInputLocation[" + zip + "," + entry + "]"
 
-  def toFile: File = zip.toFile
-  protected override def unsafeToInputStream: InputStream = entry match {
+  //def toFile: File = zip.toFile
+  override def unsafeToInputStream: InputStream = entry match {
     case None =>
       throw new RuntimeException("Can't read stream from zip folder " + self)
     case Some(entry) =>

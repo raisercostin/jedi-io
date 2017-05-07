@@ -22,7 +22,7 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocationLike w
   lazy val outStream = new ByteArrayOutputStream()
   override def toFile: File = ???
   protected override def unsafeToOutputStream: OutputStream = outStream
-  protected override def unsafeToInputStream: InputStream = new ByteArrayInputStream(outStream.toByteArray())
+  override def unsafeToInputStream: InputStream = new ByteArrayInputStream(outStream.toByteArray())
   override def child(child: String): Repr = ???
   override def build(path:String): Repr = new MemoryLocation(path)
   override def parent: Repr = ???

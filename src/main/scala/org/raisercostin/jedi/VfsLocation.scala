@@ -45,4 +45,5 @@ case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
     VfsLocation(newUrl)
   }
   override def unsafeToInputStream = file.getContent.getInputStream
+  override def unsafeToOutputStream = file.getContent.getOutputStream
 }

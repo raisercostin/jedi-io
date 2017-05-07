@@ -4,6 +4,7 @@ import java.nio.charset.CodingErrorAction
 
 import org.apache.commons.io.FilenameUtils
 import org.raisercostin.jedi.impl.JediFileSystem
+import org.raisercostin.util.Escape
 
 trait BaseLocation {
   def raw: String
@@ -14,6 +15,8 @@ trait BaseLocation {
   def baseName: String = FilenameUtils.getBaseName(nameAndBefore)
   def mimeType = mimeTypeFromName
   def mimeTypeFromName = MimeTypeDetectors.mimeTypeFromName(nameAndBefore)
+  def slug = Escape.toSlug(nameAndBefore)
+
 
   def decoder = {
     import java.nio.charset.Charset
