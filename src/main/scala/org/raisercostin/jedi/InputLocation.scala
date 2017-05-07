@@ -16,9 +16,9 @@ trait InputLocation extends AbsoluteBaseLocation{
   //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
   //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
 
-  protected def unsafeToInputStream: InputStream = new FileInputStream(absolute)
-  protected def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
-  protected def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
+  def unsafeToInputStream: InputStream = new FileInputStream(absolute)
+  def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
+  def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
   def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStream)(op)
   def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
   def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)

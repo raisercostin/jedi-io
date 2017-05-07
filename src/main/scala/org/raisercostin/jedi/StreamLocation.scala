@@ -12,3 +12,9 @@ case class StreamLocation(val inputStream: InputStream) extends InputLocation {
   def toFile: File = ???
   protected override def unsafeToInputStream: InputStream = inputStream
 }
+
+case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLocation {
+  def raw = "inputStream[" + inputStream + "]"
+  def toFile: File = ???
+  protected override def unsafeToInputStream: InputStream = inputStream.apply()
+}

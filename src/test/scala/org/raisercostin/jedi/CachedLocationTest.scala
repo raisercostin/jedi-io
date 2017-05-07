@@ -13,12 +13,9 @@ import Locations._
 import org.scalatest.Matchers._
 
 @RunWith(classOf[JUnitRunner])
-class VersionedLocationTest extends FunSuite {
-  test("read from cache") {
-    def newlocation = Locations.temp.child("child1.txt").writeContent("content1")
-    val remote = Locations.url("""http://google.com/index.html""")
-    val cached = remote.cached
-    
+class CachedLocationTest extends FunSuite {
+  def newlocation = Locations.temp.child("child1.txt").writeContent("content1")
+  test("compute etag for temp file") {
     println("version="+newlocation.version)
     println("etag="+newlocation.etag)
     assertEquals(40, newlocation.etag.size)

@@ -93,17 +93,20 @@ Projects that are using jedi-io:
 
 ## Backlog
  - make it async
- - make a small 2panel file manager - see trolCommander
+ - make a small 2panel file manager - see trolCommander - [other file managers](https://en.wikipedia.org/wiki/Comparison_of_file_managers)
  - Locations.url("file://...") should create a FileLocation?
  - add FileStore
  - AddHttpsWritable via vfs - http://detailfocused.blogspot.ro/2009/06/add-plugin-for-apache-vfs.html
  - add Locations:
    - StreamProviderLocation - location that knows how to open a stream
+   - CachedLocation - location that reads the original location only if the cache expired. Useful around UrlLocation, ZipLocation, etc. Check version if changed read origin. 
+   - MetadataLocation - location that saves metadata associated with the file. See osx files, ds-
  - investigate
    - scala arm - http://jsuereth.com/scala-arm/continuations.html
    - scala io - https://github.com/scala-incubator/scala-io
    - spray - 
    - akka streams -
+ - UrlLocation use RequestHeader for mime type and reader encoding. Maybe we need MetadataLocation 
 
 ## Resources
  - http://javapapers.com/java/file-attributes-using-java-nio/
