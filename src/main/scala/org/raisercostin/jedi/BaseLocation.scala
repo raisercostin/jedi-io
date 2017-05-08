@@ -7,6 +7,7 @@ import org.raisercostin.jedi.impl.JediFileSystem
 import org.raisercostin.util.Escape
 
 trait BaseLocation {
+  def uri:String = raw
   def raw: String
   /**A part of the location that will be used to retrieve name, baseName, extension.*/
   def nameAndBefore: String
@@ -15,8 +16,8 @@ trait BaseLocation {
   def baseName: String = FilenameUtils.getBaseName(nameAndBefore)
   def mimeType = mimeTypeFromName
   def mimeTypeFromName = MimeTypeDetectors.mimeTypeFromName(nameAndBefore)
-  def slug = Escape.toSlug(nameAndBefore)
-
+  //TODO improve slug
+  def slug = Escape.toSlug(uri)
 
   def decoder = {
     import java.nio.charset.Charset

@@ -16,11 +16,19 @@ import org.scalatest.Matchers._
 class CachedLocationTest extends FunSuite {
   test("compute etag for temp file") {
     import CachedLocation.default
-    val remote = Locations.url("""http://google.com/index.html""")
-    val cached = remote.cached
+    val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
+    val remote = Locations.url(url)
+    remote.uri shouldBe url
+    remote.raw shouldBe url
+    remote.slug shouldBe "https-----commons--apache--org--proper--commons-io--javadocs--api-2.5--index.html"
 
+    val cached = remote.cached.flush
+    println("slugRemote=" + remote.slug)
+    println("slugCached=" + cached.slug)
     println("versionRemote=" + remote.version)
     println("versionCached=" + cached.version)
+    println(s"""remote=$remote
+               |cached=$cached""".stripMargin)
     //assertEquals(40, newlocation.etag.size)
     //assertTrue(newlocation.version.size > 20)
   }

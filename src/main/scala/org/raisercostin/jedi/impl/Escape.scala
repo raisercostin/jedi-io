@@ -3,8 +3,8 @@ package org.raisercostin.util
 import scala.util.Try
 
 object Escape {
-  private val nonUrlChars = """[()\[\]{}_'\"`%^+_*!×&ƒ\:? -]+""".r.unanchored
-  private val nonUrlPathChars = """[\/]+""".r
+  private val nonUrlChars = """[()\[\]{}_'\"`%^+_*!×&ƒ\:? -]""".r.unanchored
+  private val nonUrlPathChars = """[\/]""".r
 
   def toSlug(text: String) = {
     var result = text
@@ -14,7 +14,11 @@ object Escape {
     import java.text.Normalizer
     result = Normalizer.normalize(result, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
     result = result.toLowerCase
-
+    val protocolEnds = result.indexOf("//")
+    val firstSlash = result.indexOf("/",protocolEnds+2)
+    if((protocolEnds!= -1)&&(firstSlash!= -1)){
+      result = result.substring(0,firstSlash).replaceAll("[.]","--")+result.substring(firstSlash)
+    }
     result = nonUrlChars.replaceAllIn(result, "-")
     result = nonUrlPathChars.replaceAllIn(result, "--")
 
