@@ -14,19 +14,17 @@ import org.scalatest.Matchers._
 
 @RunWith(classOf[JUnitRunner])
 class CachedLocationTest extends FunSuite {
-  test("compute etag for temp file") {
+  test("compute etag for url file") {
     import CachedLocation.default
     val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
     val remote = Locations.url(url)
     remote.uri shouldBe url
     remote.raw shouldBe url
     remote.slug shouldBe "https-----commons--apache--org--proper--commons-io--javadocs--api-2.5--index.html"
-
+    remote.etagFromHttpRequestHeader.get shouldBe "b26-531084169df69"
+    remote.etag shouldBe "b26-531084169df69"    
     val cached = remote.cached.flush
-    println("slugRemote=" + remote.slug)
-    println("slugCached=" + cached.slug)
-    println("versionRemote=" + remote.version)
-    println("versionCached=" + cached.version)
+    cached.baseName.should(endWith(remote.etag))
     println(s"""remote=$remote
                |cached=$cached""".stripMargin)
     //assertEquals(40, newlocation.etag.size)

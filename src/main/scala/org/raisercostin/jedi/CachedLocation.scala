@@ -7,7 +7,7 @@ object CachedLocation {
 }
 
 case class CacheParent(cache: NavigableInOutLocation) {
-  def cacheFor(src: InputLocation): NavigableInOutLocation = cache.mkdirIfNecessary.child(src.slug)
+  def cacheFor(src: InputLocation): NavigableInOutLocation = cache.mkdirIfNecessary.child(src.slug).withBaseName(x => x + "--etag-" + src.etag)
 }
 case class CachedLocation[O <: InputLocation](cache: InOutLocation, origin: O) extends FileLocationLike { self =>
   override type Repr = self.type
@@ -20,10 +20,12 @@ case class CachedLocation[O <: InputLocation](cache: InOutLocation, origin: O) e
   }
   /**Force caching.*/
   //TODO as async
-  def flush:this.type = {
-    val originVersion = origin.version
-    val currentVersion = existingOption.map{_.version}.getOrElse("")
-    if (currentVersion != originVersion) {
+  def flush: this.type = {
+    //since the name is computed based on etag is enough to check the existence of file
+    //val originVersion = origin.version
+    if (!cache.exists) {
+      //    val currentVersion = existingOption.map{_.version}.getOrElse("")
+      //    if (currentVersion != originVersion) {
       cache.copyFrom(origin)
     }
     this

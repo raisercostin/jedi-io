@@ -61,7 +61,10 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   def toFile: File = ???
   import java.net._
   override def length: Long = lengthTry.get
-  def lengthTry: Try[Long] = ResourceUtil.cleanly(url.openConnection()) {
+
+  //TODO sending the current etag as well and wait for 302 not modified? This will save one more connection. Maybe this should be managed in a CachedUrlLocation?
+  def etagFromHttpRequestHeader: Option[String] = headConnection { conn => conn.getHeaderField("ETag").stripPrefix("\"").stripSuffix("\"") }.toOption
+  def headConnection[T](openedHeadConnection: URLConnection => T): Try[T] = ResourceUtil.cleanly(url.openConnection()) {
     case c: HttpURLConnection =>
       c.disconnect()
     case f: FileURLConnection =>
@@ -70,16 +73,24 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
     case conn: HttpURLConnection =>
       config.configureConnection(conn)
       conn.setRequestMethod("HEAD")
-      if (conn.getResponseCode != 200)
-        throw new RuntimeException("A redirect is needed. Cannot compute size!")
-      val len = conn.getContentLengthLong()
-      if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
-      len
+      openedHeadConnection(conn)
     case conn: FileURLConnection =>
-      //conn.getInputStream
-      val len = conn.getContentLengthLong()
-      if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
-      len
+      openedHeadConnection(conn)
+  }
+  def lengthTry: Try[Long] = headConnection { conn =>
+    conn match {
+      case conn: HttpURLConnection =>
+        if (conn.getResponseCode != 200)
+          throw new RuntimeException("A redirect is needed. Cannot compute size!")
+        val len = conn.getContentLengthLong()
+        if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
+        len
+      case conn: FileURLConnection =>
+        //conn.getInputStream
+        val len = conn.getContentLengthLong()
+        if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
+        len
+    }
   }
   override def unsafeToInputStream: InputStream =
     if (config.useScalaJHttp)
@@ -167,6 +178,8 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   def withoutRedirect = this.copy(config = config.copy(allowedRedirects = 0))
   def resolved: ResolvedUrlLocation = ResolvedUrlLocation(this)
   def withJavaImpl = this.copy(config = config.withJavaImpl)
+  
+  override def etag:String = etagFromHttpRequestHeader.getOrElse(super.etag)
 }
 //TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.  
 case class ResolvedUrlLocation(location: UrlLocation) {

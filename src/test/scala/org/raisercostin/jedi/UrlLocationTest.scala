@@ -129,4 +129,13 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     }.collect { case Failure(e) => e }
     assert(res.size === 0, "No error should be thrown here.")
   }
+  test("compute etag for url file") {
+    val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
+    val remote = Locations.url(url)
+    remote.uri shouldBe url
+    remote.raw shouldBe url
+    remote.slug shouldBe "https-----commons--apache--org--proper--commons-io--javadocs--api-2.5--index.html"
+    remote.etagFromHttpRequestHeader.get shouldBe "b26-531084169df69"
+    remote.etag shouldBe "b26-531084169df69"
+  }
 }
