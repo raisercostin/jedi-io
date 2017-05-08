@@ -60,7 +60,9 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
   //Try(existing(toSource).getLines mkString ("\n"))
   //def unzip: ZipInputLocation = ???
   def unzip: ZipInputLocation = new ZipInputLocation(this, None)
-  def cached(implicit cacheParent:CacheParent):CachedLocation[this.type] = CachedLocation(cacheParent.cacheFor(this),this)
+  def cached(implicit cacheParent:CacheParent=CachedLocation.default):CachedLocation[this.type] = CachedLocation(cacheParent.cacheFor(this),this)
+  /**Sometimes we want the content to be available locally in the filesystem.*/
+  def asFileInputLocation:FileInputLocation=cached.flush
 }
 trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with VersionedLocation{
   //import org.apache.commons.io.input.BOMInputStream
@@ -78,4 +80,6 @@ trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with
     dest.copyFromAsSymLink(this, overwriteIfAlreadyExists);
     this
   }
+  /**Optimize by using the current FileInputLocation.*/
+  override def asFileInputLocation:FileInputLocation=this
 }
