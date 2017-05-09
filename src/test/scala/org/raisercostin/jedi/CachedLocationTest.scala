@@ -30,4 +30,15 @@ class CachedLocationTest extends FunSuite {
     //assertEquals(40, newlocation.etag.size)
     //assertTrue(newlocation.version.size > 20)
   }
+  test("compute same etag for url file with forced client caching") {
+    import CachedLocation.default
+    val url = """https://archive.org"""
+    val remote1 = Locations.url(url)
+    val remote2 = Locations.url(url)
+    println("etag1="+remote1.etag)
+    println("etag2="+remote2.etag)
+    println("version1="+remote1.version)
+    println("version2="+remote2.version)
+    remote1.etag shouldBe remote2.etag    
+  }
 }

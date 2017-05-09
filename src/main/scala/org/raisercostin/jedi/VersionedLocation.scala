@@ -32,7 +32,7 @@ import scala.annotation.tailrec
  * - https://www.infoq.com/articles/java7-nio2
  */
 trait VersionedLocation extends ResolvedLocationState {
-  /*In worst case every location is considered to have a different version indifferent of content
+  /**In worst case every location is considered to have a different version indifferent of content
   Two files with same version should likely be identical.
   Problems:
   - files with same content on different servers
@@ -45,13 +45,18 @@ trait VersionedLocation extends ResolvedLocationState {
      - A separator is needed for versioned files that implement this policy. 
   */
   def version: String = UUID.randomUUID().toString()
-  /**An etag based on the shallowETag. Offers best compromise for a strong etag.*/
+  def versionOfContent: String = ???
+  /**The default etag is based on the strongETag.*/
   def etag: String = strongETag
-  def shallowETag: String = DigestUtils.sha1Hex(version)
-  /**The efficient strong tag is a shallow one. The alternative is strongDeepETag that is based on content.*/
+  /**The efficient strong tag is a shallow one.*/
   def strongETag: String = shallowETag
-  def deepStrongETag: String = ???
-  /**Doesn't change if two representations are semantically equivalent. After removal of a timestamp from content for example.*/
+  /**A not so efficient strong tag that is based on the content.*/
+  def strongDeepETag: String = DigestUtils.sha1Hex(versionOfContent)
+  /**The shallowETag shouldn't need access to content. The default one is a sha1Hex of the `version`.*/
+  def shallowETag: String = DigestUtils.sha1Hex(version)
+  /**A weak ETag doesn't change if two representations are semantically equivalent.
+   * After removal of a timestamp from content for example.
+   * It is hard to compute and is not sure what it means.*/
   @deprecated("Use strongETag since a weak etag is not clear how to be computed.", "0.33")
   def weakETag: String = throw new RuntimeException("Is not clear how to compute them.")
 }

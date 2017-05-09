@@ -226,7 +226,7 @@ case class HttpRequest(
   
   private def closeStreams(conn: HttpURLConnection) {
     try {
-      conn.getInputStream.close
+      Option(conn.getInputStream).foreach(_.close)
     } catch {
       case e: Exception => //ignore
         log.debug("When closing connection's stream to "+conn.getURL,e)
@@ -236,7 +236,7 @@ case class HttpRequest(
   
   private def closeErrorStream(conn: HttpURLConnection) {
     try {
-      conn.getErrorStream.close
+      Option(conn.getErrorStream).foreach(_.close)
     } catch {
       case e: Exception => //ignore
         log.debug("When closing connection's error stream to "+conn.getURL,e)
