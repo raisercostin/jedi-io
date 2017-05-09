@@ -15,9 +15,11 @@ object Escape {
     result = Normalizer.normalize(result, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
     result = result.toLowerCase
     val protocolEnds = result.indexOf("//")
-    val firstSlash = result.indexOf("/",protocolEnds+2)
-    if((protocolEnds!= -1)&&(firstSlash!= -1)){
-      result = result.substring(0,firstSlash).replaceAll("[.]","--")+result.substring(firstSlash)
+    val firstSlash = result.indexOf("/", protocolEnds + 2)
+    if (firstSlash == -1)
+      result = result.replaceAll("[.]", "--")
+    else if ((protocolEnds != -1) && (firstSlash != -1)) {
+      result = result.substring(0, firstSlash).replaceAll("[.]", "--") + result.substring(firstSlash)
     }
     result = nonUrlChars.replaceAllIn(result, "-")
     result = nonUrlPathChars.replaceAllIn(result, "--")

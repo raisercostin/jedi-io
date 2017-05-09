@@ -179,7 +179,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   def resolved: ResolvedUrlLocation = ResolvedUrlLocation(this)
   def withJavaImpl = this.copy(config = config.withJavaImpl)
   
-  override def etag:String = etagFromHttpRequestHeader.getOrElse(super.etag)
+  override def etag:String = etagFromHttpRequestHeader.getOrElse("")
 }
 //TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.  
 case class ResolvedUrlLocation(location: UrlLocation) {
