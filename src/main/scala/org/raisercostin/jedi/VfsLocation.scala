@@ -23,7 +23,7 @@ case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
   }.getOrElse(Iterable()).map(buildNew)
 //TODO to remove as not beeing abstract enough
   def toFile: java.io.File = ???
-  def asInput: NavigableInputLocation = self
+  def asInput: NavigableFileInputLocation = self
   def append: Boolean = ???
   def withAppend: Repr = ???
   override def nameAndBefore: String = raw

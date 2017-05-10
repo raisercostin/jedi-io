@@ -23,7 +23,7 @@ case class ZipInputLocation(zip: InputLocation, entry: Option[java.util.zip.ZipE
   }
 }
 //TODO fix name&path&unique identifier stuff
-trait ZipInputLocationLike extends NavigableInputLocation { self =>
+trait ZipInputLocationLike extends NavigableFileInputLocation { self =>
   override type Repr = self.type
   def zip: InputLocation
   def entry: Option[java.util.zip.ZipEntry]

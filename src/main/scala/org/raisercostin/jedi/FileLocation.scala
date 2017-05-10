@@ -20,7 +20,7 @@ trait FileLocationLike extends NavigableInOutLocation with FileInputLocation wit
   def append: Boolean
   override def parentName: String = toFile.getParentFile.getAbsolutePath
   def raw = fileFullPath
-  def asInput: NavigableInputLocation = self
+  def asInput: NavigableFileInputLocation = self
   lazy val toFile: File = new File(fileFullPath)
   override def toPath: Path = Paths.get(fileFullPath)
   override def unsafeToInputStream: InputStream = new FileInputStream(toFile)
