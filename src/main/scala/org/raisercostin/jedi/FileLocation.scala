@@ -76,6 +76,15 @@ trait FileLocationLike extends NavigableInOutLocation with FileInputLocation wit
   def watch(pollingIntervalInMillis: Long = 1000, listener: FileLocation => Unit): FileMonitor = {
     FileMonitor(watchFileCreated(pollingIntervalInMillis).subscribe(file => listener.apply(file.location), error => LoggerFactory.getLogger(classOf[FileLocation]).error("Watch failed.", error)))
   }
+  
+  def copyFromFolder(src:FileLocation):Repr={
+    src.descendants.map { x =>
+      val rel = x.extractPrefix(src).get
+      val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
+      println(f"""copy ${rel.raw}%-40s $x -> $y""")
+    }
+    this
+  }
 }
 
 @deprecated("Use watch with observable", "0.31")

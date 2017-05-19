@@ -138,4 +138,9 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     remote.etagFromHttpRequestHeader.get shouldBe "b26-531084169df69"
     remote.etag shouldBe "b26-531084169df69"
   }
+  test("a url should always have a pair meta file") {
+    val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
+    println(Locations.url(url).meta.toString)
+    Locations.url(url).meta.toString shouldBe """Success(MetaInfo(Map(Connection -> Buffer(keep-alive), HEAD /proper/commons-io/javadocs/api-2.5/index.html HTTP/1.1 -> Buffer(null), Accept -> Buffer(*/*), Cache-Control -> Buffer(no-cache), Pragma -> Buffer(no-cache), User-Agent -> Buffer(Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36), Host -> Buffer(commons.apache.org)),Map(Vary -> Buffer(Accept-Encoding), null -> Buffer(HTTP/1.1 200 OK), Last-Modified -> Buffer(Fri, 22 Apr 2016 00:53:30 GMT), Server -> Buffer(Apache/2.4.7 (Ubuntu)), Accept-Ranges -> Buffer(bytes), Keep-Alive -> Buffer(timeout=30, max=100), Connection -> Buffer(Keep-Alive), Content-Length -> Buffer(2854), Content-Type -> Buffer(text/html), Date -> Buffer(Tue, 09 May 2017 23:29:58 GMT), ETag -> Buffer("b26-531084169df69"))))"""
+  }
 }

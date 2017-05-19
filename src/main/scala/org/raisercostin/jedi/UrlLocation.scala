@@ -77,6 +77,22 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
     case conn: FileURLConnection =>
       openedHeadConnection(conn)
   }
+  case class MetaInfo(request: Map[String, Seq[String]], response: Map[String, Seq[String]])
+  /**
+   * InputLocations should have metadata. Worst case scenario in a separate file or other files in the filesystem.
+   * See .svn, .csv, .git, dos navigator, .info files, nio meta/user attributes etc.
+   */
+  def meta: Try[MetaInfo] = headConnection { conn =>
+    conn match {
+      case conn: HttpURLConnection =>
+        if (conn.getResponseCode != 200)
+          throw new RuntimeException("A redirect is needed. Cannot compute size!")
+        import scala.collection.JavaConverters._
+        MetaInfo(conn.getRequestProperties.asScala.toMap.mapValues(_.asScala), conn.getHeaderFields.asScala.toMap.mapValues(_.asScala))
+      case conn: FileURLConnection =>
+        MetaInfo(Map(), Map())
+    }
+  }
   def lengthTry: Try[Long] = headConnection { conn =>
     conn match {
       case conn: HttpURLConnection =>
@@ -178,8 +194,8 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   def withoutRedirect = this.copy(config = config.copy(allowedRedirects = 0))
   def resolved: ResolvedUrlLocation = ResolvedUrlLocation(this)
   def withJavaImpl = this.copy(config = config.withJavaImpl)
-  
-  override def etag:String = etagFromHttpRequestHeader.getOrElse("")
+
+  override def etag: String = etagFromHttpRequestHeader.getOrElse("")
 }
 //TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.  
 case class ResolvedUrlLocation(location: UrlLocation) {
