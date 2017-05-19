@@ -19,8 +19,8 @@ import org.raisercostin.jedi.impl.Predef2
  * In principle should be agnostic to these aspects and only at runtime will depend on the local environment.
  */
 trait InOutLocation extends InputLocation with OutputLocation
-trait NavigableInputLocation extends InputLocation with NavigableLocation
-trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation
+trait NavigableFileInputLocation extends InputLocation with NavigableFileLocation
+trait NavigableInOutLocation extends InOutLocation with NavigableFileInputLocation with NavigableOutputLocation
 
 /**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
 trait LocationState
@@ -47,7 +47,7 @@ object Locations {
     createAbsoluteFile(file.getAbsolutePath())
   def file(file: File, subFile: String): FileLocation =
     createAbsoluteFile(file.getAbsolutePath()).child(subFile)
-  def file(fileFullPath: String, optionalParent: NavigableLocation): FileLocation =
+  def file(fileFullPath: String, optionalParent: NavigableFileLocation): FileLocation =
     file(if (isAbsolute(fileFullPath)) fileFullPath else optionalParent.absolute + fileFullPath)
 
   private def isAbsolute(path: String) = new File(path).isAbsolute()

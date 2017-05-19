@@ -18,7 +18,7 @@ object ClassPathInputLocationLike {
 /**
  * @see http://www.thinkplexx.com/learn/howto/java/system/java-resource-loading-explained-absolute-and-relative-names-difference-between-classloader-and-class-resource-loading
  */
-trait ClassPathInputLocationLike extends NavigableInputLocation { self =>
+trait ClassPathInputLocationLike extends NavigableFileInputLocation { self =>
   def initialResourcePath: String
   def raw = initialResourcePath
   import ClassPathInputLocationLike._

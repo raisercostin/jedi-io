@@ -1,0 +1,276 @@
+package org.uzene.transport.email
+
+import org.apache.commons.mail.DefaultAuthenticator
+import org.apache.commons.mail.Email
+import org.apache.commons.mail.SimpleEmail
+import org.uzene.transport.scala.Address
+import org.uzene.transport.scala.JsonMessagePickling
+import org.uzene.transport.scala.TransportReceiver
+import org.uzene.transport.scala.LegacyTransportServer
+import org.uzene.transport.scala.LegacyTransporter
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import org.raisercostin.jedi.Locations
+import javax.mail.Flags.Flag
+import org.uzene.transport.scala.{ ScalaMessage => TransportMessage }
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
+import org.uzene.app.sayapp.SayApp
+import org.uzene.transport.scala.LegacyTransportServer
+import org.uzene.transport.scala.ScalaMessage
+import org.uzene.transport.config.ConfigBook
+import org.uzene.transport.config.ServerConfiguration
+import com.fasterxml.jackson.annotation.JsonCreator
+import org.uzene.transport.config.AddressBook
+import java.util.Optional
+import org.raisercostin.util.StringUtils
+import org.raisercostin.utils.ObjectUtils
+import org.uzene.transport.UzeneAddress
+import org.uzene.transport.config.ServerConfiguration
+import org.uzene.transport.config.AddressBook
+import org.uzene.transport.config.ConfigBook
+import org.uzene.transport.UzeneServerAuthenticationFailed
+import org.uzene.transport.UzeneServerUnreachableUzeneError
+import org.uzene.transport.config.DataBookSection
+import org.uzene.transport.TransportServer
+import org.uzene.transport.PersonAddress
+import org.uzene.transport.UzeneMessage
+import org.uzene.util.TryAll
+import org.uzene.transport.Transporter
+import org.uzene.transport.config.TransporterConfig
+import org.uzene.transport.config.ServerConfiguration
+import java.util.function.Supplier
+import com.jasongoodwin.monads.TrySupplier
+import org.uzene.transport.config.ServerConfiguration
+import org.uzene.transport.config.ConfigAll
+import org.uzene.transport.config.GenericTransporterTrait
+
+case class EmailTransporter() extends TransporterConfig with GenericTransporterTrait {
+  def addressClassName(): String = classOf[EmailAddress].getName
+  def serverClassName(): String = classOf[EmailTransportServer].getName
+  def serverConfigClassName(): String = classOf[EmailConfig].getName
+  def transporterId(): String = "email"
+  import com.jasongoodwin.monads.{ Try => JavaTry }
+  def parseServerConfiguration(init: String): JavaTry[ServerConfiguration] =
+    JavaTry.ofFailable(new TrySupplier[ServerConfiguration]() { def get() = EmailConfig(init) })
+  val parsingHelp:String = "(<email> <password>) | (<email> <smtpHost>:<smtpPort> <imapHost>:<imapPort> <password>) - links the local account to your email account"
+  def parseAddress(init: String): com.jasongoodwin.monads.Try[org.uzene.transport.UzeneAddress] = 
+    JavaTry.ofFailable(new TrySupplier[org.uzene.transport.UzeneAddress]() { def get() = EmailAddress(init) })
+  val parsingAddressHelp: String = "<user> <user's email> - adds a contact addres for the user"
+}
+object EmailAddress{
+  import org.uzene.util.RegexStringInterpolator.Regex
+  def apply(init:String):EmailAddress = init match {
+    case r"(\S+)$user\s+(\S+)$email\s*" =>
+      EmailAddress(user, email)
+    case _ =>
+      throw new RuntimeException("Can't create an EmailAddress from [" + init + "]")
+//    case r".+@.+" => throw new RuntimeException(s"Can't find configuration server defaults for email [$email].")
+//    case _ => throw new RuntimeException(s"Can't find configuration server defaults for email [$email]. Are you sure is an email address?")
+  }
+
+}
+case class EmailAddress(name: String, email: String) extends Address {
+  //  require(!name.contains("@"),s"name [$name] should not contain @")
+  //  require(email.contains("@"),s"email [$email] should contain @")
+  //needed for serialization via jackson
+  def this() = this(null, null)
+  def uid = name
+  override def toExternalForm = "mailto:" + email
+}
+object EmailTransporter {
+  val pickler = JsonMessagePickling
+  //  def defaultConfig(configBook: ConfigBook, addressBook: AddressBook) =
+  //    new EmailTransporter(addressBook, configBook)
+
+  //EmailConfig(user.head, configInit)
+}
+
+object EmailConfig {
+  import org.uzene.util.RegexStringInterpolator.Regex
+  def apply(init: String): EmailConfig = init match {
+    case r"(\S+)$user\s+(\S+)$email\s+(\S+)$smtpHost:(\d{1,5})$smtpPort\s+(\S+)$imapHost:(\d{1,5})$imapPort\s+(.+)$password\s*" =>
+      EmailConfig(user, smtpHost, smtpPort.toInt, email, password, true, imapHost, imapPort.toInt, email, password, true)
+    case r"(\S+)$user\s+(\S+@gmail\.com)$email\s+(.+)$password\s*" =>
+      EmailConfig(user, email, password)
+    case _ =>
+      throw new RuntimeException("Can't create an EmailConfig from [" + init + "]")
+//    case r".+@.+" => throw new RuntimeException(s"Can't find configuration server defaults for email [$email].")
+//    case _ => throw new RuntimeException(s"Can't find configuration server defaults for email [$email]. Are you sure is an email address?")
+  }
+
+  def apply(name: String, email: String, password: String): EmailConfig = 
+    EmailConfig(name, "smtp.googlemail.com", 465, email, password, true, "imap.googlemail.com", 993, email, password, true)
+}
+
+//993
+case class EmailConfig(val name: String
+    , smtpHost: String, smtpPort: Int, smtpUsername: String, smtpPassword: String, smtpSsl: Boolean
+    , imapHost: String, imapPort: Int, imapUsername: String, imapPassword: String, imapSsl: Boolean) extends ServerConfiguration {
+  //  require(!name.contains("@"),s"name [$name] should not contain @")
+  //  require(smtpUsername.contains("@"),s"smtpUsername [$smtpUsername] should contain @")
+  //  require(smtpUsername.contains("@"),s"imapUsername [imapUsername] should contain @")
+  //for jackson
+  private def this() = this(null, null, 0, null, null, false, null, 0, null, null, false)
+  override def address(): EmailAddress = EmailAddress(name, smtpUsername)
+  override def toString: String = ObjectUtils.toString(this, "smtpPassword,imapPassword")
+  def id = name
+}
+
+case class EmailTransportServer(name: String, listener: org.uzene.transport.MessageListener, addressBook: DataBookSection[EmailAddress]
+, config: EmailConfig, transporter:EmailTransporter)
+    extends TransportServer {
+  val engine = new EmailTransportEngine(config.address(), listener, true, config, addressBook)
+  def registerListener(x$1: org.uzene.transport.MessageListener): Unit = ???
+
+  def address(): org.uzene.transport.PersonAddress = new PersonAddress(name)
+  def sendMessageImpl(message: UzeneMessage): org.uzene.transport.MessageId = { engine.send(message); message.id }
+  def shutdown(): Unit = engine.shutdown
+}
+object EmailTransportEngine {
+  val logger = org.slf4j.LoggerFactory.getLogger(classOf[EmailTransportEngine]);
+}
+case class EmailTransportEngine(me: EmailAddress, listener: org.uzene.transport.MessageListener, autostart: Boolean, config: EmailConfig, addressBook: DataBookSection[EmailAddress]) {
+  import EmailTransportEngine._
+  //always start
+  if (!autostart)
+    receiveStart().get
+  val pool = if (autostart) {
+    logger.info(s"$me start scheduler")
+    val scheduler = Executors.newScheduledThreadPool(1)
+    scheduler.scheduleWithFixedDelay(new Runnable() {
+      def run(): Unit = {
+        receiveStart().recover {
+          case e: com.sun.mail.util.MailConnectException =>
+            logger.info(s"Couldn't connect to $config. Giving up. Original error message [${e.getMessage}]")
+            scheduler.shutdown()
+          case e: javax.mail.AuthenticationFailedException =>
+            logger.info(s"Couldn't connect to $config. Giving up. Original error message [${e.getMessage}]")
+            scheduler.shutdown()
+          case e =>
+            logger.error(s"Couldn't connect to $config. Giving up.", e)
+            scheduler.shutdown()
+        }
+      }
+    }, 0, 10, TimeUnit.SECONDS)
+    Some(scheduler)
+  } else
+    None
+  def shutdown() = {
+    pool.foreach(_.shutdown())
+  }
+
+  def send(message: UzeneMessage): Unit =
+    (Try {
+      logger.info(s"$me send to ${message.recipients}")
+      import scala.collection.JavaConverters._
+      message.recipients.asScala.flatMap(x => addressBook.get(x.name).asScala).foreach(address => {
+        logger.info(s"send email ${me.email} -> ${address.email}")
+        val email: Email = new SimpleEmail()
+        email.setHostName(config.smtpHost);
+        email.setSmtpPort(config.smtpPort);
+        email.setAuthenticator(new DefaultAuthenticator(config.smtpUsername, config.smtpPassword));
+        email.setSSLOnConnect(config.smtpSsl);
+        email.setFrom(me.email);
+        email.setSubject(subjectTag(address) + message.id.id);
+        email.setMsg(EmailTransporter.pickler.pickle(message));
+        email.addTo(address.email);
+        email.send();
+      })
+    }).recoverWith {
+      case e: org.apache.commons.mail.EmailException if e.getCause != null && e.getCause.isInstanceOf[javax.mail.AuthenticationFailedException] =>
+        Failure(new UzeneServerAuthenticationFailed(e.getMessage + ". " + e.getCause.getMessage, e))
+      case e: org.apache.commons.mail.EmailException if e.getCause != null && e.getCause.isInstanceOf[com.sun.mail.util.MailConnectException] =>
+        Failure(new UzeneServerUnreachableUzeneError(e.getMessage, e))
+    }.get
+
+  def subjectTag(address: EmailAddress) = "[uzene][" + address.name + "]"
+
+  /**
+   * How to use imap: http://m.alvinalexander.com/scala/scala-imaps-ssl-email-client-javamail-yahoo-gmail
+   * http://java-gmail-imap-gmailrawsearchterm.blogspot.be/2013/06/java-gmail-search-using-imap-and.html
+   * https://support.google.com/mail/answer/7190
+   */
+  def receiveStart(): Try[Unit] = TryAll {
+    import javax.mail._
+    import javax.mail.internet._
+    import javax.mail.search._
+    import java.util.Properties
+    val filterByDestination = new AndTerm(new SubjectTerm(subjectTag(me)), new RecipientTerm(Message.RecipientType.TO, new javax.mail.internet.InternetAddress(me.email)))
+    logger.info(s"$me> receive with filter [${ObjectUtils.toString(filterByDestination)}]...")
+    val props = System.getProperties()
+    props.setProperty("mail.store.protocol", "imaps")
+    val session = Session.getDefaultInstance(props, null)
+    val store = session.getStore("imaps")
+    try {
+      store.connect(config.imapHost, config.imapPort, config.imapUsername, config.imapPassword)
+
+      val receivingLabel = store.getFolder("INBOX.uzene").getFolder("receiving")
+      if (!receivingLabel.exists()) {
+        val created = receivingLabel.create(Folder.HOLDS_MESSAGES)
+        require(created)
+      }
+      val consumedLabel = store.getFolder("INBOX.uzene").getFolder("consumed")
+      if (!consumedLabel.exists()) {
+        val created2 = consumedLabel.create(Folder.HOLDS_MESSAGES)
+        require(created2)
+      }
+
+      val default = store.getDefaultFolder()
+      //      println(default.list("*").toList.map(_.getFullName))
+
+      def moveNewInboxMessagesToReceiving(receivingLabel: Folder) = {
+        val inbox = store.getFolder("Inbox")
+        inbox.open(Folder.READ_WRITE)
+        val messages = inbox.search(filterByDestination)
+        move(messages, inbox, receivingLabel)
+        messages
+      }
+      def move(messages: Array[Message], from: Folder, to: Folder) = {
+        if (!from.isOpen())
+          from.open(Folder.READ_WRITE)
+        try {
+          from.copyMessages(messages, to)
+          //mark as deleted
+          from.setFlags(messages, new Flags(Flag.DELETED), true)
+        } finally {
+          from.close(true)
+        }
+        logger.info(me + "> " + messages.length + " messages moved to " + receivingLabel.getFullName);
+      }
+      //val messages = inbox.getMessages()
+      // limit this to 20 message during testing
+      //     val messages = inbox.search(new SubjectTerm("(X-GM-RAW \"subject:[namel]\")"))
+      moveNewInboxMessagesToReceiving(receivingLabel)
+      // limit this to 20 message during testing
+      receivingLabel.open(Folder.READ_WRITE)
+      val messages = receivingLabel.search(filterByDestination)
+      //search(new SubjectTerm("(X-GM-RAW \"subject:[namel]\")"))
+      logger.info(me + "> " + messages.length + " messages to process inside " + receivingLabel.getFullName);
+
+      def processAll(messages: Array[Message]): Unit = {
+        messages.take(20).map { message =>
+          Try {
+            println(s"$me> received ${message.getSubject}")
+            val content = Locations.stream(message.getInputStream()).readContent
+            val messageObject = EmailTransporter.pickler.unpickle(content, classOf[UzeneMessage])
+            listener.messageReceived(messageObject, me)
+            consumedLabel.appendMessages(Array { message })
+            //        message.setFlag(Flag.DELETED, true)
+            receivingLabel.setFlags(Array { message }, new Flags(Flag.DELETED), true)
+            //println(message.getSubject() + "\n"++"\n\n----------")
+            //receivingLabel.appendMessages(Array{message})
+          }
+        }.partition { _.isSuccess }._2.map(_.failed.get).foreach { _.printStackTrace }
+      }
+      processAll(messages)
+      receivingLabel.close(true)
+    } finally {
+      logger.info(s"$me> receive done.")
+      store.close()
+    }
+  }
+}

@@ -70,11 +70,14 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
       name + "." + ext
     else name
 }
-trait NavigableLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation{ self =>
+trait NavigableLocation extends BaseNavigableLocation{self=>
+  
+}
+trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation{ self =>
   override type Repr = self.type
   //TODO review these
   override protected def repr: Repr = toRepr2(self)
-  implicit protected def toRepr2[T<:NavigableLocation](location:T):Repr = location.asInstanceOf[Repr]
+  implicit protected def toRepr2[T<:NavigableFileLocation](location:T):Repr = location.asInstanceOf[Repr]
 
   def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
