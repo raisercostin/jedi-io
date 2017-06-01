@@ -6,7 +6,7 @@ import scala.language.reflectiveCalls
 import java.nio.file.Files
 
 
-case class TempLocation(temp: File, append: Boolean = false) extends FileLocationLike {self=>
+case class TempLocation(temp: File, append: Boolean = false) extends FileLocation {self=>
   override type Repr = self.type
   override def withAppend: self.type = this.copy(append = true)
   def fileFullPath: String = temp.getAbsolutePath()

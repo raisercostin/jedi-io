@@ -37,8 +37,7 @@ trait ResolvedLocationState extends LocationState
 object Locations {
   System.setProperty("sun.net.http.allowRestrictedHeaders", "true")
   val logger = org.slf4j.LoggerFactory.getLogger("locations")
-  def classpath(resourcePath: String): ClassPathInputLocation =
-    new ClassPathInputLocation(resourcePath)
+  def classpath(resourcePath: String): ClassPathInputLocation = ClassPathInputLocation(resourcePath)
   def file(path: Path): FileLocation =
     file(path.toFile)
   def file(fileFullPath: String): FileLocation =
@@ -54,9 +53,9 @@ object Locations {
   private def createAbsoluteFile(path: String) = {
     Predef2.requireArgNotNull(path, "path")
     if (isAbsolute(path))
-      new FileLocation(path)
+      FileLocation(path)
     else
-      new FileLocation(new File(path).getAbsolutePath())
+      FileLocation(new File(path).getAbsolutePath())
   }
   def memory(memoryName: String): MemoryLocation =
     new MemoryLocation(memoryName)

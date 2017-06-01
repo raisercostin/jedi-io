@@ -10,7 +10,7 @@ import scala.Iterable
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 
-case class MemoryLocation(val memoryName: String) extends RelativeLocationLike with NavigableInOutLocation {self=>
+case class MemoryLocation(val memoryName: String) extends RelativeLocation with NavigableInOutLocation {self=>
   override type Repr = self.type
   override def nameAndBefore: String = absolute
   override def absolutePlatformDependent: String = memoryName

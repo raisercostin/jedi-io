@@ -14,7 +14,7 @@ import rx.lang.scala.Observable
 import rx.lang.scala.Subscription
 import scala.util.control.NonFatal
 
-trait FileLocationLike extends NavigableInOutLocation with FileInputLocation with FileOutputLocation{ self =>
+trait FileLocation extends NavigableInOutLocation with FileInputLocation with FileOutputLocation{ self =>
   override type Repr = self.type
   def fileFullPath: String
   def append: Boolean
@@ -85,6 +85,8 @@ trait FileLocationLike extends NavigableInOutLocation with FileInputLocation wit
     }
     this
   }
+  override def childName(child:String):String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
+  def build(path:String): Repr = FileLocation(path)
 }
 
 @deprecated("Use watch with observable", "0.31")
@@ -101,12 +103,10 @@ case class FileDeleted(file: File) extends FileAlterated
 case class DirectoryCreated(file: File) extends FileAlterated
 case class DirectoryChanged(file: File) extends FileAlterated
 case class DirectoryDeleted(file: File) extends FileAlterated
-object FileLocation2{
-  def apply(fileFullPath: String, append: Boolean = false) = new FileLocation(fileFullPath,append)
+object FileLocation{
+  def apply(fileFullPath: String, append: Boolean = false) = FileLocationImpl(fileFullPath,append)
 }
-case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike { self =>
+case class FileLocationImpl(fileFullPath: String, append: Boolean = false) extends FileLocation { self =>
   override type Repr = self.type
-  def build(path:String): Repr = new FileLocation(path)
-  override def childName(child:String):String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
   override def withAppend: Repr = self.copy(append = true)
 }

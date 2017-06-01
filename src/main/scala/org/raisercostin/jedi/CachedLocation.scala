@@ -47,12 +47,18 @@ case class TimeSensitiveEtagCachedEntry(cacheFolder: NavigableInOutLocation) ext
 }
 
 //TODO CachedLocation when printed should show the temporary file 
-case class CachedLocation[O <: InputLocation](cacheConfig: CacheConfig, origin: O) extends FileLocationLike { self =>
+case class CachedLocation[O <: InputLocation](cacheConfig: CacheConfig, origin: O) extends FileLocation { self =>
   private lazy val cacheEntry: CacheEntry = cacheConfig.cacheFor(origin)
   def cache = cacheEntry.cache
   //def cache: InOutLocation = cacheConfig.cacheFor(origin)
   override type Repr = self.type
-  def build(path: String): Repr = new FileLocation(path)
+  override def build(path: String): Repr = origin match {
+    case n: NavigableLocation =>
+      CachedLocation(cacheConfig, n.build(path))
+    case _ =>
+      //TODO bug since origin is not used?
+      FileLocation(path)
+  }
   override def childName(child: String): String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
   //override def withAppend: Repr = self.copy(append = true)
   override def unsafeToInputStream: InputStream = {
