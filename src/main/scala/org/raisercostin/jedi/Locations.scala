@@ -20,7 +20,7 @@ import org.raisercostin.jedi.impl.Predef2
  */
 trait InOutLocation extends InputLocation with OutputLocation
 trait NavigableFileInputLocation extends InputLocation with NavigableFileLocation
-trait NavigableInOutLocation extends InOutLocation with NavigableFileInputLocation with NavigableOutputLocation
+trait NavigableInOutLocation extends InOutLocation with NavigableFileInputLocation with NavigableFileOutputLocation
 
 /**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
 trait LocationState

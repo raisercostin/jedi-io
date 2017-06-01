@@ -32,7 +32,7 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
 
   def copyToIfNotExists(dest: OutputLocation): this.type = { dest.nonExistingOption.map(_.copyFrom(this)); this }
   def copyTo(dest: OutputLocation):this.type = copyToOutputLocation(dest)
-  def copyTo(dest: NavigableOutputLocation):this.type = {
+  def copyTo(dest: NavigableFileOutputLocation):this.type = {
     dest.mkdirOnParentIfNecessary
     copyToOutputLocation(dest)
   }
