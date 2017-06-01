@@ -14,7 +14,9 @@ import org.apache.commons.io.FilenameUtils
 
 import Locations.relative
 import org.raisercostin.jedi.impl.JediFileSystem
-
+object BaseNavigableLocation{
+  val stateSep = "--state#"
+}
 trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   type Repr = self.type
   protected def repr: Repr = toRepr(self)
@@ -69,6 +71,27 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
     if (ext.length > 0)
       name + "." + ext
     else name
+    
+  /** State is a part before extension that can be used to add minimal metadata to your file.*/
+  def withState(state:String): Repr = {
+      import BaseNavigableLocation._
+      val index = baseName.lastIndexOf(stateSep)
+      if(index == -1)
+        if(state.isEmpty())
+          //unchanged - now existing state, no new state
+          this
+        else
+          //add new state
+          withBaseName(_+stateSep+state)
+      else
+        if(state.isEmpty())
+          //remove old state - no new state
+          withBaseName(_ => baseName.substring(0,index))
+        else
+          //replace old state
+          withBaseName(_ => baseName.substring(0,index+stateSep.length)+state)
+    }
+  def withoutState = withState("")
 }
 trait NavigableLocation extends BaseNavigableLocation{self=>
   

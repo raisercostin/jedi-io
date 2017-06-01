@@ -8,8 +8,7 @@
 <!--[![codecov.io](http://codecov.io/github/raisercostin/jedi-io/coverage.svg?branch=master)](http://codecov.io/github/raisercostin/jedi-io?branch=master)-->
 
 ## Description
-Uniform, fluent access to files, urls and other resources API from java and scala.
-The main purpose of this project is to provide uniform, fluent access to various input and output data locations.
+Scala uniform, fluent access to files, urls and other resources API. Fluent for java too.
 
 ## Features
 - integrate apache commons vfs via Locations.vfs("...")
@@ -113,6 +112,10 @@ Projects that are using jedi-io:
    - spray - 
    - akka streams -
  - UrlLocation use RequestHeader for mime type and reader encoding. Maybe we need MetadataLocation 
+ - clarify operations
+   - do actions (need to resolve to the filesystems)
+   - just change in memory representation
+ - both Resolved/Absolute and Relative could act as destination if they are resolved with src. `absolute.asDestination(src)=>absolute2` and `relative.asDestination(src)=>absolute3`
 
 ## Resources
  - http://javapapers.com/java/file-attributes-using-java-nio/

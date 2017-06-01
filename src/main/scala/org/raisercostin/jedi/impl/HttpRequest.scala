@@ -229,7 +229,7 @@ case class HttpRequest(
       Option(conn.getInputStream).foreach(_.close)
     } catch {
       case e: Exception => //ignore
-        log.debug("When closing connection's stream to "+conn.getURL,e)
+        logger.debug("When closing connection's stream to "+conn.getURL,e)
     }
     closeErrorStream(conn)
   }
@@ -239,7 +239,7 @@ case class HttpRequest(
       Option(conn.getErrorStream).foreach(_.close)
     } catch {
       case e: Exception => //ignore
-        log.debug("When closing connection's error stream to "+conn.getURL,e)
+        logger.debug("When closing connection's error stream to "+conn.getURL,e)
     }
   }
 
