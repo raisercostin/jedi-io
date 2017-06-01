@@ -14,7 +14,7 @@ import rx.lang.scala.Observable
 import rx.lang.scala.Subscription
 import scala.util.control.NonFatal
 
-trait FileLocation extends NavigableInOutLocation with FileInputLocation with FileOutputLocation{ self =>
+trait FileLocation extends NavigableInOutLocation with FileInputLocation with FileOutputLocation { self =>
   override type Repr = self.type
   def fileFullPath: String
   def append: Boolean
@@ -72,7 +72,7 @@ trait FileLocation extends NavigableInOutLocation with FileInputLocation with Fi
       Subscription { monitor.stop() }
     }
   }
-  @deprecated("Use watch with observable", "0.31")
+  @deprecated("Use watch with observable","0.31")
   def watch(pollingIntervalInMillis: Long = 1000, listener: FileLocation => Unit): FileMonitor = {
     FileMonitor(watchFileCreated(pollingIntervalInMillis).subscribe(file => listener.apply(file.location), error => LoggerFactory.getLogger(classOf[FileLocation]).error("Watch failed.", error)))
   }
@@ -87,6 +87,14 @@ trait FileLocation extends NavigableInOutLocation with FileInputLocation with Fi
   }
   override def childName(child:String):String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
   def build(path:String): Repr = FileLocation(path)
+
+  /**This one if folder otherwise the parent*/
+  def folder: Repr = {
+    if(isFile)
+      parent
+    else
+      this
+  }
 }
 
 @deprecated("Use watch with observable", "0.31")
