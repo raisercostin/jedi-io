@@ -15,7 +15,7 @@ import scala.annotation.tailrec
 
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation{self=>
-  type Repr = self.type
+  override type Repr = self.type
   protected def unsafeToOutputStream: OutputStream
   protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream, "UTF-8"))
   protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream, StandardCharsets.UTF_8), true)

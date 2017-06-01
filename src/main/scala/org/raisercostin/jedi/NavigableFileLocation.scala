@@ -100,6 +100,7 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
   //TODO review these
   override protected def repr: Repr = toRepr2(self)
   implicit protected def toRepr2[T <: NavigableFileLocation](location: T): Repr = location.asInstanceOf[Repr]
+  def isEmptyFolder = list.isEmpty
 
   def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
@@ -118,10 +119,10 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
     def findUniqueName(destFile: Repr, counter: Int): Repr = {
       val renamed = destFile.withBaseName { baseName: String => (baseName + "-" + counter) }
       if (renamed.exists)
-        if(renameIfEmptyToo && list.nonEmpty)
-          findUniqueName(destFile, counter + 1)
-        else
+        if(renameIfEmptyToo && list.isEmpty)
           renamed
+        else
+          findUniqueName(destFile, counter + 1)
       else
         renamed
     }

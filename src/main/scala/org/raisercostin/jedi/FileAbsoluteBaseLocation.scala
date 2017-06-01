@@ -13,7 +13,8 @@ import org.apache.commons.io.FilenameUtils
 import java.nio.file.FileStore
 import org.raisercostin.jedi.impl._
 
-trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {
+trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {self=>
+  type Repr = self.type
   def toUrl: java.net.URL = ???
   def length: Long = ???
   def exists:Boolean
@@ -25,7 +26,7 @@ trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {
   implicit def toAutoCloseable(source: scala.io.BufferedSource): AutoCloseable = new AutoCloseable {
     override def close() = source.close()
   }
-  def nonExisting(process: (this.type) => Any): this.type = {
+  def nonExisting(process: (this.type) => Any): Repr = {
     if (!exists) process(this)
     this
   }
@@ -41,17 +42,17 @@ trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {
     //      throw new RuntimeException("[" + self + "] doesn't have next!")
     source
   }
-  def existing: this.type =
+  def existing: Repr =
     if (exists)
       this
     else
       throw new RuntimeException("[" + this + "] doesn't exist!")
-  def existingOption: Option[this.type] =
+  def existingOption: Option[Repr] =
     if (exists)
       Some(this)
     else
       None
-  def nonExistingOption: Option[this.type] =
+  def nonExistingOption: Option[Repr] =
     if (exists)
       None
     else
@@ -62,7 +63,8 @@ trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {
 //  def toFile: File
 //}
 
-trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocationState with FileVersionedLocation{
+trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocationState with FileVersionedLocation{self=>
+  override type Repr = self.type
   def toFile: File
   override def toUrl: java.net.URL = toFile.toURI.toURL
 
@@ -74,7 +76,7 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
   def toPath(subFile: String): Path = toPath.resolve(subFile)
   def size = toFile.length()
   def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
-  def mkdirIfNecessary: this.type = {
+  def mkdirIfNecessary: Repr = {
     CommonsFileUtils.forceMkdir(toFile)
     this
   }
