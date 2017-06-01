@@ -3,10 +3,13 @@ package org.raisercostin.jedi
 import java.io.File
 
 object FileUtils {
-  import org.apache.commons.io.{FileUtils=>FileUtilsCommons}
+  import org.apache.commons.io.{ FileUtils => FileUtilsCommons }
 
   def moveFile(srcFile: File, destFile: File) = {
     Locations.file(destFile).parent.existing
-    FileUtilsCommons.moveFile(srcFile, destFile)
+    if (srcFile.isDirectory())
+      FileUtilsCommons.moveDirectory(srcFile, destFile)
+    else
+      FileUtilsCommons.moveFile(srcFile, destFile)
   }
 }

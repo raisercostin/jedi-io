@@ -90,6 +90,16 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
   }
 
   def buildNewFile(x: File): Repr = Locations.file(x)
+  def backupExistingOne:Repr = {
+    val newName = renamedIfExists
+    if(!newName.equals(this))
+      renameTo(newName)
+    this
+  }
+  def renameTo[T <: FileAbsoluteBaseLocation](newName:T):T = {
+     FileUtils.moveFile(toFile, newName.toFile)
+     newName
+  }
   def renamedIfExists: Repr = {
     @tailrec
     def findUniqueName(destFile: Repr, counter: Int): Repr = {

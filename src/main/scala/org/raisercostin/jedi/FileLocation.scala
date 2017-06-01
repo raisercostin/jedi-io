@@ -101,7 +101,9 @@ case class FileDeleted(file: File) extends FileAlterated
 case class DirectoryCreated(file: File) extends FileAlterated
 case class DirectoryChanged(file: File) extends FileAlterated
 case class DirectoryDeleted(file: File) extends FileAlterated
-
+object FileLocation2{
+  def apply(fileFullPath: String, append: Boolean = false) = new FileLocation(fileFullPath,append)
+}
 case class FileLocation(fileFullPath: String, append: Boolean = false) extends FileLocationLike { self =>
   override type Repr = self.type
   def build(path:String): Repr = new FileLocation(path)

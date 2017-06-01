@@ -32,8 +32,9 @@ The main purpose of this project is to provide uniform, fluent access to various
     - RelativeLocation - part of a location. Cannot be resolved to some content.
     - NavigableLocation - location for which you can find parent/childrens/descendants.
     - VersionedLocation - location trait with Version/Etag/UniqueId 
-  - Fizical Locations
-    - FileLocation
+  - Physical Locations
+    - FileLocation - HasContent, NoChildren
+    - FolderLocation - NoContent, HasChildren
     - MemoryLocation - read/write in memory content - useful for tests.
     - ClasspathLocation - InputLocation from classpath.
     - Stream Location - location from a InputStream. Might not be reopened.
@@ -41,6 +42,7 @@ The main purpose of this project is to provide uniform, fluent access to various
     - UrlLocation - location from a url. Follows redirects if needed
     - VfsLocation - location based on [Apache-Vfs library](https://commons.apache.org/proper/commons-vfs/filesystems.html)
     - ZipInputLocation - location around zip files
+- natural sorting for listing files
 
 # Usage
 ## Samples
@@ -92,6 +94,10 @@ Projects that are using jedi-io:
  ```
 
 ## Backlog
+ - explain concepts
+ - add File/Folder concepts
+ - operations on files/folders
+ - operations on lists of files/folders (like manual selections or filters in OFM)
  - make it async
  - make a small 2panel file manager - see trolCommander - [other file managers](https://en.wikipedia.org/wiki/Comparison_of_file_managers)
  - Locations.url("file://...") should create a FileLocation?
