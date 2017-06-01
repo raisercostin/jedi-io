@@ -40,7 +40,8 @@ trait OutputLocation extends AbsoluteBaseLocation{self=>
   def withAppend: self.type
   def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
 }
-trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation{
+trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation{self=>
+  override type Repr = self.type
   protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
    override def moveTo(dest: OutputLocation): this.type = dest match {
     case d:FileOutputLocation=>
@@ -68,13 +69,15 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation{
     }
     this
   }
-  def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+  def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
     if (overwriteIfAlreadyExists) {
       Files.createLink(toPath, src.toPath)
     } else {
       if (exists) {
         throw new RuntimeException("Destination file " + this + " already exists.")
       } else {
+        if(!src.isFile)
+          throw new RuntimeException("Cannot create a hardLink. Source " + src + " is not a file.")
         Files.createLink(toPath, src.toPath)
       }
     }
