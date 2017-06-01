@@ -9,11 +9,12 @@ crossScalaVersions := Set(scalaVersion.value, "2.10.6","2.11.8"/*, "2.12.0-M4"*/
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
 libraryDependencies ++= Seq(
-	"commons-io" % "commons-io" % "2.5"
+	"ch.qos.logback" % "logback-classic" % "1.2.3"
+	,"commons-io" % "commons-io" % "2.5"
 	,"org.slf4j" % "slf4j-api" % "1.7.5"
 	,"org.scalatest" %% "scalatest" % "3.0.1" % Test
 	,"junit" % "junit" % "4.10" % Test
-	,"org.slf4j" % "slf4j-simple" % "1.7.5" % Test
+	//,"org.slf4j" % "slf4j-simple" % "1.7.5" % Test
 	,"org.apache.commons" % "commons-vfs2" % "2.1" % "optional"
   	,"commons-httpclient" % "commons-httpclient" % "3.1" % "optional"
   	,"commons-codec" % "commons-codec" % "1.10" % "optional"
