@@ -12,6 +12,7 @@ import java.util.regex.Pattern.Loop
 import Locations._
 import org.scalatest.Matchers._
 import java.nio.file.Files
+import java.nio.file.NotLinkException
 
 @RunWith(classOf[JUnitRunner])
 class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
@@ -27,14 +28,14 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   test("inode on linux sistems") {
     //println("inodedos="+location.attributes.dos.fileKey())
     //println("inodeposix="+location.attributes.posix.fileKey())
-    println("inode="+location.attributes.inode)
-    println("uniqueId="+location.uniqueId)
+    println("inode=" + location.attributes.inode)
+    println("uniqueId=" + location.uniqueId)
     println(location.attributes.basic.fileKey())
     assertNotNull(location.attributes.inode)
   }
   test("hardlinks should be detected with same uniqueId") {
     val dest = Locations.temp.randomFolderChild("test").child(location.name)
-    location.copyAsHardLink(dest,true)
+    location.copyAsHardLink(dest, true)
     val uniqueIdSrc = location.canonicalOverSymLinks
     val uniqueIdDest = dest.canonicalOverSymLinks
     assertNotNull(uniqueIdSrc)
@@ -44,9 +45,9 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   }
   test("hardlinks on same drive") {
     val dest = Locations.temp.randomFolderChild("test").child(location.name)
-    location.copyAsHardLink(dest,true)
+    location.copyAsHardLink(dest, true)
     val dest2 = dest.parent.child(location.name).renamedIfExists
-    dest.copyAsHardLink(dest2,true)
+    dest.copyAsHardLink(dest2, true)
     val uniqueIdSrc = dest.canonicalOverSymLinks
     val uniqueIdDest = dest2.canonicalOverSymLinks
     assertNotNull(uniqueIdSrc)
@@ -56,7 +57,7 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   }
   //d:\personal\work2\docs-proces>mklink /D docs-process-symlink docs-process
   //symbolic link created for docs-process-symlink <<===>> docs-process
-  test("file symlink on windows"){
+  test("file symlink on windows") {
     assume(Locations.environment.isWindows)
     val simlink = Locations.current("target/a-b-symlink.jpg").backupExistingOne.copyFromAsSymLink(Locations.classpath("""a b.jpg""").asFile)
     println(simlink.attributes.toMap.mkString("\n"))
@@ -65,9 +66,9 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
     simlink.isFolder shouldBe false
     simlink.name shouldBe "a-b-symlink.jpg"
     simlink.isSymlink shouldBe true
-    simlink.symlink.name shouldBe "a b.jpg"
+    simlink.symlink.get.name shouldBe "a b.jpg"
   }
-  test("folder symlink on windows"){
+  test("folder symlink on windows") {
     assume(Locations.environment.isWindows)
     val simlink = Locations.current("target/a-b-symlink").backupExistingOne.copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile.parent)
     println(simlink.attributes.toMap.mkString("\n"))
@@ -75,19 +76,24 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
     simlink.isFolder shouldBe true
     simlink.name shouldBe "a-b-symlink"
     simlink.isSymlink shouldBe true
-    simlink.symlink.name shouldBe "folder"
+    simlink.symlink.get.name shouldBe "folder"
   }
-  test("file symlink to folder should not work on windows"){
+  test("file symlink to folder should not work on windows") {
     //cannot do that since the decision on what kind of link is created depends on passed source
   }
-  test("folder symlink to invalid path on windows"){
-    assume(Locations.environment.isWindows)
+  test("folder symlink to invalid path on windows") {
+    //assume(Locations.environment.isWindows)
     val simlink = Locations.current("target/invalid-a-b-symlink").backupExistingOne.copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile.parent.child("folder2"))
     simlink.isFile shouldBe false
     simlink.isFolder shouldBe false
-    simlink.exists shouldBe true
+    simlink.exists shouldBe false
     simlink.name shouldBe "invalid-a-b-symlink"
     simlink.isSymlink shouldBe true
-    simlink.symlink.name shouldBe "folder2"
+    simlink.symlink.get.name shouldBe "folder2"
+  }
+  test("symlink on file shouldn't work") {
+    intercept[NotLinkException] {
+      Locations.current("target").symlink.get
+    }
   }
 }
