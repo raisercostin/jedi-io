@@ -24,7 +24,7 @@ trait NavigableInOutLocation extends InOutLocation with NavigableFileInputLocati
 
 /**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
 trait LocationState
-/**Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that 
+/**Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that
  * are available in offline mode.*/
 trait UnresolvedLocationState extends LocationState
 trait ResolvedLocationState extends LocationState
@@ -70,4 +70,9 @@ object Locations {
 
   implicit val unixAndWindowsToStandard = JediFileSystem.unixAndWindowsToStandard
   def userHome:FileLocation = file(System.getProperty("user.home"))
+  lazy val environment:RuntimeEnvironment = RuntimeEnvironment()
+}
+case class RuntimeEnvironment(){
+  //TODO use https://commons.apache.org/proper/commons-lang/javadocs/api-2.6/org/apache/commons/lang/SystemUtils.html
+  val isWindows:Boolean = System.getProperty("os.name").startsWith("Windows")
 }

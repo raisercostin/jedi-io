@@ -27,6 +27,7 @@ trait BaseLocation {
     decoder
   }
   def standard(selector: this.type => String): String = JediFileSystem.standard(selector(this))
+  def standardWindows(selector: this.type => String): String = JediFileSystem.standardWindows(selector(this))
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
   //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
 

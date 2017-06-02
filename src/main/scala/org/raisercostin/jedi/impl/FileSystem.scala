@@ -26,14 +26,15 @@ case class SimpleFileSystemFormatter(from: String, to: String) extends FileSyste
 object JediFileSystem {
   final val SEP = File.separator
   final val SEP_STANDARD = "/"
-  final val WINDOWS_SEPARATOR = "\\"
+  final val SEP_WINDOWS = "\\"
   val identityFormatter = new FileSystemFormatter() {
     def standard(path: String): String = path
     def inverse: FileSystemFormatter = this
   }
-  val unixAndWindowsToStandard = SimpleFileSystemFormatter(WINDOWS_SEPARATOR, SEP_STANDARD)
+  val unixAndWindowsToStandard = SimpleFileSystemFormatter(SEP_WINDOWS, SEP_STANDARD)
 
   def standard(path: String): String = path.replaceAllLiterally(SEP, SEP_STANDARD)
+  def standardWindows(path: String): String = path.replaceAllLiterally(SEP, SEP_WINDOWS)
   def requireStandad(path: String) = {
     //TODO: test that the file is not in a form specific to windows or other non linux(standard) way
   }

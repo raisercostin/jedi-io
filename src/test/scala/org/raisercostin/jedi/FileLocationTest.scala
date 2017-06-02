@@ -11,6 +11,7 @@ import java.util.regex.Pattern.Loop
 
 import Locations._
 import org.scalatest.Matchers._
+import java.nio.file.Files
 
 @RunWith(classOf[JUnitRunner])
 class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
@@ -52,5 +53,41 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
     assertNotNull(uniqueIdDest)
     //This cannot be waranted in jdk8 on windows.
     //assertEquals(uniqueIdSrc,uniqueIdDest)
+  }
+  //d:\personal\work2\docs-proces>mklink /D docs-process-symlink docs-process
+  //symbolic link created for docs-process-symlink <<===>> docs-process
+  test("file symlink on windows"){
+    assume(Locations.environment.isWindows)
+    val simlink = Locations.current("target/a-b-symlink.jpg").backupExistingOne.copyFromAsSymLink(Locations.classpath("""a b.jpg""").asFile)
+    println(simlink.attributes.toMap.mkString("\n"))
+    println(simlink.size)
+    simlink.isFile shouldBe true
+    simlink.isFolder shouldBe false
+    simlink.name shouldBe "a-b-symlink.jpg"
+    simlink.isSymlink shouldBe true
+    simlink.symlink.name shouldBe "a b.jpg"
+  }
+  test("folder symlink on windows"){
+    assume(Locations.environment.isWindows)
+    val simlink = Locations.current("target/a-b-symlink").backupExistingOne.copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile.parent)
+    println(simlink.attributes.toMap.mkString("\n"))
+    simlink.isFile shouldBe false
+    simlink.isFolder shouldBe true
+    simlink.name shouldBe "a-b-symlink"
+    simlink.isSymlink shouldBe true
+    simlink.symlink.name shouldBe "folder"
+  }
+  test("file symlink to folder should not work on windows"){
+    //cannot do that since the decision on what kind of link is created depends on passed source
+  }
+  test("folder symlink to invalid path on windows"){
+    assume(Locations.environment.isWindows)
+    val simlink = Locations.current("target/invalid-a-b-symlink").backupExistingOne.copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile.parent.child("folder2"))
+    simlink.isFile shouldBe false
+    simlink.isFolder shouldBe false
+    simlink.exists shouldBe true
+    simlink.name shouldBe "invalid-a-b-symlink"
+    simlink.isSymlink shouldBe true
+    simlink.symlink.name shouldBe "folder2"
   }
 }

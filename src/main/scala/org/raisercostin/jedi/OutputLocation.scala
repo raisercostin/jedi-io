@@ -12,9 +12,12 @@ import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 import Locations.logger
 import scala.annotation.tailrec
+import scala.util.Try
+import org.raisercostin.jedi.impl.SlfLogger
+import scala.util.Failure
 
 //TODO add DeletableLocation?
-trait OutputLocation extends AbsoluteBaseLocation{self=>
+trait OutputLocation extends AbsoluteBaseLocation { self =>
   override type Repr = self.type
   protected def unsafeToOutputStream: OutputStream
   protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream, "UTF-8"))
@@ -40,11 +43,11 @@ trait OutputLocation extends AbsoluteBaseLocation{self=>
   def withAppend: self.type
   def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
 }
-trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation{self=>
+trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { self =>
   override type Repr = self.type
   protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
-   override def moveTo(dest: OutputLocation): this.type = dest match {
-    case d:FileOutputLocation=>
+  override def moveTo(dest: OutputLocation): this.type = dest match {
+    case d: FileOutputLocation =>
       FileUtils.moveFile(toFile, d.toFile)
       this
     case _ =>
@@ -57,17 +60,31 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation{se
     }
     this
   }
- def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
-    if (overwriteIfAlreadyExists) {
-      Files.createSymbolicLink(toPath, src.toPath)
+  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
+    import org.raisercostin.jedi.impl.LogTry._
+    SlfLogger.logger.info("symLink {} -> {}", src, this, "")
+    if (!overwriteIfAlreadyExists && exists) {
+      throw new RuntimeException("Destination file " + this + " already exists.")
     } else {
-      if (exists) {
-        throw new RuntimeException("Destination file " + this + " already exists.")
-      } else {
+      val first = Try {
         Files.createSymbolicLink(toPath, src.toPath)
       }
+      first.recoverWith {
+        case error =>
+          val symlinkType = if(src.isFile) "" else "/D"
+          val second = Try { executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows)) }
+          second.recoverWith { case _ => first.log }
+          second
+      }.log
     }
     this
+  }
+  /**Inspired from here: http://winaero.com/blog/symbolic-link-in-windows-10 */
+  def executeWindows(command: Seq[String]) = {
+    SlfLogger.logger.info("Execute on windows shell: [{}]", command.mkString("\"","\" \"","\""))
+    import sys.process._
+    val processLogger= ProcessLogger(out=>logger.info(out), err=>logger.warn(err))
+    Seq("cmd", "/C") ++ command!(processLogger)
   }
   def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
     if (overwriteIfAlreadyExists) {
@@ -76,7 +93,7 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation{se
       if (exists) {
         throw new RuntimeException("Destination file " + this + " already exists.")
       } else {
-        if(!src.isFile)
+        if (!src.isFile)
           throw new RuntimeException("Cannot create a hardLink. Source " + src + " is not a file.")
         Files.createLink(toPath, src.toPath)
       }

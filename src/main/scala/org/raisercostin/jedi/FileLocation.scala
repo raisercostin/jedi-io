@@ -76,7 +76,7 @@ trait FileLocation extends NavigableInOutLocation with FileInputLocation with Fi
   def watch(pollingIntervalInMillis: Long = 1000, listener: FileLocation => Unit): FileMonitor = {
     FileMonitor(watchFileCreated(pollingIntervalInMillis).subscribe(file => listener.apply(file.location), error => LoggerFactory.getLogger(classOf[FileLocation]).error("Watch failed.", error)))
   }
-  
+
   def copyFromFolder(src:FileLocation):Repr={
     src.descendants.map { x =>
       val rel = x.extractPrefix(src).get
@@ -112,7 +112,9 @@ case class DirectoryCreated(file: File) extends FileAlterated
 case class DirectoryChanged(file: File) extends FileAlterated
 case class DirectoryDeleted(file: File) extends FileAlterated
 object FileLocation{
-  def apply(fileFullPath: String, append: Boolean = false) = FileLocationImpl(fileFullPath,append)
+  def apply(fileFullPath: String, append: Boolean = false):FileLocation = FileLocationImpl(fileFullPath,append)
+  def apply(path: Path):FileLocation = apply(path,false)
+  def apply(path: Path, append: Boolean):FileLocation = FileLocationImpl(path.toFile.getAbsolutePath,append)
 }
 case class FileLocationImpl(fileFullPath: String, append: Boolean = false) extends FileLocation { self =>
   override type Repr = self.type

@@ -12,6 +12,7 @@ import org.apache.commons.io.{ FileUtils => CommonsFileUtils }
 import org.apache.commons.io.FilenameUtils
 import java.nio.file.FileStore
 import org.raisercostin.jedi.impl._
+import java.nio.file.LinkOption
 
 trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {self=>
   type Repr = self.type
@@ -75,7 +76,6 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
   def toPath: Path = toFile.toPath
   def toPath(subFile: String): Path = toPath.resolve(subFile)
   def size = toFile.length()
-  def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
   def mkdirIfNecessary: Repr = {
     CommonsFileUtils.forceMkdir(toFile)
     this
@@ -94,10 +94,16 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
 
   def hasDirs = listPath("*").find(_.toFile.isDirectory).nonEmpty
   def isFile = toFile.isFile
+  def isFolder = toFile.isDirectory
+  def isSymlink = Files.isSymbolicLink(toPath)
+  def symlink:FileLocation = FileLocation(Files.readSymbolicLink(toPath))
+  //TODO this one is not ok attributes.basic.isSymbolicLink
   def exists = toFile.exists
   def nameAndBefore: String = absolute
   override def length: Long = toFile.length()
   def absolute: String = standard(_.absolutePlatformDependent)
+  def absoluteWindows: String = standardWindows(_.absolutePlatformDependent)
+  def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
   def isAbsolute = toFile.isAbsolute()
   /**Gets only the path part (without drive name on windows for example), and without the name of file*/
   def path: String = FilenameUtils.getPath(absolute)
