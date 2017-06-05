@@ -14,7 +14,7 @@ import rx.lang.scala.Observable
 import rx.lang.scala.Subscription
 import scala.util.control.NonFatal
 
-trait FileLocation extends NavigableInOutLocation with FileInputLocation with FileOutputLocation { self =>
+trait FileLocation extends NavigableFileInOutLocation with FileInputLocation with FileOutputLocation { self =>
   override type Repr = self.type
   def fileFullPath: String
   def append: Boolean

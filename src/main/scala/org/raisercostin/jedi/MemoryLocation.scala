@@ -10,7 +10,7 @@ import scala.Iterable
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 
-case class MemoryLocation(val memoryName: String) extends RelativeLocation with NavigableInOutLocation {self=>
+case class MemoryLocation(val memoryName: String) extends RelativeLocation with NavigableFileInOutLocation {self=>
   override type Repr = self.type
   override def nameAndBefore: String = absolute
   override def absolutePlatformDependent: String = memoryName
@@ -21,7 +21,7 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocation with 
   //val buffer: Array[Byte] = Array()
   lazy val outStream = new ByteArrayOutputStream()
   override def toFile: File = ???
-  protected override def unsafeToOutputStream: OutputStream = outStream
+  override def unsafeToOutputStream: OutputStream = outStream
   override def unsafeToInputStream: InputStream = new ByteArrayInputStream(outStream.toByteArray())
   override def child(child: String): Repr = ???
   override def build(path:String): Repr = new MemoryLocation(path)
@@ -33,4 +33,5 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocation with 
   override def descendants: Iterable[Repr] = Iterable(this)
   override def size = outStream.size()
   override def childName(child:String):String = ???
+  override def isFolder = false
 }

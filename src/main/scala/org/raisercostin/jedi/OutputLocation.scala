@@ -19,7 +19,7 @@ import scala.util.Failure
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
   override type Repr = self.type
-  protected def unsafeToOutputStream: OutputStream
+  def unsafeToOutputStream: OutputStream
   protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream, "UTF-8"))
   protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream, StandardCharsets.UTF_8), true)
 
@@ -41,11 +41,14 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   def writeContent(content: String): this.type = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type
-  def copyFrom(src: InputLocation): this.type = { src.copyTo(this); this }
+  def copyFrom(src: InputLocation): this.type = { src.copyTo(self); this }
 }
 trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { self =>
   override type Repr = self.type
-  protected def unsafeToOutputStream: OutputStream = new FileOutputStream(absolute, append)
+  def unsafeToOutputStream: OutputStream = if (isFolder)
+    throw new RuntimeException(s"Cannot open an OutputStream to the folder ${this}")
+  else
+    new FileOutputStream(absolute, append)
   override def moveTo(dest: OutputLocation): this.type = dest match {
     case d: FileOutputLocation =>
       FileUtils.moveFile(toFile, d.toFile)
@@ -71,7 +74,7 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { 
       }
       first.recoverWith {
         case error =>
-          val symlinkType = if(src.isFile) "" else "/D"
+          val symlinkType = if (src.isFile) "" else "/D"
           val second = Try { executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows)) }
           second.recoverWith { case _ => first.log }
           second
@@ -81,10 +84,10 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { 
   }
   /**Inspired from here: http://winaero.com/blog/symbolic-link-in-windows-10 */
   def executeWindows(command: Seq[String]) = {
-    SlfLogger.logger.info("Execute on windows shell: [{}]", command.mkString("\"","\" \"","\""))
+    SlfLogger.logger.info("Execute on windows shell: [{}]", command.mkString("\"", "\" \"", "\""))
     import sys.process._
-    val processLogger= ProcessLogger(out=>logger.info(out), err=>logger.warn(err))
-    Seq("cmd", "/C") ++ command!(processLogger)
+    val processLogger = ProcessLogger(out => logger.info(out), err => logger.warn(err))
+    Seq("cmd", "/C") ++ command ! (processLogger)
   }
   def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
     if (overwriteIfAlreadyExists) {

@@ -19,8 +19,16 @@ import org.raisercostin.jedi.impl.Predef2
  * In principle should be agnostic to these aspects and only at runtime will depend on the local environment.
  */
 trait InOutLocation extends InputLocation with OutputLocation
-trait NavigableFileInputLocation extends InputLocation with NavigableFileLocation
-trait NavigableInOutLocation extends InOutLocation with NavigableFileInputLocation with NavigableFileOutputLocation
+trait NavigableInputLocation extends InputLocation with NavigableLocation{self=>
+  override type Repr = self.type
+}
+trait NavigableOutputLocation extends OutputLocation with NavigableLocation{self=>
+  override type Repr = self.type
+}
+trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation
+
+trait NavigableFileInputLocation extends InputLocation with NavigableFileLocation with NavigableInputLocation
+trait NavigableFileInOutLocation extends InOutLocation with NavigableFileInputLocation with NavigableFileOutputLocation with NavigableInOutLocation
 
 /**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
 trait LocationState

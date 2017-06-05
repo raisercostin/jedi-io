@@ -4,7 +4,7 @@ import java.io.InputStream
 import java.time.Clock
 import java.time.LocalDate
 
-abstract case class CacheEntry(cache: NavigableInOutLocation) {
+abstract case class CacheEntry(cache: NavigableFileInOutLocation) {
   def cacheIt: Unit
 }
 trait CacheConfig {
@@ -12,7 +12,7 @@ trait CacheConfig {
 }
 object DefaultCacheConfig extends TimeSensitiveEtagCachedEntry(Locations.temp.child("default-cache"))
 
-case class EtagCacheConfig(cacheFolder: NavigableInOutLocation) extends CacheConfig {
+case class EtagCacheConfig(cacheFolder: NavigableFileInOutLocation) extends CacheConfig {
   def cacheFor(origin: InputLocation): CacheEntry = new CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).withBaseName(x => x + "--etag-" + origin.etag)) {
     def cacheIt: Unit = {
       //since the name is computed based on etag is enough to check the existence of file
@@ -22,7 +22,7 @@ case class EtagCacheConfig(cacheFolder: NavigableInOutLocation) extends CacheCon
     }
   }
 }
-case class TimeSensitiveCachedEntry(cacheFolder: NavigableInOutLocation) extends CacheConfig {
+case class TimeSensitiveCachedEntry(cacheFolder: NavigableFileInOutLocation) extends CacheConfig {
   def cacheFor(origin: InputLocation): CacheEntry = new CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).withBaseName(x => x + "--date-" + LocalDate.now())) {
     def cacheIt: Unit = {
       if (!cache.exists)
@@ -31,7 +31,7 @@ case class TimeSensitiveCachedEntry(cacheFolder: NavigableInOutLocation) extends
   }
 }
 /**Use etag if UrlLocation returns one non empty otherwise use date.*/
-case class TimeSensitiveEtagCachedEntry(cacheFolder: NavigableInOutLocation) extends CacheConfig {
+case class TimeSensitiveEtagCachedEntry(cacheFolder: NavigableFileInOutLocation) extends CacheConfig {
   def cacheFor(origin: InputLocation): CacheEntry = new CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).withBaseName { x =>
     x +
       (if (origin.etag.isEmpty())

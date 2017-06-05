@@ -13,6 +13,8 @@ import Locations._
 import org.scalatest.Matchers._
 import java.nio.file.Files
 import java.nio.file.NotLinkException
+import java.io.FileNotFoundException
+import org.scalatest.words.ContainWord
 
 @RunWith(classOf[JUnitRunner])
 class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
@@ -95,5 +97,16 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
     intercept[NotLinkException] {
       Locations.current("target").symlink.get
     }
+  }
+  test("cannot get an unsafeOutputStream from a folder"){
+    val ex = intercept[RuntimeException]{
+      val folder:FileLocation = Locations.current("target")
+      folder.isFolder shouldBe true
+      val is = folder.unsafeToOutputStream
+    }
+    ex.getMessage.should(include ("folder"))
+  }
+  test("copy a file to a folder"){
+    Locations.current("target").child("test14").mkdirIfNecessary.copyFrom(Locations.classpath("a b.jpg"))
   }
 }

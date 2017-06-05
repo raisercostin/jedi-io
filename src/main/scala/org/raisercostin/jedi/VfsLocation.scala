@@ -8,7 +8,7 @@ object VfsLocation{
   private val fsManager = VFS.getManager()
   def apply(url: String):VfsLocation = VfsLocation(fsManager.resolveFile(url))
 }
-case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
+case class VfsLocation(file:FileObject) extends NavigableFileInOutLocation { self =>
   override type Repr = self.type
   def raw = file.getName.getPath
   def fileFullPath: String = file.getName.getPath

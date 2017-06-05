@@ -10,13 +10,13 @@ import scala.util.Try
 
 import org.apache.commons.io.IOUtils
 
-trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation{  
+trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation {
   def unsafeToInputStream: InputStream
   def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
   def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
   def bytes: Array[Byte] = {
     //TODO implement
-    ???//IOUtils.readFully(x$1, x$2)
+    ??? //IOUtils.readFully(x$1, x$2)
   }
 
   def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStream)(op)
@@ -31,12 +31,23 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
   }
 
   def copyToIfNotExists(dest: OutputLocation): this.type = { dest.nonExistingOption.map(_.copyFrom(this)); this }
-  def copyTo(dest: OutputLocation):this.type = copyToOutputLocation(dest)
-  def copyTo(dest: NavigableFileOutputLocation):this.type = {
-    dest.mkdirOnParentIfNecessary
-    copyToOutputLocation(dest)
+  def copyTo(dest: OutputLocation): this.type = dest match {
+    case n:NavigableFileOutputLocation => copyToPossibleFolder(n)
+    case _ => copyToOutputLocation(dest)
   }
-  private def copyToOutputLocation(dest: OutputLocation):this.type = {
+  def copyTo(dest: NavigableFileOutputLocation): this.type = copyToPossibleFolder(dest)
+
+  private def copyToPossibleFolder(dest: NavigableFileOutputLocation): this.type = {
+    dest.mkdirOnParentIfNecessary
+    if (dest.isFolder)
+      copyToOutputLocation(dest.child(name))
+    else
+      copyToOutputLocation(dest)
+  }
+  //  private def copyToOutputLocation(dest: NavigableFileInOutLocation):this.type = {
+  //    this
+  //  }
+  private def copyToOutputLocation(dest: OutputLocation): this.type = {
     usingInputStream { source =>
       dest.usingOutputStream { output =>
         IOUtils.copyLarge(source, output)
@@ -60,11 +71,11 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
   //Try(existing(toSource).getLines mkString ("\n"))
   //def unzip: ZipInputLocation = ???
   def unzip: ZipInputLocation = ZipInputLocation(this, None)
-  def cached(implicit cacheConfig:CacheConfig=DefaultCacheConfig):CachedLocation[this.type] = CachedLocation(cacheConfig,this)
+  def cached(implicit cacheConfig: CacheConfig = DefaultCacheConfig): CachedLocation[this.type] = CachedLocation(cacheConfig, this)
   /**Sometimes we want the content to be available locally in the filesystem.*/
-  def asFileInputLocation:FileInputLocation=cached.flush
+  def asFileInputLocation: FileInputLocation = cached.flush
 }
-trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with VersionedLocation{
+trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with VersionedLocation {
   //import org.apache.commons.io.input.BOMInputStream
   //import org.apache.commons.io.IOUtils
   //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
@@ -81,5 +92,5 @@ trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with
     this
   }
   /**Optimize by using the current FileInputLocation.*/
-  override def asFileInputLocation:FileInputLocation=this
+  override def asFileInputLocation: FileInputLocation = this
 }

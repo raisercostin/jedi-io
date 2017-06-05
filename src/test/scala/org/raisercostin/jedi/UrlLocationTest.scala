@@ -13,6 +13,7 @@ import Locations._
 import org.scalatest.Matchers._
 import java.io.FileNotFoundException
 import scala.util.Failure
+import scala.collection.immutable.SortedMap
 
 @RunWith(classOf[JUnitRunner])
 class UrlLocationTest extends FunSuite with BaseLocationTest {
@@ -141,26 +142,32 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
   test("a url should always have a pair meta file") {
     val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
     println(Locations.url(url).meta.toString)
-    Locations.url(url).meta.get.request.mkString("\n").stripMargin shouldBe
-    """ |Connection -> Buffer(keep-alive)
-        |HEAD /proper/commons-io/javadocs/api-2.5/index.html HTTP/1.1 -> Buffer(null)
-        |Accept -> Buffer(*/*)
-        |Cache-Control -> Buffer(no-cache)
-        |Pragma -> Buffer(no-cache)
-        |User-Agent -> Buffer(Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36)
-        |Host -> Buffer(commons.apache.org)""".stripMargin
-    Locations.url(url).meta.get.response.updated("Date","--deleted--").updated("Keep-Alive","Buffer(timeout=30, max=98)--manuallyChangedInTest").
+    Locations.url(url).meta.get.request.toSortedMap.
       mkString("\n") shouldBe
-    """|Vary -> Buffer(Accept-Encoding)
-      |null -> Buffer(HTTP/1.1 200 OK)
-      |Last-Modified -> Buffer(Fri, 22 Apr 2016 00:53:30 GMT)
-      |Server -> Buffer(Apache/2.4.7 (Ubuntu))
-      |Accept-Ranges -> Buffer(bytes)
-      |Keep-Alive -> Buffer(timeout=30, max=98)--manuallyChangedInTest
+      """ |Accept -> Buffer(*/*)
+        |Cache-Control -> Buffer(no-cache)
+        |Connection -> Buffer(keep-alive)
+        |HEAD /proper/commons-io/javadocs/api-2.5/index.html HTTP/1.1 -> Buffer(null)
+        |Host -> Buffer(commons.apache.org)
+        |Pragma -> Buffer(no-cache)
+        |User-Agent -> Buffer(Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36)""".stripMargin
+    Locations.url(url).meta.get.response.-(null).toSortedMap.updated("Date", "--deleted--").updated("Keep-Alive", "Buffer(timeout=30, max=98)--manuallyChangedInTest").
+      mkString("\n") shouldBe
+      //|null -> Buffer(HTTP/1.1 200 OK)
+      """|Accept-Ranges -> Buffer(bytes)
       |Connection -> Buffer(Keep-Alive)
       |Content-Length -> Buffer(2854)
       |Content-Type -> Buffer(text/html)
       |Date -> --deleted--
-      |ETag -> Buffer("b26-531084169df69")""".stripMargin
+      |ETag -> Buffer("b26-531084169df69")
+      |Keep-Alive -> Buffer(timeout=30, max=98)--manuallyChangedInTest
+      |Last-Modified -> Buffer(Fri, 22 Apr 2016 00:53:30 GMT)
+      |Server -> Buffer(Apache/2.4.7 (Ubuntu))
+      |Vary -> Buffer(Accept-Encoding)""".stripMargin
+  }
+
+  implicit class ToSortedMap[A, B](tuples: TraversableOnce[(A, B)])(implicit ordering: Ordering[A]) {
+    def toSortedMap =
+      SortedMap(tuples.toSeq: _*)
   }
 }

@@ -4,7 +4,7 @@ import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 import scala.util.Try
 import scala.annotation.tailrec
-trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocation { self =>
+trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocation with NavigableOutputLocation{ self =>
   override type Repr = self.type
 
   def mkdirOnParentIfNecessary: this.type = {
