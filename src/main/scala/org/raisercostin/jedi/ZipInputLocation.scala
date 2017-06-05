@@ -50,4 +50,6 @@ trait ZipInputLocation extends NavigableFileInputLocation { self =>
   override def parent: Repr = ZipInputLocation(zip, Some(rootzip.getEntry(parentName)))
   override def childName(child:String):String = ???
 }
-case class ZipInputLocationImpl(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocation
+case class ZipInputLocationImpl(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocation{
+  override def toString = s"ZipInputLocation($zip,$entry)"
+}

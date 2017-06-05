@@ -49,4 +49,5 @@ object ClassPathInputLocation {
 }
 case class ClassPathInputLocationImpl(initialResourcePath: String) extends ClassPathInputLocation {
   Predef2.requireArgNotNull(initialResourcePath, "initialResourcePath")
+  override def toString = s"ClassPathInputLocation($initialResourcePath)"
 }
