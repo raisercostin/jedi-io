@@ -23,7 +23,7 @@ trait ClassPathInputLocation extends NavigableFileInputLocation { self =>
   }
   override def toUrl: java.net.URL = resource
   override def exists = true //resource != null from constructor
-  override def absolute: String = toUrl.toURI().getPath()
+  override def absolute: String = toUrl.toURI().getPath().stripPrefix("/")
   //Try{toFile.getAbsolutePath()}.recover{case e:Throwable => Option(toUrl).map(_.toExternalForm).getOrElse("unfound classpath://" + resourcePath) }.get
   def toFile: File = Try { new File(toUrl.toURI()) }.recoverWith { case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + self, e)) }.get
   override def unsafeToInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
