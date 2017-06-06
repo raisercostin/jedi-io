@@ -2,6 +2,7 @@ package org.raisercostin.jedi
 
 import org.raisercostin.jedi.impl.JediFileSystem
 import org.raisercostin.jedi.impl.FileSystemFormatter
+
 object RelativeLocation {
   def apply(relativePath: String) = RelativeLocationImpl(relativePath)
 }
@@ -18,6 +19,6 @@ trait RelativeLocation extends BaseNavigableLocation with UnresolvedLocationStat
     FileSystemFormatter(separator).standard(relativePath)
   override def build(path: String): Repr = RelativeLocation(path)
 }
-case class RelativeLocationImpl(relativePath: String) extends RelativeLocation {
+case class RelativeLocationImpl(relativePath: String) extends RelativeLocation with UnknownFileOrFolder{
   JediFileSystem.requireRelativePath(relativePath)
 }

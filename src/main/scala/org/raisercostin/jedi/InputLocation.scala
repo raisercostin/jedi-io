@@ -10,16 +10,23 @@ import scala.util.Try
 
 import org.apache.commons.io.IOUtils
 
-trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation {
+trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation { self =>
+  override type Repr = self.type
   def unsafeToInputStream: InputStream
-  def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStream, decoder)
-  def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream)(decoder)
+  def unsafeToInputStreamIfFile: InputStream = {
+    //Return the InputStream only if this is a file. Classpath folder is returning an InputStream with the list of the files.
+    if (!isFile)
+      throw new RuntimeException("Cannot create inputStream since [" + this + "] is not a file!")
+    unsafeToInputStream
+  }
+  def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStreamIfFile, decoder)
+  def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStreamIfFile)(decoder)
   def bytes: Array[Byte] = {
     //TODO implement
     ??? //IOUtils.readFully(x$1, x$2)
   }
 
-  def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStream)(op)
+  def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStreamIfFile)(op)
   def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
   def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
 
@@ -30,31 +37,9 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
     }
   }
 
-  def copyToIfNotExists(dest: OutputLocation): this.type = { dest.nonExistingOption.map(_.copyFrom(this)); this }
-  def copyTo(dest: OutputLocation): this.type = dest match {
-    case n:NavigableFileOutputLocation => copyToPossibleFolder(n)
-    case _ => copyToOutputLocation(dest)
-  }
-  def copyTo(dest: NavigableFileOutputLocation): this.type = copyToPossibleFolder(dest)
+  def copyToIfNotExists(dest: OutputLocation): Repr = { dest.nonExistingOption.map(_.copyFrom(this)); this }
+  def copyTo(dest: OutputLocation): Repr = { dest.copyFrom(self); this}
 
-  private def copyToPossibleFolder(dest: NavigableFileOutputLocation): this.type = {
-    dest.mkdirOnParentIfNecessary
-    if (dest.isFolder)
-      copyToOutputLocation(dest.child(name))
-    else
-      copyToOutputLocation(dest)
-  }
-  //  private def copyToOutputLocation(dest: NavigableFileInOutLocation):this.type = {
-  //    this
-  //  }
-  private def copyToOutputLocation(dest: OutputLocation): this.type = {
-    usingInputStream { source =>
-      dest.usingOutputStream { output =>
-        IOUtils.copyLarge(source, output)
-      }
-    }
-    this
-  }
   def readContent = {
     // Read a file into a string
     //    import rapture._

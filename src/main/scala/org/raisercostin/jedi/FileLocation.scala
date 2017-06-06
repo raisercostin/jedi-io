@@ -77,14 +77,14 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
     FileMonitor(watchFileCreated(pollingIntervalInMillis).subscribe(file => listener.apply(file.location), error => LoggerFactory.getLogger(classOf[FileLocation]).error("Watch failed.", error)))
   }
 
-  def copyFromFolder(src:FileLocation):Repr={
-    src.descendants.map { x =>
-      val rel = x.extractPrefix(src).get
-      val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
-      println(f"""copy ${rel.raw}%-40s $x -> $y""")
-    }
-    this
-  }
+//  def copyFromFolder(src:FileLocation):Repr={
+//    src.descendants.map { x =>
+//      val rel = x.extractPrefix(src).get
+//      val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
+//      println(f"""copy ${rel.raw}%-40s $x -> $y""")
+//    }
+//    this
+//  }
   override def childName(child:String):String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
   def build(path:String): Repr = FileLocation(path)
 

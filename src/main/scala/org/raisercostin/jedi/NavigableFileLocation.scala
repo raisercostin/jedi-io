@@ -93,9 +93,10 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   def withoutState = withState("")
 }
 trait NavigableLocation extends BaseNavigableLocation { self =>
-
+  override type Repr = self.type
+  def descendants: Iterable[Repr]
 }
-trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation { self =>
+trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation with NavigableLocation{ self =>
   override type Repr = self.type
   //TODO review these
   override protected def repr: Repr = toRepr2(self)

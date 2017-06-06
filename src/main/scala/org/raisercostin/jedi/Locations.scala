@@ -21,9 +21,28 @@ import org.raisercostin.jedi.impl.Predef2
 trait InOutLocation extends InputLocation with OutputLocation
 trait NavigableInputLocation extends InputLocation with NavigableLocation{self=>
   override type Repr = self.type
+  def copyToFolder(to:NavigableOutputLocation):Repr = {
+    to.copyFromFolder(self)
+  }
 }
 trait NavigableOutputLocation extends OutputLocation with NavigableLocation{self=>
   override type Repr = self.type
+  def mkdirOnParentIfNecessary:Repr
+  def copyFromFolder(src:NavigableInputLocation):Repr={
+    src.descendants.map { x =>
+      val rel = x.extractPrefix(src).get
+      val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
+      println(f"""copy ${rel.raw}%-40s $x -> $y""")
+    }
+    this
+  }
+  def copyFromFileToFileOrFolder(from:InputLocation): Repr = {
+    mkdirOnParentIfNecessary
+    if (isFolder)
+      child(name).copyFromInputLocation(from)
+    else
+      copyFromInputLocation(from)
+  }
 }
 trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation
 
@@ -35,7 +54,32 @@ trait LocationState
 /**Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that
  * are available in offline mode.*/
 trait UnresolvedLocationState extends LocationState
-trait ResolvedLocationState extends LocationState
+trait ResolvedLocationState extends LocationState with IsFileOrFolder
+
+/** There might be ones that are both? Or none? Or undecided?
+ */
+trait IsFileOrFolder{
+  /**Returns true if is file and file exists.*/
+  def isFile:Boolean
+  /**Returns true if is folder and folder exists.*/
+  def isFolder:Boolean
+  /**Returns true if is not an existing folder => so could be a file if created.*/
+  def canBeFile:Boolean = !isFolder
+  /**Returns true if is not an existing file => so could be a folder if created.*/
+  def canBeFolder:Boolean = !isFile
+}
+trait IsFile extends IsFileOrFolder{
+  override def isFile = true
+  override def isFolder = false
+}
+trait IsFolder extends IsFileOrFolder{
+  override def isFile = false
+  override def isFolder = true
+}
+trait UnknownFileOrFolder extends IsFileOrFolder{
+  override def isFile = throw new RuntimeException("Unknown if file or folder.")
+  override def isFolder = throw new RuntimeException("Unknown if file or folder.")
+}
 
 /**
  * file(*) - will refer to the absolute path passed as parameter or to a file relative to current directory new File(".") which should be the same as System.getProperty("user.dir") .

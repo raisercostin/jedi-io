@@ -52,7 +52,7 @@ case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int
 /**
  * See here for good behaviour: https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/
  */
-case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig.defaultConfig) extends InputLocation { self =>
+case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig.defaultConfig) extends InputLocation with IsFile{ self =>
   def exists = ???
   def raw = url.toExternalForm()
   //TODO dump intermediate requests/responses
@@ -148,7 +148,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
     }.body
   }
 
-  //protected override 
+  //protected override
   def unsafeToInputStreamUsingJava: InputStream = {
     url.openConnection() match {
       case conn: HttpURLConnection =>
@@ -197,7 +197,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
 
   override def etag: String = etagFromHttpRequestHeader.getOrElse("")
 }
-//TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.  
+//TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.
 case class ResolvedUrlLocation(location: UrlLocation) {
 }
 case class HttpStatusException(message: String, code: Int, url: UrlLocation) extends IOException(message)

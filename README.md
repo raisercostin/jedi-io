@@ -27,10 +27,10 @@ Scala uniform, fluent access to files, urls and other resources API. Fluent for 
   - Abstract Locations
     - InputLocation - locations that can be read
     - OutputLocation - locations that can be written
-    - InOutLocation - location that can be read/written 
+    - InOutLocation - location that can be read/written
     - RelativeLocation - part of a location. Cannot be resolved to some content.
     - NavigableLocation - location for which you can find parent/childrens/descendants.
-    - VersionedLocation - location trait with Version/Etag/UniqueId 
+    - VersionedLocation - location trait with Version/Etag/UniqueId
   - Physical Locations
     - FileLocation - HasContent, NoChildren
     - FolderLocation - NoContent, HasChildren
@@ -48,7 +48,7 @@ Scala uniform, fluent access to files, urls and other resources API. Fluent for 
  ```
 	//Reading from a file:
 	Locations.file("/home/costin/myfile.txt").readContent
- 
+
 	//Copying a file to a new folder (and create parent folder if needed)
 	Locations.file("/home/costin/myfile.txt").
 		copyTo(Locations.file("/home/costin/folder2/myfile2.txt").mkdirOnParentIfNecessary))
@@ -104,14 +104,14 @@ Projects that are using jedi-io:
  - AddHttpsWritable via vfs - http://detailfocused.blogspot.ro/2009/06/add-plugin-for-apache-vfs.html
  - add Locations:
    - StreamProviderLocation - location that knows how to open a stream
-   - CachedLocation - location that reads the original location only if the cache expired. Useful around UrlLocation, ZipLocation, etc. Check version if changed read origin. 
+   - CachedLocation - location that reads the original location only if the cache expired. Useful around UrlLocation, ZipLocation, etc. Check version if changed read origin.
    - MetadataLocation - location that saves metadata associated with the file. See osx files, ds-
  - investigate
    - scala arm - http://jsuereth.com/scala-arm/continuations.html
    - scala io - https://github.com/scala-incubator/scala-io
-   - spray - 
+   - spray -
    - akka streams -
- - UrlLocation use RequestHeader for mime type and reader encoding. Maybe we need MetadataLocation 
+ - UrlLocation use RequestHeader for mime type and reader encoding. Maybe we need MetadataLocation
  - clarify operations
    - do actions (need to resolve to the filesystems)
    - just change in memory representation
@@ -120,4 +120,5 @@ Projects that are using jedi-io:
 ## Resources
  - http://javapapers.com/java/file-attributes-using-java-nio/
  - https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html
+ - http://docs.oracle.com/javase/tutorial/essential/io/links.html#detect
  - http://www.javacodex.com/More-Examples/1/8

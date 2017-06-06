@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 
 
-case class StreamLocation(val inputStream: InputStream) extends InputLocation {
+case class StreamLocation(val inputStream: InputStream) extends InputLocation with IsFile{
   def exists: Boolean = true
   def nameAndBefore: String = inputStream.toString()
   def raw = "inputStream[" + inputStream + "]"
@@ -15,7 +15,7 @@ case class StreamLocation(val inputStream: InputStream) extends InputLocation {
   override def unsafeToInputStream: InputStream = inputStream
 }
 
-case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLocation {
+case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLocation with IsFile{
   def exists: Boolean = true
   def nameAndBefore: String = inputStream.toString()
   def raw = "inputStream[" + inputStream + "]"

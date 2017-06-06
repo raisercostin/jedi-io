@@ -15,15 +15,21 @@ import scala.annotation.tailrec
 import scala.util.Try
 import org.raisercostin.jedi.impl.SlfLogger
 import scala.util.Failure
+import org.apache.commons.io.IOUtils
 
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
   override type Repr = self.type
   def unsafeToOutputStream: OutputStream
-  protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream, "UTF-8"))
-  protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream, StandardCharsets.UTF_8), true)
+  def unsafeToOutputStream2: OutputStream = {
+    if(!canBeFile)
+      throw new RuntimeException("Cannot create an OutputStream since ["+this+"] is not a file!")
+    unsafeToOutputStream
+  }
+  protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream2, "UTF-8"))
+  protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream2, StandardCharsets.UTF_8), true)
 
-  def usingOutputStream[T](op: OutputStream => T): T = using(unsafeToOutputStream)(op)
+  def usingOutputStream[T](op: OutputStream => T): T = using(unsafeToOutputStream2)(op)
   def usingWriter[T](op: Writer => T): T = using(unsafeToWriter)(op)
   def usingPrintWriter[T](op: PrintWriter => T): T = using(unsafeToPrintWriter)(op)
 
@@ -41,7 +47,23 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   def writeContent(content: String): this.type = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type
-  def copyFrom(src: InputLocation): this.type = { src.copyTo(self); this }
+  def copyFrom(src: InputLocation): this.type = {
+    (src, this) match {
+      case (from, to) if from.isFile && to.isFile => copyFromInputLocation(from)
+      case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder => to.copyFromFileToFileOrFolder(from)
+      case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder => to.copyFromFolder(from)
+      case (from,to) => copyFromInputLocation(from)
+    }
+    this
+  }
+  def copyFromInputLocation(from: InputLocation): this.type = {
+    from.usingInputStream { source =>
+      usingOutputStream { output =>
+        IOUtils.copyLarge(source, output)
+      }
+    }
+    this
+  }
 }
 trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { self =>
   override type Repr = self.type

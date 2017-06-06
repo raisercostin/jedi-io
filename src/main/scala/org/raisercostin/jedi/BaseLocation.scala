@@ -6,7 +6,7 @@ import org.apache.commons.io.FilenameUtils
 import org.raisercostin.jedi.impl.JediFileSystem
 import org.raisercostin.util.Escape
 
-trait BaseLocation {
+trait BaseLocation extends IsFileOrFolder{
   def uri:String = raw
   def raw: String
   /**A part of the location that will be used to retrieve name, baseName, extension.*/
