@@ -116,6 +116,8 @@ Projects that are using jedi-io:
    - do actions (need to resolve to the filesystems)
    - just change in memory representation
  - both Resolved/Absolute and Relative could act as destination if they are resolved with src. `absolute.asDestination(src)=>absolute2` and `relative.asDestination(src)=>absolute3`
+ - see from here https://wiki.apache.org/commons/VfsNext . Is already integrated with vfs.  
+ - add transactional aspect as an option http://wiki.c2.com/?TransactionalFileSystem
 
 ## Resources
  - http://javapapers.com/java/file-attributes-using-java-nio/

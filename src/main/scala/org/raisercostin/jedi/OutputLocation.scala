@@ -44,17 +44,16 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
     this
   }
 
-  def writeContent(content: String): this.type = { usingPrintWriter(_.print(content)); this }
+  def writeContent(content: String): Repr = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type
-  def copyFrom(src: InputLocation): this.type = {
+  def copyFrom(src: InputLocation): Repr = {
     (src, this) match {
       case (from, to) if from.isFile && to.isFile => copyFromInputLocation(from)
-      case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder => to.copyFromFileToFileOrFolder(from)
-      case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder => to.copyFromFolder(from)
+      case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder => to.copyFromFileToFileOrFolder(from).asInstanceOf[Repr]
+      case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder => to.copyFromFolder(from).asInstanceOf[Repr]
       case (from,to) => copyFromInputLocation(from)
     }
-    this
   }
   def copyFromInputLocation(from: InputLocation): this.type = {
     from.usingInputStream { source =>

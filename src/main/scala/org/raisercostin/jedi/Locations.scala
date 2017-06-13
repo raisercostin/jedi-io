@@ -29,6 +29,8 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation{self
   override type Repr = self.type
   def mkdirOnParentIfNecessary:Repr
   def copyFromFolder(src:NavigableInputLocation):Repr={
+    if(!src.isFolder)
+      throw new RuntimeException(s"Src $src is not a folder")
     src.descendants.map { x =>
       val rel = x.extractPrefix(src).get
       val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
@@ -39,7 +41,7 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation{self
   def copyFromFileToFileOrFolder(from:InputLocation): Repr = {
     mkdirOnParentIfNecessary
     if (isFolder)
-      child(name).copyFromInputLocation(from)
+      child(from.name).copyFromInputLocation(from)
     else
       copyFromInputLocation(from)
   }

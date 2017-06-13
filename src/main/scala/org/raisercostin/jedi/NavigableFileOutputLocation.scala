@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocation with NavigableOutputLocation{ self =>
   override type Repr = self.type
 
-  def mkdirOnParentIfNecessary: this.type = {
+  def mkdirOnParentIfNecessary: Repr = {
     parent.mkdirIfNecessary
     this
   }

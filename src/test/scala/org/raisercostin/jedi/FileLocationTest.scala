@@ -107,6 +107,6 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
     ex.getMessage.should(include ("folder"))
   }
   test("copy a file to a folder"){
-    Locations.current("target").child("test14").mkdirIfNecessary.copyFrom(Locations.classpath("a b.jpg"))
+    Locations.current("target").child("test14").mkdirIfNecessary.copyFrom(Locations.classpath("a b.jpg")).name shouldBe "a b.jpg"
   }
 }
