@@ -98,6 +98,13 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
       Locations.current("target").symlink.get
     }
   }
+  test("if symlink cannot be created because a parent folder an exception should be thrown") {
+    Locations.current("target/a").backupExistingOne.child("b-symlink").mkdirIfNecessary
+    Locations.current("target/a").backupExistingOne.child("b-symlink").copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile)
+    intercept[NotLinkException] {
+      Locations.current("target/a").backupExistingOne.child("b-symlink").copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile)
+    }
+  }
   test("cannot get an unsafeOutputStream from a folder"){
     val ex = intercept[RuntimeException]{
       val folder:FileLocation = Locations.current("target")
@@ -108,5 +115,10 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   }
   test("copy a file to a folder"){
     Locations.current("target").child("test14").mkdirIfNecessary.copyFrom(Locations.classpath("a b.jpg")).name shouldBe "a b.jpg"
+  }
+  test("detect parent ancestor") {
+    val parent = location
+    parent.child("a/b/cdef").ancestor(parent.child("a/xyz")).name shouldBe "a"
+    parent.child("a/b/cdef").ancestor(parent.child("a/b/cdxy")).name shouldBe "b"
   }
 }

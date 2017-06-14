@@ -87,14 +87,6 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
 //  }
   override def childName(child:String):String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
   def build(path:String): Repr = FileLocation(path)
-
-  /**This one if folder otherwise the parent*/
-  def folder: Repr = {
-    if(isFile)
-      parent
-    else
-      this
-  }
 }
 
 @deprecated("Use watch with observable", "0.31")

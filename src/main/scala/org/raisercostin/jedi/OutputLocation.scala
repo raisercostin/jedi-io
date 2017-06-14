@@ -16,6 +16,8 @@ import scala.util.Try
 import org.raisercostin.jedi.impl.SlfLogger
 import scala.util.Failure
 import org.apache.commons.io.IOUtils
+import scala.util.Success
+import org.raisercostin.jedi.impl.ProcessUtils
 
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
@@ -84,11 +86,14 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { 
     }
     this
   }
-  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
+  @deprecated
+  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLinkAndGet(src,overwriteIfAlreadyExists)
+  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLinkTry(src,overwriteIfAlreadyExists).get
+  def copyFromAsSymLinkTry(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[Repr] = {
     import org.raisercostin.jedi.impl.LogTry._
     SlfLogger.logger.info("symLink {} -> {}", src, this, "")
     if (!overwriteIfAlreadyExists && exists) {
-      throw new RuntimeException("Destination file " + this + " already exists.")
+      Failure(new RuntimeException("Destination file " + this + " already exists."))
     } else {
       val first = Try {
         Files.createSymbolicLink(toPath, src.toPath)
@@ -96,19 +101,11 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { 
       first.recoverWith {
         case error =>
           val symlinkType = if (src.isFile) "" else "/D"
-          val second = Try { executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows)) }
+          val second = ProcessUtils.executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows))
           second.recoverWith { case _ => first.log }
           second
-      }.log
+      }.map(x=> this)//log.get
     }
-    this
-  }
-  /**Inspired from here: http://winaero.com/blog/symbolic-link-in-windows-10 */
-  def executeWindows(command: Seq[String]) = {
-    SlfLogger.logger.info("Execute on windows shell: [{}]", command.mkString("\"", "\" \"", "\""))
-    import sys.process._
-    val processLogger = ProcessLogger(out => logger.info(out), err => logger.warn(err))
-    Seq("cmd", "/C") ++ command ! (processLogger)
   }
   def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
     if (overwriteIfAlreadyExists) {

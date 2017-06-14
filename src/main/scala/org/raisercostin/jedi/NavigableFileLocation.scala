@@ -51,6 +51,36 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
     process(repr)
     repr
   }
+  /**This one if folder otherwise the parent*/
+  def folder: Repr = {
+    if(isFile)
+      parent
+    else
+      this
+  }
+  /** A folder should end in `/`. */
+  def ancestor[T<:BaseLocation](src:T*):Repr = build(src.foldLeft(this.nameAndBefore)((x,file)=>folderCommonPrefix(x,file.nameAndBefore)))
+//  private def ancestor2[T<:BaseLocation](a:String,b:String):Repr = {
+//    build(getFolderCommonPrefix(a,b))
+//  }
+  private def ancestor3(a:String,b:String):String = {
+    folderCommonPrefix(a,b)
+  }
+  private def folderCommonPrefix(a:String, b:String):String = {
+    val prefix = commonPrefix(a+JediFileSystem.SEP_STANDARD,b+JediFileSystem.SEP_STANDARD)
+    val index = prefix.lastIndexOf(JediFileSystem.SEP_STANDARD)
+    if(index != -1)
+      prefix.substring(0, index)
+    else
+      prefix
+  }
+  //see org.apache.commons.lang3.StringUtils
+  private def commonPrefix(a:String, b:String):String = {
+    var i = 0
+    val maxi = Math.min(a.length,b.length)
+    while(i<maxi && a(i)==b(i)) i+=1
+    a.substring(0,i)
+  }
   def parentName: String = //toFile.getParentFile.getAbsolutePath
     Option(FilenameUtils.getFullPathNoEndSeparator(nameAndBefore)).getOrElse("")
   def extractPrefix(ancestor: BaseNavigableLocation): Try[RelativeLocation] =
