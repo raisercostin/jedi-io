@@ -8,7 +8,8 @@ object VfsLocation{
   private val fsManager = VFS.getManager()
   def apply(url: String):VfsLocation = VfsLocation(fsManager.resolveFile(url))
 }
-case class VfsLocation(file:FileObject) extends NavigableFileInOutLocation { self =>
+
+case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
   override type Repr = self.type
   def raw = file.getName.getPath
   def fileFullPath: String = file.getName.getPath
@@ -21,9 +22,13 @@ case class VfsLocation(file:FileObject) extends NavigableFileInOutLocation { sel
   override def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.file.getChildren).map(_.toIterable).getOrElse(Iterable(x.file))
   }.getOrElse(Iterable()).map(buildNew)
-//TODO to remove as not beeing abstract enough
-  def toFile: java.io.File = ???
-  def asInput: NavigableFileInputLocation = self
+  def isFile: Boolean = file.isFile
+  def isFolder: Boolean = file.isFolder
+  def mkdirOnParentIfNecessary:Repr = {
+    file.getParent.createFolder
+    this
+  }
+  def asInput: NavigableInOutLocation = self
   def append: Boolean = ???
   def withAppend: Repr = ???
   override def nameAndBefore: String = raw

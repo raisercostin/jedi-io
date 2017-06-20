@@ -61,7 +61,7 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   //symbolic link created for docs-process-symlink <<===>> docs-process
   test("file symlink on windows") {
     assume(Locations.environment.isWindows)
-    val simlink = Locations.current("target/a-b-symlink.jpg").backupExistingOne.copyFromAsSymLink(Locations.classpath("""a b.jpg""").asFile)
+    val simlink = Locations.current("target/a-b-symlink.jpg").backupExistingOne.copyFromAsSymLinkAndGet(Locations.classpath("""a b.jpg""").asFile)
     println(simlink.attributes.toMap.mkString("\n"))
     println(simlink.size)
     simlink.isFile shouldBe true
@@ -72,7 +72,7 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   }
   test("folder symlink on windows") {
     assume(Locations.environment.isWindows)
-    val simlink = Locations.current("target/a-b-symlink").backupExistingOne.copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile.parent)
+    val simlink = Locations.current("target/a-b-symlink").backupExistingOne.copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile.parent)
     println(simlink.attributes.toMap.mkString("\n"))
     simlink.isFile shouldBe false
     simlink.isFolder shouldBe true
@@ -85,7 +85,7 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   }
   test("folder symlink to invalid path on windows") {
     //assume(Locations.environment.isWindows)
-    val simlink = Locations.current("target/invalid-a-b-symlink").backupExistingOne.copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile.parent.child("folder2"))
+    val simlink = Locations.current("target/invalid-a-b-symlink").backupExistingOne.copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile.parent.child("folder2"))
     simlink.isFile shouldBe false
     simlink.isFolder shouldBe false
     simlink.exists shouldBe false
@@ -98,11 +98,10 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
       Locations.current("target").symlink.get
     }
   }
-  test("if symlink cannot be created because a parent folder an exception should be thrown") {
-    Locations.current("target/a").backupExistingOne.child("b-symlink").mkdirIfNecessary
-    Locations.current("target/a").backupExistingOne.child("b-symlink").copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile)
+  test("if symlink cannot be created because the parent folder doesn't exist an exception should be thrown") {
+    Locations.current("target/a").backupExistingOne.child("b-symlink").mkdirIfNecessary.copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile)
     intercept[NotLinkException] {
-      Locations.current("target/a").backupExistingOne.child("b-symlink").copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile)
+      Locations.current("target/a").backupExistingOne.child("b-symlink").copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile)
     }
   }
   test("cannot get an unsafeOutputStream from a folder"){

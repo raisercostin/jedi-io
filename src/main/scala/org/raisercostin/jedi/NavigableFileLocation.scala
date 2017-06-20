@@ -122,9 +122,20 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   }
   def withoutState = withState("")
 }
-trait NavigableLocation extends BaseNavigableLocation { self =>
+trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation{ self =>
   override type Repr = self.type
-  def descendants: Iterable[Repr]
+  def list: Iterable[Repr]
+  def descendants: Iterable[Repr] = ???
+//  def loop(h: Int, n: Int): Stream[Int] = h #:: loop(n, h + n)
+//  loop(1, 1)
+//  def descendantsStream: Stream[Repr] =
+//  def descendants: Iterable[Repr] = {
+//    val all: Iterable[File] = Option(existing).map {  x =>
+//      list.map()
+//      traverse.map(_._1.toFile).toIterable
+//    }.getOrElse(Iterable[File]())
+//    all.map(buildNewFile)
+//  }
 }
 trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation with NavigableLocation{ self =>
   override type Repr = self.type
@@ -136,7 +147,7 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
   def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
   }.getOrElse(Iterable()).map(buildNewFile)
-  def descendants: Iterable[Repr] = {
+  override def descendants: Iterable[Repr] = {
     val all: Iterable[File] = Option(existing).map { x =>
       traverse.map(_._1.toFile).toIterable
     }.getOrElse(Iterable[File]())

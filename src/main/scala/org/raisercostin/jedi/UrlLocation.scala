@@ -60,7 +60,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   override def nameAndBefore: String = url.getPath
   def toFile: File = ???
   import java.net._
-  override def length: Long = lengthTry.get
+  override def size: Long = lengthTry.get
 
   //TODO sending the current etag as well and wait for 302 not modified? This will save one more connection. Maybe this should be managed in a CachedUrlLocation?
   def etagFromHttpRequestHeader: Option[String] = headConnection { conn => conn.getHeaderField("ETag").stripPrefix("\"").stripSuffix("\"") }.toOption

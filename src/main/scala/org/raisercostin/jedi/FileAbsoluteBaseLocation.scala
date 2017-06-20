@@ -17,7 +17,8 @@ import java.nio.file.LinkOption
 trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {self=>
   type Repr = self.type
   def toUrl: java.net.URL = ???
-  def length: Long = ???
+  def size:Long
+  final def length:Long = size
   def exists:Boolean
   protected def using[A <% AutoCloseable, B](resource: A)(f: A => B): B = {
     import scala.language.reflectiveCalls
@@ -75,7 +76,6 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
 
   def toPath: Path = toFile.toPath
   def toPath(subFile: String): Path = toPath.resolve(subFile)
-  def size = toFile.length()
   def mkdirIfNecessary: Repr = {
     CommonsFileUtils.forceMkdir(toFile)
     this
@@ -100,7 +100,7 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
   //TODO this one is not ok attributes.basic.isSymbolicLink
   def exists = toFile.exists
   def nameAndBefore: String = absolute
-  override def length: Long = toFile.length()
+  override def size:Long = toFile.length()
   def absolute: String = standard(_.absolutePlatformDependent)
   def absoluteWindows: String = standardWindows(_.absolutePlatformDependent)
   def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString

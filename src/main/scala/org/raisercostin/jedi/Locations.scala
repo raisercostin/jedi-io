@@ -46,7 +46,9 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation{self
       copyFromInputLocation(from)
   }
 }
-trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation
+trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation{
+  def absolute:String
+}
 
 trait NavigableFileInputLocation extends InputLocation with NavigableFileLocation with NavigableInputLocation
 trait NavigableFileInOutLocation extends InOutLocation with NavigableFileInputLocation with NavigableFileOutputLocation with NavigableInOutLocation
@@ -56,7 +58,8 @@ trait LocationState
 /**Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that
  * are available in offline mode.*/
 trait UnresolvedLocationState extends LocationState
-trait ResolvedLocationState extends LocationState with IsFileOrFolder
+trait ResolvedLocationState extends LocationState with IsFileOrFolder{
+}
 
 /** There might be ones that are both? Or none? Or undecided?
  */

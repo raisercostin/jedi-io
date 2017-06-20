@@ -86,10 +86,8 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { 
     }
     this
   }
-  @deprecated
-  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLinkAndGet(src,overwriteIfAlreadyExists)
-  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLinkTry(src,overwriteIfAlreadyExists).get
-  def copyFromAsSymLinkTry(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[Repr] = {
+  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLink(src,overwriteIfAlreadyExists).get
+  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[Repr] = {
     import org.raisercostin.jedi.impl.LogTry._
     SlfLogger.logger.info("symLink {} -> {}", src, this, "")
     if (!overwriteIfAlreadyExists && exists) {

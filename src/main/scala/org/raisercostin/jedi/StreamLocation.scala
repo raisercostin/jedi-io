@@ -11,14 +11,14 @@ case class StreamLocation(val inputStream: InputStream) extends InputLocation wi
   def exists: Boolean = true
   def nameAndBefore: String = inputStream.toString()
   def raw = "inputStream[" + inputStream + "]"
-  def toFile: File = ???
   override def unsafeToInputStream: InputStream = inputStream
+  override def size:Long = ???
 }
 
 case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLocation with IsFile{
   def exists: Boolean = true
   def nameAndBefore: String = inputStream.toString()
   def raw = "inputStream[" + inputStream + "]"
-  def toFile: File = ???
   override def unsafeToInputStream: InputStream = inputStream.apply()
+  override def size:Long = ???
 }
