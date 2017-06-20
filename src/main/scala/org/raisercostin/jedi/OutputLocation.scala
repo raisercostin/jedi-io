@@ -24,8 +24,8 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   override type Repr = self.type
   def unsafeToOutputStream: OutputStream
   def unsafeToOutputStream2: OutputStream = {
-    if(!canBeFile)
-      throw new RuntimeException("Cannot create an OutputStream since ["+this+"] is not a file!")
+    if (!canBeFile)
+      throw new RuntimeException("Cannot create an OutputStream since [" + this + "] is not a file!")
     unsafeToOutputStream
   }
   protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream2, "UTF-8"))
@@ -54,7 +54,7 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
       case (from, to) if from.isFile && to.isFile => copyFromInputLocation(from)
       case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder => to.copyFromFileToFileOrFolder(from).asInstanceOf[Repr]
       case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder => to.copyFromFolder(from).asInstanceOf[Repr]
-      case (from,to) => copyFromInputLocation(from)
+      case (from, to) => copyFromInputLocation(from)
     }
   }
   def copyFromInputLocation(from: InputLocation): this.type = {
@@ -86,25 +86,25 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { 
     }
     this
   }
-  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLink(src,overwriteIfAlreadyExists).get
+  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLink(src, overwriteIfAlreadyExists).get
+  import org.raisercostin.jedi.impl.LogTry._
   def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[Repr] = {
-    import org.raisercostin.jedi.impl.LogTry._
     SlfLogger.logger.info("symLink {} -> {}", src, this, "")
     if (!overwriteIfAlreadyExists && exists) {
       Failure(new RuntimeException("Destination file " + this + " already exists."))
     } else {
-      val first = Try {
+      val first: Try[Repr] = Try {
         Files.createSymbolicLink(toPath, src.toPath)
+        self
       }
       first.recoverWith {
         case error =>
           val symlinkType = if (src.isFile) "" else "/D"
-          val second = ProcessUtils.executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows))
-          second.recoverWith { case _ => first.log }
-          second
-      }.map(x=> this)//log.get
+          val second:Try[Repr] = ProcessUtils.executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows)).map(x => self)
+          second.recoverWith { case x => Failure { x.addSuppressed(first.failed.get);x } }
+      }
     }
-  }
+  }.log
   def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
     if (overwriteIfAlreadyExists) {
       Files.createLink(toPath, src.toPath)

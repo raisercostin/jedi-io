@@ -14,12 +14,12 @@ import java.nio.file.FileStore
 import org.raisercostin.jedi.impl._
 import java.nio.file.LinkOption
 
-trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {self=>
+trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState { self =>
   type Repr = self.type
   def toUrl: java.net.URL = ???
-  def size:Long
-  final def length:Long = size
-  def exists:Boolean
+  def size: Long
+  final def length: Long = size
+  def exists: Boolean
   protected def using[A <% AutoCloseable, B](resource: A)(f: A => B): B = {
     import scala.language.reflectiveCalls
     try f(resource) finally resource.close()
@@ -65,7 +65,7 @@ trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState {self
 //  def toFile: File
 //}
 
-trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocationState with FileVersionedLocation{self=>
+trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocationState with FileVersionedLocation { self =>
   override type Repr = self.type
   def toFile: File
   override def toUrl: java.net.URL = toFile.toURI.toURL
@@ -96,11 +96,15 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
   def isFile = toFile.isFile
   def isFolder = toFile.isDirectory
   def isSymlink = Files.isSymbolicLink(toPath)
-  def symlink:Try[FileLocation] = Try{FileLocation(Files.readSymbolicLink(toPath))}
+  def symlink: Try[FileLocation] = Try { FileLocation(Files.readSymbolicLink(toPath)) }
   //TODO this one is not ok attributes.basic.isSymbolicLink
-  def exists = toFile.exists
+  def exists: Boolean = toFile.exists
+  def existsWithoutResolving = if (isSymlink)
+    Files.exists(toPath, LinkOption.NOFOLLOW_LINKS)
+  else
+    exists
   def nameAndBefore: String = absolute
-  override def size:Long = toFile.length()
+  override def size: Long = toFile.length()
   def absolute: String = standard(_.absolutePlatformDependent)
   def absoluteWindows: String = standardWindows(_.absolutePlatformDependent)
   def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString

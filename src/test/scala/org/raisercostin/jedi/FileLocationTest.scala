@@ -83,15 +83,23 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   test("file symlink to folder should not work on windows") {
     //cannot do that since the decision on what kind of link is created depends on passed source
   }
+  test("backupExisting symlink should work") {
+    val symlink = Locations.current("target/invalid-a-b-symlink").backupExistingOne
+    symlink.existsWithoutResolving shouldBe false
+    val symlink2 = symlink.copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile).get
+    symlink2.existsWithoutResolving shouldBe true
+    val symlink3 = symlink2.backupExistingOne
+    symlink3.existsWithoutResolving shouldBe false
+  }
   test("folder symlink to invalid path on windows") {
     //assume(Locations.environment.isWindows)
-    val simlink = Locations.current("target/invalid-a-b-symlink").backupExistingOne.copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile.parent.child("folder2"))
-    simlink.isFile shouldBe false
-    simlink.isFolder shouldBe false
-    simlink.exists shouldBe false
-    simlink.name shouldBe "invalid-a-b-symlink"
-    simlink.isSymlink shouldBe true
-    simlink.symlink.get.name shouldBe "folder2"
+    val symlink = Locations.current("target/invalid-a-b-symlink").backupExistingOne.copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile.parent.child("folder2"))
+    symlink.isFile shouldBe false
+    symlink.isFolder shouldBe false
+    symlink.exists shouldBe false
+    symlink.name shouldBe "invalid-a-b-symlink"
+    symlink.isSymlink shouldBe true
+    symlink.symlink.get.name shouldBe "folder2"
   }
   test("symlink on file shouldn't work") {
     intercept[NotLinkException] {

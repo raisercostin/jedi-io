@@ -4,6 +4,9 @@ import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 import scala.util.Try
 import scala.annotation.tailrec
+import java.nio.file.Files
+import java.nio.file.CopyOption
+
 trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocation with NavigableOutputLocation{ self =>
   override type Repr = self.type
 
@@ -24,7 +27,7 @@ trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocat
         moveToRenamedIfExists(dest.renamedIfExists)
     }
   }
-  private def backupExistingOneAndReturnBackup(backupEmptyFolderToo:Boolean = false): Repr = {
+  private def backupExistingOneAndReturnBackup(backupEmptyFolderToo:Boolean = true): Repr = {
     val newName:NavigableFileLocation = renamedIfExists(backupEmptyFolderToo)
     if (!newName.equals(this)){
       if(!backupEmptyFolderToo && newName.exists && newName.isEmptyFolder)
@@ -33,16 +36,21 @@ trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocat
     }else
       this
   }
-  def backupExistingOne(onBackup: Repr => Unit, backupIfEmpty:Boolean=false): Repr = {
+  def backupExistingOne(onBackup: Repr => Unit, backupIfEmpty:Boolean = true): Repr = {
     onBackup(backupExistingOneAndReturnBackup(backupIfEmpty))
     this
   }
-  def backupExistingOne: Repr = {
-    backupExistingOneAndReturnBackup()
+  def backupExistingOne(backupEmptyFolderToo:Boolean): Repr = {
+    backupExistingOneAndReturnBackup(backupEmptyFolderToo)
     this
   }
+  def backupExistingOne: Repr = backupExistingOne(true)
+
   def renameTo[T <: FileAbsoluteBaseLocation](newName: T): T = {
-    FileUtils.moveFile(toFile, newName.toFile)
+    if(isSymlink)
+      Files.move(toPath,newName.toPath)
+    else
+      FileUtils.moveFile(toFile, newName.toFile)
     newName
   }
 }

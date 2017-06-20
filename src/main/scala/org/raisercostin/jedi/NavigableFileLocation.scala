@@ -160,7 +160,7 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
     @tailrec
     def findUniqueName(destFile: Repr, counter: Int): Repr = {
       val renamed = destFile.withBaseName { baseName: String => (baseName + "-" + counter) }
-      if (renamed.exists)
+      if (renamed.existsWithoutResolving)
         if(renameIfEmptyToo && list.isEmpty)
           renamed
         else
@@ -168,7 +168,7 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
       else
         renamed
     }
-    if (repr.exists)
+    if (repr.existsWithoutResolving)
       findUniqueName(repr, 1)
     else
       repr
