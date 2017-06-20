@@ -13,7 +13,8 @@ import scala.language.reflectiveCalls
 case class MemoryLocation(val memoryName: String) extends RelativeLocation with InOutLocation {self=>
   override type Repr = self.type
   override def nameAndBefore: String = absolute
-  def absolute: String = memoryName  def relativePath: String = memoryName
+  def absolute: String = memoryName
+  def relativePath: String = memoryName
   override def raw = memoryName
   def asInput: MemoryLocation = this
   def append: Boolean = false
@@ -27,7 +28,8 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocation with 
   override def withAppend: this.type = ???
   override def size: Long = outStream.size()
   override def exists = true
-  def descendants: Iterable[Repr] = Iterable(this)  override def childName(child:String):String = ???
+  def descendants: Iterable[Repr] = Iterable(this)
+  override def childName(child:String):String = ???
   override def isFolder = false
   def isFile: Boolean = true
 }

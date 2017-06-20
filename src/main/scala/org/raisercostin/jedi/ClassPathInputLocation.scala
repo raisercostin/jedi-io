@@ -16,7 +16,7 @@ trait ClassPathInputLocation extends NavigableFileInputLocation { self =>
   def raw = initialResourcePath
   import ClassPathInputLocation._
   val resourcePath = initialResourcePath.stripPrefix("/")
-  val resource = {
+  val resource:java.net.URL = {
     val res = getSpecialClassLoader.getResource(resourcePath);
     Predef2.requireNotNull(res, s"Couldn't get a stream from $self");
     res
@@ -24,8 +24,16 @@ trait ClassPathInputLocation extends NavigableFileInputLocation { self =>
   override def toUrl: java.net.URL = resource
   override def exists = true //resource != null from constructor
   override def absolute: String = toUrl.toURI().getPath().stripPrefix("/")
+  //Cannot detect if is file or folder. See https://stackoverflow.com/questions/20105554/is-there-a-way-to-tell-if-a-classpath-resource-is-a-file-or-a-directory
+  override def isFolder: Boolean = true
+  override def isFile: Boolean = true
   //Try{toFile.getAbsolutePath()}.recover{case e:Throwable => Option(toUrl).map(_.toExternalForm).getOrElse("unfound classpath://" + resourcePath) }.get
-  def toFile: File = Try { new File(toUrl.toURI()) }.recoverWith { case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + self, e)) }.get
+
+  def toFile: File =
+    //    if (resource.getProtocol().equals("file"))
+    //    Try { new File(resource.getPath()) }.get
+    //  else
+    Try { new File(resource.toURI()) }.recoverWith { case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + self + " with url [" + resource.toURI() + "]. " + e.getMessage, e)) }.get
   override def unsafeToInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
   ///def toWrite = Locations.file(toFile.getAbsolutePath)
   override def parentName = {
