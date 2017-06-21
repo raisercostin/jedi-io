@@ -13,6 +13,10 @@ import org.slf4j.LoggerFactory
 import rx.lang.scala.Observable
 import rx.lang.scala.Subscription
 import scala.util.control.NonFatal
+import org.raisercostin.jedi.impl.SlfLogger
+import scala.util.Failure
+import java.nio.file.Files
+import org.raisercostin.jedi.impl.ProcessUtils
 
 trait FileLocation extends NavigableFileInOutLocation with FileInputLocation with FileOutputLocation { self =>
   override type Repr = self.type
@@ -46,47 +50,70 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
       val observer = new FileAlterationObserver(toFile);
       val monitor = new FileAlterationMonitor(pollingIntervalInMillis);
       val fileListener = new FileAlterationListenerAdaptor() {
-//        override def onFileCreate(file: File) = {
-//          val location = Locations.file(file)
-//          try {
-//            obs.onNext(FileCreated(file))
-//          } catch {
-//            case NonFatal(e) =>
-//              obs.onError(new RuntimeException(s"Processing of [${Locations.file(file)}] failed.", e))
-//          }
-//        }
+        //        override def onFileCreate(file: File) = {
+        //          val location = Locations.file(file)
+        //          try {
+        //            obs.onNext(FileCreated(file))
+        //          } catch {
+        //            case NonFatal(e) =>
+        //              obs.onError(new RuntimeException(s"Processing of [${Locations.file(file)}] failed.", e))
+        //          }
+        //        }
         /**File system observer started checking event.*/
         //override def onStart(file:FileAlterationObserver) = obs.onNext(FileChanged(file))
-        override def onDirectoryCreate(file:File) = obs.onNext(DirectoryCreated(file))
-        override def onDirectoryChange(file:File) = obs.onNext(DirectoryChanged(file))
-        override def onDirectoryDelete(file:File) = obs.onNext(DirectoryDeleted(file))
-        override def onFileCreate(file:File) = obs.onNext(FileCreated(file))
-        override def onFileChange(file:File) = obs.onNext(FileChanged(file))
-        override def onFileDelete(file:File) = obs.onNext(FileDeleted(file))
+        override def onDirectoryCreate(file: File) = obs.onNext(DirectoryCreated(file))
+        override def onDirectoryChange(file: File) = obs.onNext(DirectoryChanged(file))
+        override def onDirectoryDelete(file: File) = obs.onNext(DirectoryDeleted(file))
+        override def onFileCreate(file: File) = obs.onNext(FileCreated(file))
+        override def onFileChange(file: File) = obs.onNext(FileChanged(file))
+        override def onFileDelete(file: File) = obs.onNext(FileDeleted(file))
         /**File system observer finished checking event.*/
         //override def onStop(file:FileAlterationObserver) = obs.onNext(FileChanged(file))
-    }
+      }
       observer.addListener(fileListener)
       monitor.addObserver(observer)
       monitor.start()
       Subscription { monitor.stop() }
     }
   }
-  @deprecated("Use watch with observable","0.31")
+  @deprecated("Use watch with observable", "0.31")
   def watch(pollingIntervalInMillis: Long = 1000, listener: FileLocation => Unit): FileMonitor = {
     FileMonitor(watchFileCreated(pollingIntervalInMillis).subscribe(file => listener.apply(file.location), error => LoggerFactory.getLogger(classOf[FileLocation]).error("Watch failed.", error)))
   }
 
-//  def copyFromFolder(src:FileLocation):Repr={
-//    src.descendants.map { x =>
-//      val rel = x.extractPrefix(src).get
-//      val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
-//      println(f"""copy ${rel.raw}%-40s $x -> $y""")
-//    }
-//    this
-//  }
-  override def childName(child:String):String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
-  def build(path:String): Repr = FileLocation(path)
+  //  def copyFromFolder(src:FileLocation):Repr={
+  //    src.descendants.map { x =>
+  //      val rel = x.extractPrefix(src).get
+  //      val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
+  //      println(f"""copy ${rel.raw}%-40s $x -> $y""")
+  //    }
+  //    this
+  //  }
+  override def childName(child: String): String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
+  def build(path: String): Repr = FileLocation(path)
+  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLink(src, overwriteIfAlreadyExists).get
+  import org.raisercostin.jedi.impl.LogTry._
+  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[Repr] = {
+    SlfLogger.logger.info("symLink {} -> {}", src, this, "")
+    if (!parent.exists) {
+      Failure(new RuntimeException("Destination parent folder " + parent + " doesn't exists."))
+    } else if (!overwriteIfAlreadyExists && exists) {
+      Failure(new RuntimeException("Destination file " + this + " already exists."))
+    } else {
+      val first: Try[Repr] = Try {
+        Files.createSymbolicLink(toPath, src.toPath)
+        self
+      }
+      first.recoverWith {
+        case error =>
+          val symlinkType = if (src.isFile) "" else "/D"
+          val second: Try[Repr] = {
+            ProcessUtils.executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows)).map(x => self)
+          }
+          second.recoverWith { case x => Failure { x.addSuppressed(first.failed.get); x } }
+      }
+    }
+  }
 }
 
 @deprecated("Use watch with observable", "0.31")
@@ -103,10 +130,10 @@ case class FileDeleted(file: File) extends FileAlterated
 case class DirectoryCreated(file: File) extends FileAlterated
 case class DirectoryChanged(file: File) extends FileAlterated
 case class DirectoryDeleted(file: File) extends FileAlterated
-object FileLocation{
-  def apply(fileFullPath: String, append: Boolean = false):FileLocation = FileLocationImpl(fileFullPath,append)
-  def apply(path: Path):FileLocation = apply(path,false)
-  def apply(path: Path, append: Boolean):FileLocation = FileLocationImpl(path.toFile.getAbsolutePath,append)
+object FileLocation {
+  def apply(fileFullPath: String, append: Boolean = false): FileLocation = FileLocationImpl(fileFullPath, append)
+  def apply(path: Path): FileLocation = apply(path, false)
+  def apply(path: Path, append: Boolean): FileLocation = FileLocationImpl(path.toFile.getAbsolutePath, append)
 }
 case class FileLocationImpl(fileFullPath: String, append: Boolean = false) extends FileLocation { self =>
   override type Repr = self.type

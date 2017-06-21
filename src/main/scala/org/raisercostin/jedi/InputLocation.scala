@@ -72,7 +72,7 @@ trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with
     dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
     this
   }
-  def copyAsSymLink(dest: FileOutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+  def copyAsSymLink(dest: FileLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
     dest.copyFromAsSymLink(this, overwriteIfAlreadyExists);
     this
   }

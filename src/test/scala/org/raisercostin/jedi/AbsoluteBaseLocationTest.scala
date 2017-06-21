@@ -7,7 +7,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 
-trait AbsoluteBaseLocationTest extends FunSuite {
+trait AbsoluteBaseLocationTest extends FunSuite{
   def location: FileAbsoluteBaseLocation
 
   test("length should be not null") {

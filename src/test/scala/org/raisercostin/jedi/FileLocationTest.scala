@@ -18,6 +18,8 @@ import org.scalatest.words.ContainWord
 
 @RunWith(classOf[JUnitRunner])
 class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
+  import org.raisercostin.jedi.impl.LogTry._
+
   override def location: FileLocation = Locations.classpath("""a b.jpg""").asFile
 
   test("basic attributes") {
@@ -103,24 +105,24 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
   }
   test("symlink on file shouldn't work") {
     intercept[NotLinkException] {
-      Locations.current("target").symlink.get
+      Locations.current("target").symlink.log.get
     }
   }
-  test("if symlink cannot be created because the parent folder doesn't exist an exception should be thrown") {
-    Locations.current("target/a").backupExistingOne.child("b-symlink").mkdirIfNecessary.copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile)
-    intercept[NotLinkException] {
-      Locations.current("target/a").backupExistingOne.child("b-symlink").copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile)
-    }
+  test("throw an exception when create a symnlink under a non existing parent") {
+    Locations.current("target/a").backupExistingOne.mkdirIfNecessary.child("b-symlink").copyFromAsSymLinkAndGet(Locations.classpath("""folder/a b.jpg""").asFile)
+    intercept[RuntimeException] {
+      Locations.current("target/a").backupExistingOne.child("b-symlink").copyFromAsSymLink(Locations.classpath("""folder/a b.jpg""").asFile).log.get
+    }.getMessage should include(Locations.current("target/a").name)
   }
-  test("cannot get an unsafeOutputStream from a folder"){
-    val ex = intercept[RuntimeException]{
-      val folder:FileLocation = Locations.current("target")
+  test("cannot get an unsafeOutputStream from a folder") {
+    val ex = intercept[RuntimeException] {
+      val folder: FileLocation = Locations.current("target")
       folder.isFolder shouldBe true
       val is = folder.unsafeToOutputStream
     }
-    ex.getMessage.should(include ("folder"))
+    ex.getMessage.should(include("folder"))
   }
-  test("copy a file to a folder"){
+  test("copy a file to a folder") {
     Locations.current("target").child("test14").mkdirIfNecessary.copyFrom(Locations.classpath("a b.jpg")).name shouldBe "a b.jpg"
   }
   test("detect parent ancestor") {

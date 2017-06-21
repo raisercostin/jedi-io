@@ -18,6 +18,7 @@ import scala.util.Failure
 import org.apache.commons.io.IOUtils
 import scala.util.Success
 import org.raisercostin.jedi.impl.ProcessUtils
+import javafx.scene.Parent
 
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
@@ -86,25 +87,6 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { 
     }
     this
   }
-  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLink(src, overwriteIfAlreadyExists).get
-  import org.raisercostin.jedi.impl.LogTry._
-  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[Repr] = {
-    SlfLogger.logger.info("symLink {} -> {}", src, this, "")
-    if (!overwriteIfAlreadyExists && exists) {
-      Failure(new RuntimeException("Destination file " + this + " already exists."))
-    } else {
-      val first: Try[Repr] = Try {
-        Files.createSymbolicLink(toPath, src.toPath)
-        self
-      }
-      first.recoverWith {
-        case error =>
-          val symlinkType = if (src.isFile) "" else "/D"
-          val second:Try[Repr] = ProcessUtils.executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows)).map(x => self)
-          second.recoverWith { case x => Failure { x.addSuppressed(first.failed.get);x } }
-      }
-    }
-  }.log
   def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
     if (overwriteIfAlreadyExists) {
       Files.createLink(toPath, src.toPath)
