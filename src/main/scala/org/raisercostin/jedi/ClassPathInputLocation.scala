@@ -23,7 +23,7 @@ trait ClassPathInputLocation extends NavigableFileInputLocation { self =>
   }
   override def toUrl: java.net.URL = resource
   override def exists = true //resource != null from constructor
-  override def absolute: String = toUrl.toURI().getPath().stripPrefix("/")
+  override def absolute: String = toUrl.toURI().getPath()//.stripPrefix("/")
   //Cannot detect if is file or folder. See https://stackoverflow.com/questions/20105554/is-there-a-way-to-tell-if-a-classpath-resource-is-a-file-or-a-directory
   override def isFolder: Boolean = true
   override def isFile: Boolean = true
