@@ -19,9 +19,14 @@ import org.apache.commons.io.IOUtils
 import scala.util.Success
 import org.raisercostin.jedi.impl.ProcessUtils
 import javafx.scene.Parent
+case class CopyOptions(copyMeta:Boolean)
+object CopyWithoutMetadata extends CopyOptions(false)
+object CopyWithMetadata extends CopyOptions(true)
+object SimpleCopy extends CopyOptions(false)
 
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
+  override type MetaRepr <: OutputLocation with InputLocation
   override type Repr = self.type
   def unsafeToOutputStream: OutputStream
   def unsafeToOutputStream2: OutputStream = {
@@ -50,14 +55,26 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   def writeContent(content: String): Repr = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type
-  def copyFrom(src: InputLocation): Repr = {
+  def copyFromWithoutMetadata(src: InputLocation): Repr = copyFrom(src)(CopyWithoutMetadata)
+  def copyFromWithMetadata(src: InputLocation): Repr = copyFrom(src)(CopyWithMetadata)
+
+  def copyFrom(src: InputLocation)(implicit option:CopyOptions=CopyWithMetadata): Repr = {
     (src, this) match {
+      case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder =>
+        to.copyFromFileToFileOrFolder(from).asInstanceOf[Repr]
+      case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder => 
+        to.copyFromFolder(from).asInstanceOf[Repr]
       case (from, to) if from.isFile && to.isFile => copyFromInputLocation(from)
-      case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder => to.copyFromFileToFileOrFolder(from).asInstanceOf[Repr]
-      case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder => to.copyFromFolder(from).asInstanceOf[Repr]
       case (from, to) => copyFromInputLocation(from)
     }
   }
+  private def copyFromIncludingMetadata(src: InputLocation): Repr =
+    (for {
+      x1 <- Try(copyFromWithoutMetadata(src));
+      x2 <- metaLocation;
+      x3 <- src.metaLocation;
+      x4 <- Try(x2.copyFromWithoutMetadata(x3))
+    } yield x1).get
   def copyFromInputLocation(from: InputLocation): this.type = {
     from.usingInputStream { source =>
       usingOutputStream { output =>

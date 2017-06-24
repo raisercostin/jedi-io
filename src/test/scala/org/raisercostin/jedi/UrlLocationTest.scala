@@ -139,13 +139,46 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     remote.etagFromHttpRequestHeader.get shouldBe "b26-531084169df69"
     remote.etag shouldBe "b26-531084169df69"
   }
-  test("copy url with meta") {
+  test("url metaLocation content") {
     val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
     println(Locations.url(url).meta.toString)
     val src = Locations.url(url)
-    val dest = Locations.current("target/copy/").backupExistingOne.mkdirIfNecessary.copyFrom(src)
-    println(src.meta.get.request.toSortedMap.mkString("\n"))
-    //println(dest.meta.get.request.toSortedMap.mkString("\n"))
+    val map1 = src.meta.get.asMap.mapValues(x=>x.toList).-("response.Keep-Alive").toSortedMap.mkString("\n")
+    val map2 = HierarchicalMultimap(src.metaLocation.flatMap(_.readContentAsText).get).asMap.mapValues(x=>x.toList).-("response.Keep-Alive").toSortedMap.mkString("\n")
+    println("map1: " + map1)
+    println("map2: " + map2)
+    map1 shouldBe map2
+  }
+  test("requesting twice should return same thing") {
+    val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
+    val src = Locations.url(url).meta.get
+    val dest = Locations.url(url).meta.get
+    println("metadata url:  " + src.subset("request").asMap.toSortedMap.mkString("\n"))
+    println("metadata file: " + dest.subset("request").asMap.toSortedMap.mkString("\n"))
+    dest.subset("request").asMap.toSortedMap.mkString("\n") shouldBe
+      src.subset("request").asMap.toSortedMap.mkString("\n")
+    //meta.get.request.-("Cache-Control").-("Pragma").toSortedMap.
+  }
+  test("copy url with meta request subset") {
+    val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
+    println(Locations.url(url).meta.toString)
+    val src = Locations.url(url)
+    val dest: FileLocation = Locations.current("target/copy/").backupExistingOne.mkdirIfNecessary.copyFromWithMetadata(src)
+    println("metadata url:  " + src.meta.get.subset("request").asMap.toSortedMap.mkString("\n"))
+    println("metadata file: " + dest.meta.get.subset("request").asMap.toSortedMap.mkString("\n"))
+    dest.meta.get.subset("request").asMap.toSortedMap.mapValues(x=>x.toList).mkString("\n") shouldBe
+      src.meta.get.subset("request").asMap.toSortedMap.mapValues(x=>x.toList).mkString("\n")
+    //meta.get.request.-("Cache-Control").-("Pragma").toSortedMap.
+  }
+  test("copy url with all meta") {
+    val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
+    println(Locations.url(url).meta.toString)
+    val src = Locations.url(url)
+    val dest: FileLocation = Locations.current("target/copy/").backupExistingOne.mkdirIfNecessary.copyFromWithMetadata(src)
+    println("metadata url:  " + src.meta.get.asMap.toSortedMap.mkString("\n"))
+    println("metadata file: " + dest.meta.get.asMap.toSortedMap.mkString("\n"))
+    dest.meta.get.subset("request").asMap.toSortedMap.mapValues(x=>x.toList).mkString("\n") shouldBe
+      src.meta.get.subset("request").asMap.toSortedMap.mapValues(x=>x.toList).mkString("\n")
     //meta.get.request.-("Cache-Control").-("Pragma").toSortedMap.
   }
   test("a url should always have a pair meta file") {

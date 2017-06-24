@@ -5,6 +5,7 @@ import java.io.InputStream
 
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
+import scala.util.Try
 
 
 case class StreamLocation(val inputStream: InputStream) extends InputLocation with IsFile{
@@ -13,6 +14,7 @@ case class StreamLocation(val inputStream: InputStream) extends InputLocation wi
   def raw = "inputStream[" + inputStream + "]"
   override def unsafeToInputStream: InputStream = inputStream
   override def size:Long = ???
+  def metaLocation:Try[MetaRepr] = ???
 }
 
 case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLocation with IsFile{
@@ -21,4 +23,5 @@ case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLoc
   def raw = "inputStream[" + inputStream + "]"
   override def unsafeToInputStream: InputStream = inputStream.apply()
   override def size:Long = ???
+  def metaLocation:Try[MetaRepr] = ???
 }

@@ -6,8 +6,10 @@ import java.nio.file.Path
 
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
-import org.raisercostin.jedi.impl.{FileSystemFormatter,JediFileSystem}
+import org.raisercostin.jedi.impl.{ FileSystemFormatter, JediFileSystem }
 import org.raisercostin.jedi.impl.Predef2
+import scala.util.Try
+import scala.util.Success
 
 /**
  * Should take into consideration several composable/ortogonal aspects:
@@ -19,17 +21,19 @@ import org.raisercostin.jedi.impl.Predef2
  * In principle should be agnostic to these aspects and only at runtime will depend on the local environment.
  */
 trait InOutLocation extends InputLocation with OutputLocation
-trait NavigableInputLocation extends InputLocation with NavigableLocation{self=>
+trait NavigableInputLocation extends InputLocation with NavigableLocation { self =>
+  override type MetaRepr = self.type
   override type Repr = self.type
-  def copyToFolder(to:NavigableOutputLocation):Repr = {
+  def copyToFolder(to: NavigableOutputLocation): Repr = {
     to.copyFromFolder(self)
   }
+  def metaLocation: Try[MetaRepr] = Try { withName(_ + ".meta") }
 }
-trait NavigableOutputLocation extends OutputLocation with NavigableLocation{self=>
+trait NavigableOutputLocation extends OutputLocation with NavigableLocation { self =>
   override type Repr = self.type
-  def mkdirOnParentIfNecessary:Repr
-  def copyFromFolder(src:NavigableInputLocation):Repr={
-    if(!src.isFolder)
+  def mkdirOnParentIfNecessary: Repr
+  def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=SimpleCopy): Repr = {
+    if (!src.isFolder)
       throw new RuntimeException(s"Src $src is not a folder")
     src.descendants.map { x =>
       val rel = x.extractPrefix(src).get
@@ -38,16 +42,21 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation{self
     }
     this
   }
-  def copyFromFileToFileOrFolder(from:InputLocation): Repr = {
+  def copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=SimpleCopy): Repr = {
     mkdirOnParentIfNecessary
-    if (isFolder)
+    if (isFolder) {
+      if (option.copyMeta)
+        child(from.name).metaLocation.get.copyFromInputLocation(from.metaLocation.get)
       child(from.name).copyFromInputLocation(from)
-    else
+    } else {
+      if (option.copyMeta)
+        metaLocation.get.copyFromInputLocation(from.metaLocation.get)
       copyFromInputLocation(from)
+    }
   }
 }
-trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation{
-  def absolute:String
+trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation {
+  def absolute: String
 }
 
 trait NavigableFileInputLocation extends InputLocation with NavigableFileLocation with NavigableInputLocation
@@ -55,33 +64,42 @@ trait NavigableFileInOutLocation extends InOutLocation with NavigableFileInputLo
 
 /**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
 trait LocationState
-/**Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that
- * are available in offline mode.*/
+/**
+ * Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that
+ * are not available in offline mode.
+ */
 trait UnresolvedLocationState extends LocationState
-trait ResolvedLocationState extends LocationState with IsFileOrFolder{
+/**If a location has access to its content and metadata is said to be resolved.*/
+trait ResolvedLocationState extends LocationState with IsFileOrFolder {
+  type MetaRepr <: InputLocation
+
+  /**The meta seen as another location.*/
+  def metaLocation: Try[MetaRepr]
+  def meta: Try[HierarchicalMultimap] = metaLocation.flatMap(_.existingOption.map(_.readContentAsText.map(x => HierarchicalMultimap(x))).getOrElse(Success(HierarchicalMultimap())))
 }
 
-/** There might be ones that are both? Or none? Or undecided?
+/**
+ * There might be ones that are both? Or none? Or undecided?
  */
-trait IsFileOrFolder{
+trait IsFileOrFolder {
   /**Returns true if is file and file exists.*/
-  def isFile:Boolean
+  def isFile: Boolean
   /**Returns true if is folder and folder exists.*/
-  def isFolder:Boolean
+  def isFolder: Boolean
   /**Returns true if is not an existing folder => so could be a file if created.*/
-  def canBeFile:Boolean = !isFolder
+  def canBeFile: Boolean = !isFolder
   /**Returns true if is not an existing file => so could be a folder if created.*/
-  def canBeFolder:Boolean = !isFile
+  def canBeFolder: Boolean = !isFile
 }
-trait IsFile extends IsFileOrFolder{
+trait IsFile extends IsFileOrFolder {
   override def isFile = true
   override def isFolder = false
 }
-trait IsFolder extends IsFileOrFolder{
+trait IsFolder extends IsFileOrFolder {
   override def isFile = false
   override def isFolder = true
 }
-trait UnknownFileOrFolder extends IsFileOrFolder{
+trait UnknownFileOrFolder extends IsFileOrFolder {
   override def isFile = throw new RuntimeException("Unknown if file or folder.")
   override def isFolder = throw new RuntimeException("Unknown if file or folder.")
 }
@@ -126,10 +144,10 @@ object Locations {
   def current(relative: String): FileLocation = file(new File(new File("."), relative).getCanonicalPath())
 
   implicit val unixAndWindowsToStandard = JediFileSystem.unixAndWindowsToStandard
-  def userHome:FileLocation = file(System.getProperty("user.home"))
-  lazy val environment:RuntimeEnvironment = RuntimeEnvironment()
+  def userHome: FileLocation = file(System.getProperty("user.home"))
+  lazy val environment: RuntimeEnvironment = RuntimeEnvironment()
 }
-case class RuntimeEnvironment(){
+case class RuntimeEnvironment() {
   //TODO use https://commons.apache.org/proper/commons-lang/javadocs/api-2.6/org/apache/commons/lang/SystemUtils.html
-  val isWindows:Boolean = System.getProperty("os.name").startsWith("Windows")
+  val isWindows: Boolean = System.getProperty("os.name").startsWith("Windows")
 }

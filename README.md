@@ -118,6 +118,45 @@ Projects that are using jedi-io:
  - both Resolved/Absolute and Relative could act as destination if they are resolved with src. `absolute.asDestination(src)=>absolute2` and `relative.asDestination(src)=>absolute3`
  - see from here https://wiki.apache.org/commons/VfsNext . Is already integrated with vfs.  
  - add transactional aspect as an option http://wiki.c2.com/?TransactionalFileSystem
+ - store metadata as YAML (hierarchy, use anchors). Should be useful for id3(mp3), exif(image files) etc.
+ - add hierachical map (apache collections - MultiValueMap & HierarchicalConfiguration, guava - Multimap, spring - MultiValueMap, me - HierarchicalMultimap 
+   - apache commons config
+     - https://commons.apache.org/proper/commons-configuration/javadocs/v1.10/apidocs/org/apache/commons/configuration/Configuration.html
+     - https://commons.apache.org/proper/commons-configuration/userguide/howto_basicfeatures.html
+	 - http://commons.apache.org/proper/commons-configuration/userguide/howto_properties.html#Using_PropertiesConfiguration
+   - https://github.com/Telefonica/java-plainmap
+   - see config libraries: http://javaeeconfig.blogspot.ro/2014/08/overview-of-existing-configuration.html
+   - https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html
+   - apache Configuration vs typesafe Config
+   - https://stackoverflow.com/questions/15658310/scala-load-java-properties
+   - https://stackoverflow.com/questions/1432481/multiple-values-in-java-util-properties
+   - guava ListMultimap via Serializable - https://stackoverflow.com/questions/17697974/writing-and-reading-listmultimapobject-object-to-file-using-properties
+ - design:
+   - FileSystems: sink, source, traverse(list, ...), mount/unmount
+   - Items
+     - src/from - dest/to
+     - folder/files
+     - selected items
+       - manually
+       - filters
+   - Operations between Items with the Operation Config/Operation Strategy
+     - copy
+       - followsymlinks
+       - including metadata
+       - overwrite
+       - recursive
+       - using symlinks
+     - move
+
+## Technology Selection
+
+### Hierarchical Map
+A container of keys in form a.b.c is needed.
+The value could be multivalue eventually typed : Seq(value1,value2,value3).
+Given a container and a key prefix another container should be returned with partial keys prefix removed.
+A refereence to full key might be useful. A relativeKey concept might be useful?
+A save/load from hocon, yaml would be nice.
+A business wrapper around a Config should be easy to use.
 
 ## Resources
  - http://javapapers.com/java/file-attributes-using-java-nio/

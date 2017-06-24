@@ -9,6 +9,7 @@ import java.io.OutputStream
 import scala.Iterable
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
+import scala.util.Try
 
 case class MemoryLocation(val memoryName: String) extends RelativeLocation with InOutLocation {self=>
   override type Repr = self.type
@@ -32,4 +33,5 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocation with 
   override def childName(child:String):String = ???
   override def isFolder = false
   def isFile: Boolean = true
+  def metaLocation:Try[MetaRepr] = ???
 }

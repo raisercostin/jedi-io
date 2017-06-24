@@ -17,6 +17,7 @@ import org.raisercostin.jedi.impl.QueryStringUrlFunc
 import java.net.HttpURLConnection
 import scala.util.Failure
 import java.io.IOException
+
 object HttpConfig {
   val defaultConfig: HttpConfig = HttpConfig(header = Map(
     "User-Agent" -> "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
@@ -25,7 +26,6 @@ object HttpConfig {
 case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000, useScalaJHttp: Boolean = true) {
   def followRedirects = allowedRedirects > 0
   def configureConnection(conn: HttpURLConnection): Unit = {
-    //agent.foreach(agent => conn.setRequestProperty("User-Agent", agent))
     header.foreach(element => conn.setRequestProperty(element._1, element._2))
     conn.setInstanceFollowRedirects(followRedirects)
     conn.setConnectTimeout(connectionTimeout)
@@ -54,6 +54,7 @@ object UrlLocation extends SlfLogger
  * See here for good behaviour: https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/
  */
 case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig.defaultConfig) extends InputLocation with IsFile{ self =>
+  override type MetaRepr = MemoryLocation
   def exists = ???
   def raw = url.toExternalForm()
   //TODO dump intermediate requests/responses
@@ -78,20 +79,23 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
     case conn: FileURLConnection =>
       openedHeadConnection(conn)
   }
-  case class MetaInfo(request: Map[String, Seq[String]], response: Map[String, Seq[String]])
+  def metaLocation:Try[MetaRepr] = {
+    val out = Locations.memory("")
+    HierarchicalMultimap.save(meta.get,out).map(_=>out)
+  }
   /**
    * InputLocations should have metadata. Worst case scenario in a separate file or other files in the filesystem.
    * See .svn, .csv, .git, dos navigator, .info files, nio meta/user attributes etc.
    */
-  def meta: Try[MetaInfo] = headConnection { conn =>
+  override def meta: Try[HttpHMap] = headConnection { conn =>
     conn match {
       case conn: HttpURLConnection =>
         if (conn.getResponseCode != 200)
           throw new RuntimeException("A redirect is needed. Cannot compute size!")
         import scala.collection.JavaConverters._
-        MetaInfo(conn.getRequestProperties.asScala.toMap.mapValues(_.asScala), conn.getHeaderFields.asScala.toMap.mapValues(_.asScala))
+        HttpHMap(conn.getRequestProperties.asScala.toMap.mapValues(_.asScala), conn.getHeaderFields.asScala.toMap.mapValues(_.asScala))
       case conn: FileURLConnection =>
-        MetaInfo(Map(), Map())
+        HttpHMap(Map(), Map())
     }
   }
   def lengthTry: Try[Long] = headConnection { conn =>
