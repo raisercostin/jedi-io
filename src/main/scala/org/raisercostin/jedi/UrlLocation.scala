@@ -49,6 +49,7 @@ case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int
   def withAgent(newAgent: String) = this.copy(header = header + ("User-Agent" -> newAgent))
   def withoutAgent = this.copy(header = header - "User-Agent")
 }
+object UrlLocation extends SlfLogger
 /**
  * See here for good behaviour: https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/
  */
@@ -123,9 +124,9 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
       connectFunc = {
         case (req: HttpRequest, conn: HttpURLConnection) =>
           import scala.collection.JavaConverters._
-          SlfLogger.logger.info(s"RequestHeaders for $raw:\n    " + conn.getRequestProperties.asScala.mkString("\n    "))
+          UrlLocation.logger.debug(s"RequestHeaders for $raw:\n    " + conn.getRequestProperties.asScala.mkString("\n    "))
           DefaultConnectFunc.apply(req, conn)
-          SlfLogger.logger.info(s"ResponseHeaders for $raw:\n    " + conn.getHeaderFields.asScala.mkString("\n    "))
+          UrlLocation.logger.debug(s"ResponseHeaders for $raw:\n    " + conn.getHeaderFields.asScala.mkString("\n    "))
       },
       params = Nil,
       headers = config.header.toSeq, //agent.map(ag=>Seq("User-Agent" -> ag)).getOrElse(Seq()),//"scalaj-http/1.0"),
@@ -154,10 +155,10 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
       case conn: HttpURLConnection =>
         config.configureConnection(conn)
         import scala.collection.JavaConverters._
-        SlfLogger.logger.info("header:\n" + config.header.mkString("\n    "))
-        SlfLogger.logger.info(s"RequestHeaders for $raw:\n    " + conn.getRequestProperties.asScala.mkString("\n    "))
-        //if (SlfLogger.log.isDebugEnabled())
-        SlfLogger.logger.info(s"ResponseHeaders for $raw:\n    " + Try { conn.getHeaderFields.asScala.mkString("\n    ") })
+        UrlLocation.logger.info("header:\n" + config.header.mkString("\n    "))
+        UrlLocation.logger.info(s"RequestHeaders for $raw:\n    " + conn.getRequestProperties.asScala.mkString("\n    "))
+        //if (UrlLocation.log.isDebugEnabled())
+        UrlLocation.logger.info(s"ResponseHeaders for $raw:\n    " + Try { conn.getHeaderFields.asScala.mkString("\n    ") })
         handleCode(conn.getResponseCode, conn.getHeaderField("Location"), { conn.getInputStream }, Try { conn.getHeaderFields.asScala.toMap })
       case conn =>
         conn.getInputStream
@@ -185,7 +186,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
   def closeStream(stream: => InputStream) = Try {
     if (stream != null)
       stream.close
-  }.recover { case e => SlfLogger.logger.debug("Couldn't close input/error stream to " + this, e) }
+  }.recover { case e => UrlLocation.logger.debug("Couldn't close input/error stream to " + this, e) }
 
   def withSensibleAgent = withAgent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
   def withAgent(newAgent: String) = this.copy(config = config.withAgent(newAgent))

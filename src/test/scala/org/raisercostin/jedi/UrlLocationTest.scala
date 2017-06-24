@@ -139,6 +139,15 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     remote.etagFromHttpRequestHeader.get shouldBe "b26-531084169df69"
     remote.etag shouldBe "b26-531084169df69"
   }
+  test("copy url with meta") {
+    val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
+    println(Locations.url(url).meta.toString)
+    val src = Locations.url(url)
+    val dest = Locations.current("target/copy/").backupExistingOne.mkdirIfNecessary.copyFrom(src)
+    println(src.meta.get.request.toSortedMap.mkString("\n"))
+    //println(dest.meta.get.request.toSortedMap.mkString("\n"))
+    //meta.get.request.-("Cache-Control").-("Pragma").toSortedMap.
+  }
   test("a url should always have a pair meta file") {
     val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
     println(Locations.url(url).meta.toString)
