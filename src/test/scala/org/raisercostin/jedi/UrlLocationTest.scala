@@ -142,14 +142,12 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
   test("a url should always have a pair meta file") {
     val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
     println(Locations.url(url).meta.toString)
-    Locations.url(url).meta.get.request.toSortedMap.
+    Locations.url(url).meta.get.request.-("Cache-Control").-("Pragma").toSortedMap.
       mkString("\n") shouldBe
       """ |Accept -> Buffer(*/*)
-        |Cache-Control -> Buffer(no-cache)
         |Connection -> Buffer(keep-alive)
         |HEAD /proper/commons-io/javadocs/api-2.5/index.html HTTP/1.1 -> Buffer(null)
         |Host -> Buffer(commons.apache.org)
-        |Pragma -> Buffer(no-cache)
         |User-Agent -> Buffer(Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36)""".stripMargin
     Locations.url(url).meta.get.response.-(null).toSortedMap.updated("Date", "--deleted--").updated("Keep-Alive", "Buffer(timeout=30, max=98)--manuallyChangedInTest").
       mkString("\n") shouldBe
