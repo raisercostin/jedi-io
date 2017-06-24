@@ -98,7 +98,12 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
   def isSymlink = Files.isSymbolicLink(toPath)
   def symlink: Try[FileLocation] = Try { FileLocation(Files.readSymbolicLink(toPath)) }
   //TODO this one is not ok attributes.basic.isSymbolicLink
-  def exists: Boolean = toFile.exists
+  def exists: Boolean = {
+    toFile.exists()
+//    Files.exists(toPath)
+//    val a = toFile
+//    a.exists
+  }
   def existsWithoutResolving = if (isSymlink)
     Files.exists(toPath, LinkOption.NOFOLLOW_LINKS)
   else
