@@ -11,7 +11,7 @@ import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 import scala.util.Try
 
-case class MemoryLocation(val memoryName: String) extends RelativeLocation with InOutLocation {self=>
+case class MemoryLocation(val memoryName: String) extends RelativeLocation with InOutLocation with NavigableInputLocation{self=>
   override type Repr = self.type
   override def nameAndBefore: String = absolute
   def absolute: String = memoryName
@@ -29,9 +29,10 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocation with 
   override def withAppend: this.type = ???
   override def size: Long = outStream.size()
   override def exists = true
-  def descendants: Iterable[Repr] = Iterable(this)
+  override def descendants: Iterable[Repr] = Iterable(this)
+  override def list: Iterable[Repr] = Iterable(this)
   override def childName(child:String):String = ???
   override def isFolder = false
-  def isFile: Boolean = true
-  def metaLocation:Try[MetaRepr] = ???
+  override def isFile: Boolean = true
+  override def metaLocation:Try[MetaRepr] = ???
 }

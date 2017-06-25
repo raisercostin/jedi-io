@@ -24,6 +24,10 @@ case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
   }.getOrElse(Iterable()).map(buildNew)
   def isFile: Boolean = file.isFile
   def isFolder: Boolean = file.isFolder
+  def mkdirIfNecessary: Repr = {
+    file.createFolder
+    this
+  }
   def mkdirOnParentIfNecessary:Repr = {
     file.getParent.createFolder
     this

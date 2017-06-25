@@ -48,10 +48,11 @@ case class TimeSensitiveEtagCachedEntry(cacheFolder: NavigableFileInOutLocation)
 
 //TODO CachedLocation when printed should show the temporary file 
 case class CachedLocation[O <: InputLocation](cacheConfig: CacheConfig, origin: O) extends FileLocation { self =>
+  override type Repr = self.type
+
   private lazy val cacheEntry: CacheEntry = cacheConfig.cacheFor(origin)
   def cache = cacheEntry.cache
   //def cache: InOutLocation = cacheConfig.cacheFor(origin)
-  override type Repr = self.type
   override def build(path: String): Repr = origin match {
     case n: NavigableLocation =>
       CachedLocation(cacheConfig, n.build(path))

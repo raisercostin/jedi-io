@@ -126,6 +126,7 @@ trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation{
   override type Repr = self.type
   def list: Iterable[Repr]
   def descendants: Iterable[Repr] = ???
+  def absolute: String
 //  def loop(h: Int, n: Int): Stream[Int] = h #:: loop(n, h + n)
 //  loop(1, 1)
 //  def descendantsStream: Stream[Repr] =

@@ -31,6 +31,9 @@ trait NavigableInputLocation extends InputLocation with NavigableLocation { self
 }
 trait NavigableOutputLocation extends OutputLocation with NavigableLocation { self =>
   override type Repr = self.type
+  type InputPairType = NavigableInputLocation
+  def asInput: InputPairType
+  def mkdirIfNecessary: Repr
   def mkdirOnParentIfNecessary: Repr
   def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=SimpleCopy): Repr = {
     if (!src.isFolder)
@@ -56,7 +59,6 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
   }
 }
 trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation {
-  def absolute: String
 }
 
 trait NavigableFileInputLocation extends InputLocation with NavigableFileLocation with NavigableInputLocation
