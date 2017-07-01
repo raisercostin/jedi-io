@@ -140,14 +140,18 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     remote.etag shouldBe "b26-531084169df69"
   }
   test("url metaLocation content") {
+    def cleanup(map:Map[String,Seq[String]]):String={
+      map.-("response.Keep-Alive").-("response.ETag").-("response.Last-Modified").toSortedMap.mkString("\n")
+    }
+    
     val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
     println(Locations.url(url).meta.toString)
     val src = Locations.url(url)
-    val map1 = src.meta.get.asMap.mapValues(x=>x.toList).-("response.Keep-Alive").-("response.ETag").toSortedMap.mkString("\n")
-    val map2 = HierarchicalMultimap(src.metaLocation.flatMap(_.readContentAsText).get).asMap.mapValues(x=>x.toList).-("response.Keep-Alive").-("response.ETag").toSortedMap.mkString("\n")
+    val map1 = cleanup(src.meta.get.asMap.mapValues(x=>x.toList))
+    val map2 = cleanup(HierarchicalMultimap(src.metaLocation.flatMap(_.readContentAsText).get).asMap.mapValues(x=>x.toList))
     println("map1: " + map1)
     println("map2: " + map2)
-    map1 shouldBe map2
+    map1 shouldBe map2    
   }
   test("requesting twice should return same thing") {
     val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""
