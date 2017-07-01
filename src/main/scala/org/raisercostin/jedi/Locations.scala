@@ -35,7 +35,7 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
   def asInput: InputPairType
   def mkdirIfNecessary: Repr
   def mkdirOnParentIfNecessary: Repr
-  def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=SimpleCopy): Repr = {
+  def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): Repr = {
     if (!src.isFolder)
       throw new RuntimeException(s"Src $src is not a folder")
     src.descendants.map { x =>
@@ -45,15 +45,22 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
     }
     this
   }
-  def copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=SimpleCopy): Repr = {
+  def copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): Repr = {
+    def copyMeta(meta:Try[MetaRepr]):Unit={
+      if (option.copyMeta){
+        if(!option.optionalMeta || meta.isSuccess && meta.get.exists)
+          meta.get.copyFromInputLocation(from.metaLocation.get)
+        else
+          option.monitor.warn("Optional meta "+meta+" doesn't exists. Ignored.")
+      }
+    }
+
     mkdirOnParentIfNecessary
     if (isFolder) {
-      if (option.copyMeta)
-        child(from.name).metaLocation.get.copyFromInputLocation(from.metaLocation.get)
+      copyMeta(child(from.name).metaLocation)
       child(from.name).copyFromInputLocation(from)
     } else {
-      if (option.copyMeta)
-        metaLocation.get.copyFromInputLocation(from.metaLocation.get)
+      copyMeta(metaLocation)
       copyFromInputLocation(from)
     }
   }

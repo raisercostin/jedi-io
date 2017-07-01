@@ -130,4 +130,11 @@ class FileLocationTest extends FunSuite with AbsoluteBaseLocationTest {
     parent.child("a/b/cdef").ancestor(parent.child("a/xyz")).name shouldBe "a"
     parent.child("a/b/cdef").ancestor(parent.child("a/b/cdxy")).name shouldBe "b"
   }
+  test("copy a file with forced metadata") {
+    val ex = intercept[IllegalArgumentException]{Locations.current("target").child("test14").mkdirIfNecessary.copyFrom(Locations.classpath("a b.jpg"))(CopyOptions.copyWithMetadata)}
+    ex.getMessage.should(include(".meta"))
+  }
+  test("copy a file with optional metadata") {
+    Locations.current("target").child("test14").mkdirIfNecessary.copyFrom(Locations.classpath("a b.jpg"))(CopyOptions.copyWithOptionalMetadata)
+  }
 }

@@ -42,6 +42,9 @@ Scala uniform, fluent access to files, urls and other resources API. Fluent for 
     - VfsLocation - location based on [Apache-Vfs library](https://commons.apache.org/proper/commons-vfs/filesystems.html)
     - ZipInputLocation - location around zip files
 - natural sorting for listing files
+- Operation Options
+  - CopyOptions: copy metadata forced or optionally if exists
+  - OperationMonitor: log warnings
 
 # Usage
 ## Samples

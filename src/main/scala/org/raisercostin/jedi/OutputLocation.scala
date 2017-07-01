@@ -19,10 +19,21 @@ import org.apache.commons.io.IOUtils
 import scala.util.Success
 import org.raisercostin.jedi.impl.ProcessUtils
 import javafx.scene.Parent
-case class CopyOptions(copyMeta:Boolean)
-object CopyWithoutMetadata extends CopyOptions(false)
-object CopyWithMetadata extends CopyOptions(true)
-object SimpleCopy extends CopyOptions(false)
+
+object CopyOptions{
+  def copyWithoutMetadata:CopyOptions = CopyOptions(false,false)
+  def copyWithMetadata:CopyOptions = CopyOptions(true,false)
+  def copyWithOptionalMetadata:CopyOptions = CopyOptions(true,true)
+  def simpleCopy:CopyOptions = CopyOptions(true,false)
+}
+trait OperationMonitor{
+  def warn(message: =>String)
+}
+object LoggingOperationMonitor extends LoggingOperationMonitor()
+case class LoggingOperationMonitor() extends OperationMonitor with SlfLogger{
+  override def warn(message: =>String) = logger.warn("JediOperation: {}",message)
+}
+case class CopyOptions(copyMeta:Boolean, optionalMeta:Boolean, monitor:OperationMonitor = LoggingOperationMonitor)
 
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
@@ -55,10 +66,10 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   def writeContent(content: String): Repr = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type
-  def copyFromWithoutMetadata(src: InputLocation): Repr = copyFrom(src)(CopyWithoutMetadata)
-  def copyFromWithMetadata(src: InputLocation): Repr = copyFrom(src)(CopyWithMetadata)
+  def copyFromWithoutMetadata(src: InputLocation): Repr = copyFrom(src)(CopyOptions.copyWithoutMetadata)
+  def copyFromWithMetadata(src: InputLocation): Repr = copyFrom(src)(CopyOptions.copyWithMetadata)
 
-  def copyFrom(src: InputLocation)(implicit option:CopyOptions=CopyWithMetadata): Repr = {
+  def copyFrom(src: InputLocation)(implicit option:CopyOptions=CopyOptions.copyWithMetadata): Repr = {
     (src, this) match {
       case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder =>
         to.copyFromFileToFileOrFolder(from).asInstanceOf[Repr]
