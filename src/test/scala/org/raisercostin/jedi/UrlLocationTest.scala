@@ -141,7 +141,7 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
   }
   test("url metaLocation content") {
     def cleanup(map:Map[String,Seq[String]]):String={
-      map.-("response.Keep-Alive").-("response.ETag").-("response.Last-Modified").toSortedMap.mkString("\n")
+      map.-("response.Keep-Alive").-("response.ETag").-("response.Last-Modified").-("response.Date").toSortedMap.mkString("\n")
     }
     
     val url = """https://commons.apache.org/proper/commons-io/javadocs/api-2.5/index.html"""

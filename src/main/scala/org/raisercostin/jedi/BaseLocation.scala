@@ -26,6 +26,7 @@ trait BaseLocation extends IsFileOrFolder{
     decoder.onMalformedInput(CodingErrorAction.IGNORE)
     decoder
   }
+  def standard(text: => String): String = JediFileSystem.standard(text)
   def standard(selector: this.type => String): String = JediFileSystem.standard(selector(this))
   def standardWindows(selector: this.type => String): String = JediFileSystem.standardWindows(selector(this))
   def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")

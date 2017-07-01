@@ -1,10 +1,12 @@
 package org.raisercostin.jedi.impl
 
 import scala.util.{Try,Failure,Success}
+import scala.util.Properties
 
 object ProcessUtils extends SlfLogger{
     /**Inspired from here: http://winaero.com/blog/symbolic-link-in-windows-10 */
   def executeWindows(command: Seq[String]):Try[Unit] = {
+    require(Properties.isWin)
     SlfLogger.logger.info("Execute on windows shell: [{}]", command.mkString("\"", "\" \"", "\""))
     import sys.process._
     var reason = new StringBuilder()

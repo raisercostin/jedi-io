@@ -28,7 +28,8 @@ trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocat
     }
   }
   private def backupExistingOneAndReturnBackup(backupEmptyFolderToo:Boolean = true): Repr = {
-    val newName:NavigableFileLocation = renamedIfExists(backupEmptyFolderToo)
+    //new name should never exists
+    val newName:NavigableFileLocation = renamedIfExists(false)
     if (!newName.equals(this)){
       if(!backupEmptyFolderToo && newName.exists && newName.isEmptyFolder)
         newName.delete

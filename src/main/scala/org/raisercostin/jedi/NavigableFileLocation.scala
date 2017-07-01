@@ -58,7 +58,7 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
     else
       this
   }
-  /** A folder should end in `/`. */
+  /** Finds the common ancestor of current Location and the src location. A folder should end in `/`. */
   def ancestor[T<:BaseLocation](src:T*):Repr = build(src.foldLeft(this.nameAndBefore)((x,file)=>folderCommonPrefix(x,file.nameAndBefore)))
 //  private def ancestor2[T<:BaseLocation](a:String,b:String):Repr = {
 //    build(getFolderCommonPrefix(a,b))
@@ -147,15 +147,15 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
 
   def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
-  }.getOrElse(Iterable()).map(buildNewFile)
+  }.getOrElse(Iterable()).map(buildFromFile)
   override def descendants: Iterable[Repr] = {
     val all: Iterable[File] = Option(existing).map { x =>
       traverse.map(_._1.toFile).toIterable
     }.getOrElse(Iterable[File]())
-    all.map(buildNewFile)
+    all.map(buildFromFile)
   }
-
-  def buildNewFile(x: File): Repr = Locations.file(x)
+  override def build(path: String): Repr = Locations.file(path)
+  protected def buildFromFile(x: File): Repr = build(x.getAbsolutePath)
   def renamedIfExists: Repr = renamedIfExists(true)
   def renamedIfExists(renameIfEmptyToo:Boolean = false): Repr = {
     @tailrec

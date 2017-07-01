@@ -24,7 +24,7 @@ object CopyOptions{
   def copyWithoutMetadata:CopyOptions = CopyOptions(false,false)
   def copyWithMetadata:CopyOptions = CopyOptions(true,false)
   def copyWithOptionalMetadata:CopyOptions = CopyOptions(true,true)
-  def simpleCopy:CopyOptions = CopyOptions(true,false)
+  def simpleCopy:CopyOptions = copyWithOptionalMetadata
 }
 trait OperationMonitor{
   def warn(message: =>String)
@@ -69,7 +69,7 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   def copyFromWithoutMetadata(src: InputLocation): Repr = copyFrom(src)(CopyOptions.copyWithoutMetadata)
   def copyFromWithMetadata(src: InputLocation): Repr = copyFrom(src)(CopyOptions.copyWithMetadata)
 
-  def copyFrom(src: InputLocation)(implicit option:CopyOptions=CopyOptions.copyWithMetadata): Repr = {
+  def copyFrom(src: InputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): Repr = {
     (src, this) match {
       case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder =>
         to.copyFromFileToFileOrFolder(from).asInstanceOf[Repr]

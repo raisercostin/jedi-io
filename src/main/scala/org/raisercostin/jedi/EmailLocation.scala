@@ -27,7 +27,7 @@ case class EmailLocation(host:String, port:Int, username:String, password:String
   def raw: String = ???
 
   // Members declared in org.raisercostin.jedi.BaseNavigableLocation
-  def build(path: String): Repr = ???
+  override def build(path: String): Repr = ???
 
   // Members declared in org.raisercostin.jedi.FileAbsoluteBaseLocation
   def toFile: java.io.File = ???
