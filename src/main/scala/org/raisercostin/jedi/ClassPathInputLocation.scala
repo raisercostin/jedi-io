@@ -49,13 +49,10 @@ trait ClassPathInputLocation extends NavigableFileInputLocation { self =>
           true
       }
 
-  def toFile: File =
-    //    if (resource.getProtocol().equals("file"))
-    //    Try { new File(resource.getPath()) }.get
-    //  else
-    Try { new File(resource.toURI()) }.recoverWith { case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + self + " with url [" + resource.toURI() + "]. " + e.getMessage, e)) }.get
+  def toFile: File = Try { new File(resource.toURI()) }.recoverWith {
+    case e: Throwable => Failure(new RuntimeException("Couldn't get file from " + self + " with url [" + resource.toURI() + "]. " + e.getMessage, e))
+  }.get
   override def unsafeToInputStream: InputStream = getSpecialClassLoader.getResourceAsStream(resourcePath)
-  ///def toWrite = Locations.file(toFile.getAbsolutePath)
   override def parentName = {
     val index = initialResourcePath.lastIndexOf("/")
     if (index == -1)
@@ -65,29 +62,9 @@ trait ClassPathInputLocation extends NavigableFileInputLocation { self =>
   }
   def asFile: FileLocation = Locations.file(toFile)
   def asUrl: UrlLocation = Locations.url("file:" + absolute)
-  override def build(path: String): Repr =
-    ClassPathInputLocation(standard(path).stripPrefix(outerPrefix))
-  //    println("build from =" + path)
-  //    println("init=" + initialResourcePath)
-  //    println("current=" + absolute)
-  //    println("outerPrefix=" + outerPrefix)
-  //    println("innerPath=" + innerPath)
-  //    println("actual=" + standard(path).stripPrefix(outerPrefix))
+  override def build(path: String): Repr = ClassPathInputLocation(standard(path).stripPrefix(outerPrefix))
   def outerPrefix: String = absolute.stripSuffix(initialResourcePath)
   def innerPath: String = absolute.stripPrefix(outerPrefix)
-  //  override def list: Iterable[Repr] = Option(existing).map { x =>
-  //    println("init=" + initialResourcePath)
-  //    println("current=" + absolute)
-  //    println("outerPrefix=" + outerPrefix)
-  //    println("x=" + x.toFile)
-  //    println("innerPath=" + innerPath)
-  //    //x.toFile.list() foreach println
-  //    val a = Option(x.toFile.list).map(_.toIterable).getOrElse(Iterable(name)).map(innerPath+"/"+_)
-  //    a foreach println
-  //    a
-  //  }.getOrElse(Iterable()).map(build)
-  //  override def descendants: Iterable[Repr] =
-  //    super.descendants.map(x=> x.absolute.stripPrefix(absolute)).map(build)
 }
 object ClassPathInputLocation {
   def apply(initialResourcePath: String) = ClassPathInputLocationImpl(initialResourcePath)
