@@ -95,7 +95,7 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
     this
   }
 }
-trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { self =>
+trait FileOutputLocation extends NavigableOutputLocation with FileAbsoluteBaseLocation { self =>
   override type Repr = self.type
   def unsafeToOutputStream: OutputStream = if (isFolder)
     throw new RuntimeException(s"Cannot open an OutputStream to the folder ${this}")
@@ -104,6 +104,13 @@ trait FileOutputLocation extends OutputLocation with FileAbsoluteBaseLocation { 
   override def moveTo(dest: OutputLocation): this.type = dest match {
     case d: FileOutputLocation =>
       FileUtils.moveFile(toFile, d.toFile)
+      this
+    case _ =>
+      ???
+  }
+  def moveInto(dest: OutputLocation): this.type = dest match {
+    case d: FileOutputLocation =>
+      FileUtils.moveFile(toFile, d.child(name).toFile)
       this
     case _ =>
       ???
