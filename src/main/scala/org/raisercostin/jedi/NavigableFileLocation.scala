@@ -58,6 +58,7 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
     else
       this
   }
+  def hasAncestor[T<:BaseLocation](folder:T): Boolean = ancestor(folder)==folder
   /** Finds the common ancestor of current Location and the src location. A folder should end in `/`. */
   def ancestor[T<:BaseLocation](src:T*):Repr = build(src.foldLeft(this.nameAndBefore)((x,file)=>folderCommonPrefix(x,file.nameAndBefore)))
 //  private def ancestor2[T<:BaseLocation](a:String,b:String):Repr = {
