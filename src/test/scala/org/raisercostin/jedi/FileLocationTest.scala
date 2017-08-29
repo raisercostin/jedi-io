@@ -59,4 +59,8 @@ class FileLocationTest extends FunSuite with FileAbsoluteBaseLocationTest with N
     //This cannot be waranted in jdk8 on windows.
     //assertEquals(uniqueIdSrc,uniqueIdDest)
   }
+  @Test def `child starting with separator should not be allowed` {
+    val dest = Try{Locations.temp.randomFolderChild("test").child("/test-child")}
+    assertTrue(dest.isFailure)
+  }
 }

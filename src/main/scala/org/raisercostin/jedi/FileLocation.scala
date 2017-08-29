@@ -29,7 +29,12 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
   override def toPath: Path = Paths.get(fileFullPath)
   override def unsafeToInputStream: InputStream = new FileInputStream(toFile)
   //should not throw exception but return Try?
-  def checkedChild(child: String): String = { require(!child.endsWith(" "), "Child [" + child + "] has trailing spaces"); child }
+  def checkedChild(child: String): String = { 
+    require(!child.endsWith(" "), "Child [" + child + "] has trailing spaces"); 
+    require(!child.startsWith("/"), "Child [" + child + "] starts with path separator suggesting starting from root. That is not a child."); 
+    child
+  }
+  def childFile(child:String) = toPath.resolve(checkedChild(child)).toFile
   //import org.raisercostin.util.MimeTypesUtils2
   def asFile: Repr = self
   def renamed(renamer: String => String): Try[Repr] = Try {
@@ -89,7 +94,8 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
   //    }
   //    this
   //  }
-  override def childName(child: String): String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
+  override def childName(child:String): String = childFile(child).getAbsolutePath
+
   override def build(path: String): Repr = FileLocation(path)
   def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLink(src, overwriteIfAlreadyExists).get
   import org.raisercostin.jedi.impl.LogTry._
