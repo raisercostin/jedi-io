@@ -20,20 +20,32 @@ import scala.util.Success
 import org.raisercostin.jedi.impl.ProcessUtils
 import javafx.scene.Parent
 
-object CopyOptions{
-  def copyWithoutMetadata:CopyOptions = CopyOptions(false,false)
-  def copyWithMetadata:CopyOptions = CopyOptions(true,false)
-  def copyWithOptionalMetadata:CopyOptions = CopyOptions(true,true)
-  def simpleCopy:CopyOptions = copyWithOptionalMetadata
+object CopyOptions {
+  def copyWithoutMetadata: CopyOptions = CopyOptions(false, false)
+  def copyWithMetadata: CopyOptions = CopyOptions(true, false)
+  def copyWithOptionalMetadata: CopyOptions = CopyOptions(true, true)
+  def simpleCopy: CopyOptions = copyWithOptionalMetadata
 }
-trait OperationMonitor{
-  def warn(message: =>String)
+trait OperationMonitor {
+  def warn(message: => String)
 }
 object LoggingOperationMonitor extends LoggingOperationMonitor()
-case class LoggingOperationMonitor() extends OperationMonitor with SlfLogger{
-  override def warn(message: =>String) = logger.warn("JediOperation: {}",message)
+case class LoggingOperationMonitor() extends OperationMonitor with SlfLogger {
+  override def warn(message: => String) = logger.warn("JediOperation: {}", message)
 }
-case class CopyOptions(copyMeta:Boolean, optionalMeta:Boolean, monitor:OperationMonitor = LoggingOperationMonitor)
+case class CopyOptions(copyMeta: Boolean, optionalMeta: Boolean, monitor: OperationMonitor = LoggingOperationMonitor) {
+  def checkCopyToSame(from: AbsoluteBaseLocation, to: AbsoluteBaseLocation): Boolean = {
+    if (to.exists && from.uniqueId == to.uniqueId)
+      throw new RuntimeException(s"You tried to copy ${from} to itself ${to}. Both have same uniqueId=${from.uniqueId}")
+    else
+      (from, to) match {
+        case (f:BaseNavigableLocation, t:BaseNavigableLocation) =>
+          if(t.childOf(f))
+            throw new RuntimeException(s"You tried to copy ${from} to child ${to}.")
+      }
+    true
+  }
+}
 
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
@@ -69,29 +81,30 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   def copyFromWithoutMetadata(src: InputLocation): Repr = copyFrom(src)(CopyOptions.copyWithoutMetadata)
   def copyFromWithMetadata(src: InputLocation): Repr = copyFrom(src)(CopyOptions.copyWithMetadata)
 
-  def copyFrom(src: InputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): Repr = {
+  def copyFrom(src: InputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): Repr = {
     (src, this) match {
       case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder =>
         to.copyFromFileToFileOrFolder(from).asInstanceOf[Repr]
-      case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder => 
+      case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder =>
         to.copyFromFolder(from).asInstanceOf[Repr]
       case (from, to) if from.isFile && to.isFile => copyFromInputLocation(from)
-      case (from, to) => copyFromInputLocation(from)
+      case (from, to)                             => copyFromInputLocation(from)
     }
   }
-  private def copyFromIncludingMetadata(src: InputLocation): Repr =
+  private def copyFromIncludingMetadata(src: InputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): Repr =
     (for {
       x1 <- Try(copyFromWithoutMetadata(src));
       x2 <- metaLocation;
       x3 <- src.metaLocation;
       x4 <- Try(x2.copyFromWithoutMetadata(x3))
     } yield x1).get
-  def copyFromInputLocation(from: InputLocation): this.type = {
-    from.usingInputStream { source =>
-      usingOutputStream { output =>
-        IOUtils.copyLarge(source, output)
+  def copyFromInputLocation(from: InputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): this.type = {
+    if (option.checkCopyToSame(from, this))
+      from.usingInputStream { source =>
+        usingOutputStream { output =>
+          IOUtils.copyLarge(source, output)
+        }
       }
-    }
     this
   }
 }

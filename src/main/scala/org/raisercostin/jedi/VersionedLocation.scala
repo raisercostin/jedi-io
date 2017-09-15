@@ -62,7 +62,7 @@ trait VersionedLocation extends ResolvedLocationState {
 }
 
 trait FileVersionedLocation extends VersionedLocation { self: FileAbsoluteBaseLocation =>
-  def uniqueId: String = attributes.inode.getOrElse(DigestUtils.sha1Hex(canonicalOverSymLinks))
+  override def uniqueId: String = attributes.inode.getOrElse(DigestUtils.sha1Hex(canonicalOverSymLinks))
   def canonical = toFile.getCanonicalPath
   def canonicalOverSymLinks = {
     target(toPath,10).right.get.toFile().getCanonicalPath

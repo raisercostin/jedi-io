@@ -63,4 +63,23 @@ class FileLocationTest extends FunSuite with FileAbsoluteBaseLocationTest with N
     val dest = Try{Locations.temp.randomFolderChild("test").child("/test-child")}
     assertTrue(dest.isFailure)
   }
+  @Test def `copy to itself detected` {
+    val test = Try{
+      val dest = Locations.temp.randomFolderChild("test")
+      dest.copyTo(dest)
+    }
+    assertTrue(test.failed.get.getMessage.contains("to itself"))
+    assertTrue(test.isFailure)
+  }
+  @Test def `copy parent folder to child folder detected` {
+    val test = Try{
+      val parent = Locations.temp.randomFolderChild("test")
+      val child = parent.child("childFolder")
+      val content = child.child("childFile.txt").mkdirOnParentIfNecessary.writeContent("content")
+      parent.copyTo(child)(CopyOptions.copyWithoutMetadata)
+    }
+    assertTrue(test.isFailure)
+    //test.failed.get.printStackTrace()
+    assertTrue(test.failed.get.getMessage.contains("to child"))
+  }
 }

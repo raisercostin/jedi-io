@@ -16,6 +16,7 @@ import java.nio.file.LinkOption
 
 trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState { self =>
   type Repr = self.type
+  def uniqueId: String = raw
   def toUrl: java.net.URL = ???
   def size: Long
   final def length: Long = size

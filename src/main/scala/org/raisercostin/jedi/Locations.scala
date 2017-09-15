@@ -38,11 +38,12 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
   def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): Repr = {
     if (!src.isFolder)
       throw new RuntimeException(s"Src $src is not a folder")
-    src.descendants.map { x =>
-      val rel = x.extractPrefix(src).get
-      val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
-      println(f"""copy ${rel.raw}%-40s $x -> $y""")
-    }
+    if(option.checkCopyToSame(src,this))
+      src.descendants.map { x =>
+        val rel = x.extractPrefix(src).get
+        val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
+        println(f"""copy ${rel.raw}%-40s $x -> $y""")
+      }
     this
   }
   def copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): Repr = {
