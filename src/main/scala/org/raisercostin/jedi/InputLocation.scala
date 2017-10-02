@@ -30,6 +30,10 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
   def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
   def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
 
+  def usingInputStreamAndContinue(op: InputStream => Any): Repr = {using(unsafeToInputStreamIfFile)(op);this}
+  def usingReaderAndContinue(reader: java.io.Reader => Any): Repr = {using(unsafeToReader)(reader);this}
+  def usingSourceAndContinue(processor: scala.io.BufferedSource => Any): Repr = {using(unsafeToSource)(processor);this}
+
   def readLines: Iterable[String] = traverseLines.toIterable
   def traverseLines: Traversable[String] = new Traversable[String] {
     def foreach[U](f: String => U): Unit = {

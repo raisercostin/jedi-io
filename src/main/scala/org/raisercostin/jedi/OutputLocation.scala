@@ -64,6 +64,13 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   def usingWriter[T](op: Writer => T): T = using(unsafeToWriter)(op)
   def usingPrintWriter[T](op: PrintWriter => T): T = using(unsafeToPrintWriter)(op)
 
+  /** Produce lateral effects in op.*/
+  def usingOutputStreamAndContinue(op: OutputStream => Any): Repr = {using(unsafeToOutputStream2)(op);this}
+  /** Produce lateral effects in op.*/
+  def usingWriterAndContinue(op: Writer => Any): Repr = {using(unsafeToWriter)(op);this}
+  /** Produce lateral effects in op.*/
+  def usingPrintWriterAndContinue(op: PrintWriter => Any): Repr = {using(unsafeToPrintWriter)(op);this}
+
   def append: Boolean
   def moveTo(dest: OutputLocation): this.type = ???
   def deleteIfExists: Repr = ???
