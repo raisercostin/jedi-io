@@ -42,6 +42,7 @@ case class CopyOptions(copyMeta: Boolean, optionalMeta: Boolean, monitor: Operat
         case (f:BaseNavigableLocation, t:BaseNavigableLocation) =>
           if(t.childOf(f))
             throw new RuntimeException(s"You tried to copy ${from} to child ${to}.")
+        case _ =>
       }
     true
   }
