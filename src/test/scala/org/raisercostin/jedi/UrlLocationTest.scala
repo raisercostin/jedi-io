@@ -90,7 +90,7 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
   test("download following redirects") {
     val url = Locations.url("""http://www.altshop.ro/poze_produse/83096/mari/televizor-led-philips-32phh4309-88-seria-phh4309-81cm-negru-hd-ready_0.jpg""").
       withAgent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
-    assertEquals(35127, url.readContentAsText.get.length)
+    assertTrue(url.readContentAsText.get.length>10000)
   }
   test("download with a 302 no redirects") {
     val url = Locations.url("""http://httpstat.us/302""")
@@ -109,7 +109,7 @@ class UrlLocationTest extends FunSuite with BaseLocationTest {
     assert(text.get === text2.get)
   }
   test("slow connection") {
-    val url = Locations.url("""http://vintageparadise.ro/files/produse/th_1682_0.jpeg""")
+    val url = Locations.url("""http://httpstat.us/403""")
     val resp = url.withoutAgent.readContentAsText.failed.map { case e: HttpStatusException => e }.get
     assert(resp.code === 403)
   }
