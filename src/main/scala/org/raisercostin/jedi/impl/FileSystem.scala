@@ -47,7 +47,7 @@ object JediFileSystem {
   def splitPartialPath(path: String): Array[String] = {
     path.split(Pattern.quote(SEP_STANDARD)).filterNot(_.trim.isEmpty)
   }
-  def constructPath(names: Seq[String]): String = names.foldLeft("")((x, y) => (if (x.isEmpty) "" else (x + SEP_STANDARD)) + y)
+  def constructPath(names: Seq[String]): String = names.mkString("",SEP_STANDARD,"")
   def addChild(path: String, child: String): String = path + JediFileSystem.SEP_STANDARD + child
   def normalize(path: String): String = path.replaceAllLiterally(SEP, SEP_STANDARD)
 }
