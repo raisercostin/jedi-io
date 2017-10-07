@@ -4,8 +4,12 @@ description := "Scala fluent file utility library"
 homepage := Some(url(s"https://github.com/raisercostin/"+name.value))
 
 //scalaVersion := "2.10.6"
-scalaVersion := "2.11.8"
-crossScalaVersions := Set(scalaVersion.value, "2.10.6","2.11.8","2.12.2").toSeq
+scalaVersion := "2.11.11"
+crossScalaVersions := Set(scalaVersion.value, "2.10.6","2.11.11","2.12.3"
+    /*,"2.13.0-M2"
+    //rxscala, scalaj_http, scalatest are not yet compiled for 2.13
+    */
+    ).toSeq
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
 libraryDependencies ++= Seq(
