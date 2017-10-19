@@ -23,17 +23,17 @@ class PathOperationsTest extends FunSuite {
   @Test def `check parent is ancestor` {
     val child = Locations.temp.randomChild("thePrefix","theSuffix")
     assertEquals(child.ancestor(child.parent),child.parent)
-    assertTrue(child.hasAncestor(child.parent))
+    assertTrue(child.childOf(child.parent))
   }
   @Test def `check grandparent is ancestor` {
     val child = Locations.temp.randomChild("thePrefix","theSuffix").child("aaa")
     assertEquals(child.ancestor(child.parent),child.parent)
-    assertTrue(child.hasAncestor(child.parent))
+    assertTrue(child.childOf(child.parent))
   }
   @Test def `check ancestor` {
     val parent = Locations.temp.randomChild("thePrefix","theSuffix")
     val child = parent.child("aaa/bbb/cccc/ddd.html")
     assertEquals(child.ancestor(parent),parent)
-    assertTrue(child.hasAncestor(parent))
+    assertTrue(child.childOf(parent))
   }
 }

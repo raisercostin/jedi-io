@@ -134,6 +134,10 @@ case class FileCreated(file: File) extends FileAlterated
 case class FileChanged(file: File) extends FileAlterated
 case class FileDeleted(file: File) extends FileAlterated
 case class DirectoryCreated(file: File) extends FileAlterated
+/**
+ * The Changed event is raised when changes are made to the size, system attributes, last write time, last access time, or security permissions of a file or directory in the directory being monitored.
+ * @see https://msdn.microsoft.com/en-us/library/system.io.filesystemwatcher.changed(v=vs.110).aspx
+ */
 case class DirectoryChanged(file: File) extends FileAlterated
 case class DirectoryDeleted(file: File) extends FileAlterated
 object FileLocation {
