@@ -50,7 +50,7 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
     }
   }
 
-  def watchFileCreated(pollingIntervalInMillis: Long = 1000): Observable[FileAlterated] = {
+  def watchFileCreated(pollingIntervalInMillis: Long = 1000): Observable[FileAltered] = {
     Observable.apply { obs =>
       val observer = new FileAlterationObserver(toFile);
       val monitor = new FileAlterationMonitor(pollingIntervalInMillis);
@@ -126,20 +126,20 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
 case class FileMonitor(private val subscription: Subscription) {
   def stop() = subscription.unsubscribe()
 }
-sealed abstract class FileAlterated {
+sealed abstract class FileAltered {
   lazy val location: FileLocation = Locations.file(file)
   protected def file: File
 }
-case class FileCreated(file: File) extends FileAlterated
-case class FileChanged(file: File) extends FileAlterated
-case class FileDeleted(file: File) extends FileAlterated
-case class DirectoryCreated(file: File) extends FileAlterated
+case class FileCreated(file: File) extends FileAltered
+case class FileChanged(file: File) extends FileAltered
+case class FileDeleted(file: File) extends FileAltered
+case class DirectoryCreated(file: File) extends FileAltered
 /**
  * The Changed event is raised when changes are made to the size, system attributes, last write time, last access time, or security permissions of a file or directory in the directory being monitored.
  * @see https://msdn.microsoft.com/en-us/library/system.io.filesystemwatcher.changed(v=vs.110).aspx
  */
-case class DirectoryChanged(file: File) extends FileAlterated
-case class DirectoryDeleted(file: File) extends FileAlterated
+case class DirectoryChanged(file: File) extends FileAltered
+case class DirectoryDeleted(file: File) extends FileAltered
 object FileLocation {
   def apply(fileFullPath: String, append: Boolean = false): FileLocation = FileLocationImpl(fileFullPath, append)
   def apply(path: Path): FileLocation = apply(path, false)

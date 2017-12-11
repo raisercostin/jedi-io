@@ -96,6 +96,11 @@ Projects that are using jedi-io:
  ```
 
 ## Backlog
+
+### 2017-12-06
+- Locations.fromString("content"):MemoryLocation
+
+### Others
  - explain concepts
  - add File/Folder concepts
  - operations on files/folders
