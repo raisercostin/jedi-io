@@ -101,6 +101,10 @@ Projects that are using jedi-io:
 - Locations.fromString("content"):MemoryLocation
 
 ### Others
+ - add Haddop/Spark like executor for windows: \
+   - winutils from hadoop
+   - https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/FileSystemShell.html
+   - https://stackoverflow.com/questions/38233228/spark-on-windows-what-exactly-is-winutils-and-why-do-we-need-it
  - explain concepts
  - add File/Folder concepts
  - operations on files/folders
