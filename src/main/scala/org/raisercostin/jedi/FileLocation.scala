@@ -49,7 +49,7 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
     }
   }
 
-  def watchFileCreated(pollingIntervalInMillis: Long = 1000): Observable[FileAltered] = {
+  def watch(pollingIntervalInMillis: Long = 1000): Observable[FileAltered] = {
     Observable.apply { obs =>
       val observer = new FileAlterationObserver(toFile);
       val monitor = new FileAlterationMonitor(pollingIntervalInMillis);
@@ -80,10 +80,10 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
       Subscription { monitor.stop() }
     }
   }
-  @deprecated("Use watch with observable", "0.31")
-  def watch(pollingIntervalInMillis: Long = 1000, listener: FileLocation => Unit): FileMonitor = {
-    FileMonitor(watchFileCreated(pollingIntervalInMillis).subscribe(file => listener.apply(file.location), error => LoggerFactory.getLogger(classOf[FileLocation]).error("Watch failed.", error)))
-  }
+//  @deprecated("Use watch with observable", "0.31")
+//  def watch(pollingIntervalInMillis: Long = 1000, listener: FileLocation => Unit): FileMonitor = {
+//    FileMonitor(watchFileCreated(pollingIntervalInMillis).subscribe(file => listener.apply(file.location), error => LoggerFactory.getLogger(classOf[FileLocation]).error("Watch failed.", error)))
+//  }
 
   //  def copyFromFolder(src:FileLocation):Repr={
   //    src.descendants.map { x =>
@@ -121,10 +121,10 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
   }
 }
 
-@deprecated("Use watch with observable", "0.31")
-case class FileMonitor(private val subscription: Subscription) {
-  def stop() = subscription.unsubscribe()
-}
+//@deprecated("Use watch with observable", "0.31")
+//case class FileMonitor(private val subscription: Subscription) {
+//  def stop() = subscription.unsubscribe()
+//}
 sealed abstract class FileAltered {
   lazy val location: FileLocation = Locations.file(file)
   protected def file: File
