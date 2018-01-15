@@ -81,15 +81,6 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
     CommonsFileUtils.forceMkdir(toFile)
     this
   }
-  @deprecated("use descendants","since 0.53")
-  def traverse: Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
-    Locations.file(pathInRaw).parent.traverse
-  else
-    new FileVisitor.TraversePath(toPath)
-  @deprecated("use descendants","since 0.53")
-  def traverseFiles: Traversable[Path] = if (exists) traverse.map { case (file, attr) => file } else Traversable()
-
-  def traverseWithDir = new FileVisitor.TraversePath(toPath, true)
   private def listPath(glob: String): List[Path] = {
     val stream = Files.newDirectoryStream(toPath, glob)
     try stream.asScala.toList finally stream.close

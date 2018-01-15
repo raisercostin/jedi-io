@@ -39,7 +39,7 @@ case class EmailLocation(host:String, port:Int, username:String, password:String
   def asInput: org.raisercostin.jedi.NavigableFileInputLocation = ???
 
   // Members declared in org.raisercostin.jedi.OutputLocation
-  def append: Boolean = ???
+  override def append: Boolean = ???
   def unsafeToOutputStream: java.io.OutputStream = ???
   def withAppend: Repr = ???
 }

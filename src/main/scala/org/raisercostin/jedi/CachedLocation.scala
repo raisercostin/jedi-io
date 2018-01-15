@@ -73,7 +73,7 @@ case class CachedLocation[O <: InputLocation](cacheConfig: CacheConfig, origin: 
     this
   }
 
-  def append: Boolean = cache.append
+  override def append: Boolean = cache.append
   def fileFullPath: String = cache.nameAndBefore
   def withAppend = ??? //this.copy(cache = cache.withAppend)
 }

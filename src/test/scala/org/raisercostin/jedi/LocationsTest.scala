@@ -45,7 +45,7 @@ ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".rep
       Locations.classpath("location.zip").unzip.list.toSeq.sortBy(_.name).mkString("\n"))
     assertEquals("""a - file content""", Locations.classpath("location.zip").unzip.child("a.txt").readContent)
     assertEquals("""f content""", Locations.classpath("location.zip").unzip.child("c/e/f.txt").readContent)
-    assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c)]""", Locations.classpath("location.zip").unzip.child("c").raw)
+    assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c/)]""", Locations.classpath("location.zip").unzip.child("c").raw)
     assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c/e)]""", Locations.classpath("location.zip").unzip.child("c").child("e").raw)
     assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c/e/f.txt)]""", Locations.classpath("location.zip").unzip.child("c").child("e").child("f.txt").raw)
     assertEquals("""f content""", Locations.classpath("location.zip").unzip.child("c").child("e").child("f.txt").readContent)

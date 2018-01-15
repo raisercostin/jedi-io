@@ -21,7 +21,6 @@ import org.raisercostin.jedi.impl.ProcessUtils
 trait FileLocation extends NavigableFileInOutLocation with FileInputLocation with FileOutputLocation { self =>
   override type Repr = self.type
   def fileFullPath: String
-  def append: Boolean
   override def parentName: String = toFile.getParentFile.getAbsolutePath
   def raw = fileFullPath
   def asInput: NavigableFileInputLocation = self
@@ -141,11 +140,17 @@ case class DirectoryCreated(file: File) extends FileAltered
 case class DirectoryChanged(file: File) extends FileAltered
 case class DirectoryDeleted(file: File) extends FileAltered
 object FileLocation {
-  def apply(fileFullPath: String, append: Boolean = false): FileLocation = FileLocationImpl(fileFullPath, append)
+  def apply(fileFullPath: String, append: Boolean = false): FileLocation = if(append) FileLocationAppendable(fileFullPath) else FileLocationImpl(fileFullPath)
   def apply(path: Path): FileLocation = apply(path, false)
-  def apply(path: Path, append: Boolean): FileLocation = FileLocationImpl(path.toFile.getAbsolutePath, append)
+  def apply(path: Path, append: Boolean): FileLocation = apply(path.toFile.getAbsolutePath, append)
 }
-case class FileLocationImpl(fileFullPath: String, append: Boolean = false) extends FileLocation { self =>
+case class FileLocationImpl(fileFullPath: String) extends FileLocation { self =>
   override type Repr = self.type
-  override def withAppend: Repr = self.copy(append = true)
+  override def withAppend: Repr = FileLocationAppendable(fileFullPath)
+  override def append: Boolean = false
+}
+case class FileLocationAppendable(fileFullPath: String) extends FileLocation { self =>
+  override type Repr = self.type
+  override def withAppend: Repr = self
+  override def append: Boolean = true
 }

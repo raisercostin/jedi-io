@@ -18,7 +18,7 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocation with 
   def relativePath: String = memoryName
   override def raw = memoryName
   def asInput: MemoryLocation = this
-  def append: Boolean = false
+  override def append: Boolean = false
   //val buffer: Array[Byte] = Array()
   lazy val outStream = new ByteArrayOutputStream()
   override def unsafeToOutputStream: OutputStream = outStream
@@ -29,7 +29,7 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocation with 
   override def withAppend: this.type = ???
   override def size: Long = outStream.size()
   override def exists = true
-  override def descendants: Iterable[Repr] = Iterable(this)
+  override def descendantsWithOptions(traverseDir:Boolean): Iterable[Repr] = Iterable(this)
   override def list: Iterable[Repr] = Iterable(this)
   override def childName(child:String):String = ???
   override def isFolder = false

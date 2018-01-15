@@ -33,7 +33,7 @@ case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
     this
   }
   def asInput: NavigableInOutLocation = self
-  def append: Boolean = ???
+  override def append: Boolean = ???
   def withAppend: Repr = ???
   override def size:Long = file.getContent.getSize
   override def nameAndBefore: String = raw

@@ -31,9 +31,9 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   }
 
   def child(childText: Option[String]): Repr = childText match {
-    case None => repr
+    case None                      => repr
     case Some(s) if s.trim.isEmpty => repr
-    case Some(s) => child(s)
+    case Some(s)                   => child(s)
   }
   def child(childLocation: RelativeLocation): Repr = {
     if (childLocation.isEmpty) {
@@ -53,37 +53,37 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   }
   /**This one if folder otherwise the parent*/
   def folder: Repr = {
-    if(isFile)
+    if (isFile)
       parent
     else
       this
   }
-  def ancestorOf[T<:BaseLocation](folder:T): Boolean = ancestor(folder)==this
+  def ancestorOf[T <: BaseLocation](folder: T): Boolean = ancestor(folder) == this
   @deprecated("use childOf")
-  def hasAncestor[T<:BaseLocation](folder:T): Boolean = childOf(folder)
-  def childOf[T<:BaseLocation](folder:T): Boolean = ancestor(folder)==folder
+  def hasAncestor[T <: BaseLocation](folder: T): Boolean = childOf(folder)
+  def childOf[T <: BaseLocation](folder: T): Boolean = ancestor(folder) == folder
   /** Finds the common ancestor of current Location and the src location. A folder should end in `/`. */
-  def ancestor[T<:BaseLocation](src:T*):Repr = build(src.foldLeft(this.nameAndBefore)((x,file)=>folderCommonPrefix(x,file.nameAndBefore)))
-//  private def ancestor2[T<:BaseLocation](a:String,b:String):Repr = {
-//    build(getFolderCommonPrefix(a,b))
-//  }
-  private def ancestor3(a:String,b:String):String = {
-    folderCommonPrefix(a,b)
+  def ancestor[T <: BaseLocation](src: T*): Repr = build(src.foldLeft(this.nameAndBefore)((x, file) => folderCommonPrefix(x, file.nameAndBefore)))
+  //  private def ancestor2[T<:BaseLocation](a:String,b:String):Repr = {
+  //    build(getFolderCommonPrefix(a,b))
+  //  }
+  private def ancestor3(a: String, b: String): String = {
+    folderCommonPrefix(a, b)
   }
-  private def folderCommonPrefix(a:String, b:String):String = {
-    val prefix = commonPrefix(a+JediFileSystem.SEP_STANDARD,b+JediFileSystem.SEP_STANDARD)
+  private def folderCommonPrefix(a: String, b: String): String = {
+    val prefix = commonPrefix(a + JediFileSystem.SEP_STANDARD, b + JediFileSystem.SEP_STANDARD)
     val index = prefix.lastIndexOf(JediFileSystem.SEP_STANDARD)
-    if(index != -1)
+    if (index != -1)
       prefix.substring(0, index)
     else
       prefix
   }
   //see org.apache.commons.lang3.StringUtils
-  private def commonPrefix(a:String, b:String):String = {
+  private def commonPrefix(a: String, b: String): String = {
     var i = 0
-    val maxi = Math.min(a.length,b.length)
-    while(i<maxi && a(i)==b(i)) i+=1
-    a.substring(0,i)
+    val maxi = Math.min(a.length, b.length)
+    while (i < maxi && a(i) == b(i)) i += 1
+    a.substring(0, i)
   }
   def parentName: String = //toFile.getParentFile.getAbsolutePath
     Option(FilenameUtils.getFullPathNoEndSeparator(nameAndBefore)).getOrElse("")
@@ -126,23 +126,24 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   }
   def withoutState = withState("")
 }
-trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation{ self =>
+trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation { self =>
   override type Repr = self.type
   def list: Iterable[Repr]
-  def descendants: Iterable[Repr] = ???
+  final def descendants: Iterable[Repr] = descendantsWithOptions(true)
+  def descendantsWithOptions(traverseDir:Boolean): Iterable[Repr] = ???
   def absolute: String
-//  def loop(h: Int, n: Int): Stream[Int] = h #:: loop(n, h + n)
-//  loop(1, 1)
-//  def descendantsStream: Stream[Repr] =
-//  def descendants: Iterable[Repr] = {
-//    val all: Iterable[File] = Option(existing).map {  x =>
-//      list.map()
-//      traverse.map(_._1.toFile).toIterable
-//    }.getOrElse(Iterable[File]())
-//    all.map(buildNewFile)
-//  }
+  //  def loop(h: Int, n: Int): Stream[Int] = h #:: loop(n, h + n)
+  //  loop(1, 1)
+  //  def descendantsStream: Stream[Repr] =
+  //  def descendants: Iterable[Repr] = {
+  //    val all: Iterable[File] = Option(existing).map {  x =>
+  //      list.map()
+  //      traverse.map(_._1.toFile).toIterable
+  //    }.getOrElse(Iterable[File]())
+  //    all.map(buildNewFile)
+  //  }
 }
-trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation with NavigableLocation{ self =>
+trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation with NavigableLocation { self =>
   override type Repr = self.type
   //TODO review these
   override protected def repr: Repr = toRepr2(self)
@@ -152,21 +153,31 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
   def list: Iterable[Repr] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
   }.getOrElse(Iterable()).map(buildFromFile)
-  override def descendants: Iterable[Repr] = {
+  override def descendantsWithOptions(includeDirs:Boolean): Iterable[Repr] = {
     val all: Iterable[File] = Option(existing).map { x =>
-      traverse.map(_._1.toFile).toIterable
+      traverse(includeDirs).map(_._1.toFile).toIterable
     }.getOrElse(Iterable[File]())
     all.map(buildFromFile)
   }
+  import java.nio.file.Files
+  import java.nio.file.Path
+  import java.nio.file.attribute.BasicFileAttributes
+  def traverse(includeDirs:Boolean): Traversable[(Path, BasicFileAttributes)] = if (raw contains "*")
+    Locations.file(pathInRaw).parent.traverse(includeDirs)
+  else
+    new TraversePath(toPath,includeDirs)
+  //def traverseFiles: Traversable[Path] = if (exists) traverse.map { case (file, attr) => file } else Traversable()
+  //def traverseWithDir = new TraversePath(toPath, true)
+
   override def build(path: String): Repr = Locations.file(path)
   protected def buildFromFile(x: File): Repr = build(x.getAbsolutePath)
   def renamedIfExists: Repr = renamedIfExists(true)
-  def renamedIfExists(renameIfEmptyToo:Boolean = false): Repr = {
+  def renamedIfExists(renameIfEmptyToo: Boolean = false): Repr = {
     @tailrec
     def findUniqueName(destFile: Repr, counter: Int): Repr = {
       val renamed = destFile.withBaseName { baseName: String => (baseName + "-" + counter) }
       if (renamed.existsWithoutResolving)
-        if(renameIfEmptyToo && exists && list.isEmpty)
+        if (renameIfEmptyToo && exists && list.isEmpty)
           renamed
         else
           findUniqueName(destFile, counter + 1)
