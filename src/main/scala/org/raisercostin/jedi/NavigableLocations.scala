@@ -30,8 +30,10 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
     if(option.checkCopyToSame(src,this))
       src.descendants.map { x =>
         val rel = x.extractPrefix(src).get
-        val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
-        println(f"""copy ${rel.raw}%-40s $x -> $y""")
+        if(rel.nonEmpty){
+          val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
+          println(f"""copy ${rel.raw}%-40s $x -> $y""")
+        }
       }
     this
   }
