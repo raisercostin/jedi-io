@@ -1,4 +1,4 @@
-package org.raisercostin.util
+package org.raisercostin.jedi.impl
 
 import scala.util.Try
 

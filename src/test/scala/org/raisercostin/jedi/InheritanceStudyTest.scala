@@ -6,6 +6,7 @@ import org.junit.Assert._
 import org.scalatest.junit.JUnitRunner
 import scala.util.Try
 import java.util.regex.Pattern.Loop
+import org.raisercostin.jedi.impl.MimeTypeDetectors
 
 package test {
   object Logger{

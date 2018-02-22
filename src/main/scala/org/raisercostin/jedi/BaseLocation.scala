@@ -4,7 +4,8 @@ import java.nio.charset.CodingErrorAction
 
 import org.apache.commons.io.FilenameUtils
 import org.raisercostin.jedi.impl.JediFileSystem
-import org.raisercostin.util.Escape
+import org.raisercostin.jedi.impl.Escape
+import org.raisercostin.jedi.impl.MimeTypeDetectors
 
 trait BaseLocation extends IsFileOrFolder{
   def uri:String = raw

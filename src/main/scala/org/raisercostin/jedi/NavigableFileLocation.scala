@@ -14,6 +14,8 @@ import org.apache.commons.io.FilenameUtils
 
 import Locations.relative
 import org.raisercostin.jedi.impl.JediFileSystem
+import org.raisercostin.jedi.impl.TraversePath
+
 object BaseNavigableLocation {
   val stateSep = "--state#"
 }

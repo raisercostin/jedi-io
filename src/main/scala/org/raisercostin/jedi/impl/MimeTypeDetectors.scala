@@ -1,4 +1,4 @@
-package org.raisercostin.jedi
+package org.raisercostin.jedi.impl
 
 import java.nio.file.Path
 import java.nio.file.Paths
