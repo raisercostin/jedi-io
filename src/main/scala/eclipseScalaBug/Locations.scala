@@ -41,225 +41,225 @@ object Locations {
   //def temp: TempLocation = TempLocation(tmpdir)
 }
 trait IsFileOrFolder {
-  /**Returns true if is file and file exists.*/
-  def isFile: Boolean
-  /**Returns true if is folder and folder exists.*/
-  def isFolder: Boolean
-  /**Returns true if is not an existing folder => so could be a file if created.*/
-  def canBeFile: Boolean = !isFolder
-  /**Returns true if is not an existing file => so could be a folder if created.*/
-  def canBeFolder: Boolean = !isFile
+//  /**Returns true if is file and file exists.*/
+//  def isFile: Boolean
+//  /**Returns true if is folder and folder exists.*/
+//  def isFolder: Boolean
+//  /**Returns true if is not an existing folder => so could be a file if created.*/
+//  def canBeFile: Boolean = !isFolder
+//  /**Returns true if is not an existing file => so could be a folder if created.*/
+//  def canBeFolder: Boolean = !isFile
 }
 
 trait BaseLocation extends IsFileOrFolder {
-  def uri: String = raw
-  def raw: String
-  /**A part of the location that will be used to retrieve name, baseName, extension.*/
-  def nameAndBefore: String
-  def name: String = FilenameUtils.getName(nameAndBefore)
-  def extension: String = FilenameUtils.getExtension(nameAndBefore)
-  def baseName: String = FilenameUtils.getBaseName(nameAndBefore)
-  def mimeType = mimeTypeFromName
-  def mimeTypeFromName = ???
-  //TODO improve slug
-  def slug = Escape.toSlug(uri)
-
-  def decoder = {
-    import java.nio.charset.Charset
-    val decoder = Charset.forName("UTF-8").newDecoder()
-    decoder.onMalformedInput(CodingErrorAction.IGNORE)
-    decoder
-  }
-  def standard(text: => String): String = ???
-  def standard(selector: this.type => String): String = ???
-  def standardWindows(selector: this.type => String): String = ???
-  def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
-  //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
-
-  def inspect(message: (this.type) => Any): this.type = {
-    message(this)
-    this
-  }
+//  def uri: String = raw
+//  def raw: String
+//  /**A part of the location that will be used to retrieve name, baseName, extension.*/
+//  def nameAndBefore: String
+//  def name: String = FilenameUtils.getName(nameAndBefore)
+//  def extension: String = FilenameUtils.getExtension(nameAndBefore)
+//  def baseName: String = FilenameUtils.getBaseName(nameAndBefore)
+//  def mimeType = mimeTypeFromName
+//  def mimeTypeFromName = ???
+//  //TODO improve slug
+//  def slug = Escape.toSlug(uri)
+//
+//  def decoder = {
+//    import java.nio.charset.Charset
+//    val decoder = Charset.forName("UTF-8").newDecoder()
+//    decoder.onMalformedInput(CodingErrorAction.IGNORE)
+//    decoder
+//  }
+//  def standard(text: => String): String = ???
+//  def standard(selector: this.type => String): String = ???
+//  def standardWindows(selector: this.type => String): String = ???
+//  def pathInRaw: String = raw.replaceAll("""^([^*]*)[*].*$""", "$1")
+//  //def list: Seq[FileLocation] = Option(existing.toFile.listFiles).getOrElse(Array[File]()).map(Locations.file(_))
+//
+//  def inspect(message: (this.type) => Any): this.type = {
+//    message(this)
+//    this
+//  }
 }
 /**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
 trait LocationState
 trait ResolvedLocationState extends LocationState with IsFileOrFolder {
   type MetaRepr <: InputLocation
-
-  /**The meta seen as another location.*/
-  def metaLocation: Try[MetaRepr]
-  def meta: Try[HierarchicalMultimap] = metaLocation.flatMap(_.existingOption.map(_.readContentAsText.map(x => HierarchicalMultimap(x))).getOrElse(Success(HierarchicalMultimap())))
+//
+//  /**The meta seen as another location.*/
+//  def metaLocation: Try[MetaRepr]
+//  def meta: Try[HierarchicalMultimap] = metaLocation.flatMap(_.existingOption.map(_.readContentAsText.map(x => HierarchicalMultimap(x))).getOrElse(Success(HierarchicalMultimap())))
 }
 trait HierarchicalMultimap {
-  def subset(key: String): HierarchicalMultimap
-  def get(key: String): Option[String]
-  def list(key: String): Option[String]
-  def asMap: Map[String, Seq[String]]
+//  def subset(key: String): HierarchicalMultimap
+//  def get(key: String): Option[String]
+//  def list(key: String): Option[String]
+//  def asMap: Map[String, Seq[String]]
 }
-object HierarchicalMultimap {
-  def apply(): HierarchicalMultimap = EmptyHMap()
-  def apply(data: String): HierarchicalMultimap = ???
-  def apply(data: InputLocation): HierarchicalMultimap = load(data)
-  def load(data: InputLocation): HierarchicalMultimap = {
-    val prop = new java.util.Properties()
-    data.usingInputStream { s => prop.load(s) }
-    import scala.collection.JavaConverters._
-    MapHMap2(prop.asScala.toMap.mapValues(Seq(_)))
-  }
-  def save(map: HierarchicalMultimap, data: OutputLocation): Try[Unit] = Try {
-    println(map)
-    val prop = new java.util.Properties()
-    import scala.collection.JavaConverters._
-    prop.putAll(map.asMap.map {
-      case (x, y) if x == null => ("", toLine(y))
-      case (x, y)              => (x, toLine(y))
-    }.asJava)
-    data.usingWriter(s => prop.store(s, "saved HMap"))
-  }
-  def toLine(line: Seq[String]): String = line.mkString(",")
-}
-
-case class EmptyHMap() extends HierarchicalMultimap {
-  def subset(key: String): HierarchicalMultimap = this
-  def get(key: String): Option[String] = None
-  def list(key: String): Option[String] = None
-  def asMap: Map[String, Seq[String]] = Map()
-}
-case class MapHMap2(map: Map[String, Seq[String]]) extends HierarchicalMultimap {
-  def subset(key: String): HierarchicalMultimap = subsetString(key + ".")
-  private def subsetString(key: String): HierarchicalMultimap = MapHMap2(map.filterKeys(_.startsWith(key)).map { case (k, v) => k.stripPrefix(key) -> v })
-  def get(key: String): Option[String] = map.getOrElse(key, Seq()).headOption
-  def list(key: String): Option[String] = None
-  def asMap: Map[String, Seq[String]] = map
-}
-/**HMap with good performance on subset,key,list.*/
-object FastHMap {
-  def apply(map: Map[String, Seq[String]]): HierarchicalMultimap = FastHMap("", map)
-}
-case class FastHMap(prefix: String, map: Map[String, Seq[String]]) extends HierarchicalMultimap {
-  def subset(key: String): HierarchicalMultimap = FastHMap(prefix + "." + key, map)
-  def get(key: String): Option[String] = map.getOrElse(prefix + "." + key, Seq()).headOption
-  def list(key: String): Option[String] = None
-  def asMap: Map[String, Seq[String]] =
-    if (prefix.isEmpty)
-      map
-    else
-      map.filterKeys(_.startsWith(prefix + ".")).map { case (k, v) => k.stripPrefix(prefix + ".") -> v }
-}
-
-case class HttpHMap(request: Map[String, Seq[String]], response: Map[String, Seq[String]]) extends HierarchicalMultimap {
-  val all = request.map { case (key, value) => "request." + key -> value } ++ response.map { case (key, value) => "response." + key -> value }
-  def subset(key: String): HierarchicalMultimap = key match {
-    case "request" =>
-      FastHMap(request)
-    case "response" =>
-      FastHMap(response)
-    case _ =>
-      EmptyHMap()
-  }
-  def get(key: String): Option[String] = all.getOrElse(key, Seq()).headOption
-  def list(key: String): Option[String] = None
-  def asMap: Map[String, Seq[String]] = all
-}
+//object HierarchicalMultimap {
+//  def apply(): HierarchicalMultimap = EmptyHMap()
+//  def apply(data: String): HierarchicalMultimap = ???
+//  def apply(data: InputLocation): HierarchicalMultimap = load(data)
+//  def load(data: InputLocation): HierarchicalMultimap = {
+//    val prop = new java.util.Properties()
+//    data.usingInputStream { s => prop.load(s) }
+//    import scala.collection.JavaConverters._
+//    MapHMap2(prop.asScala.toMap.mapValues(Seq(_)))
+//  }
+////  def save(map: HierarchicalMultimap, data: OutputLocation): Try[Unit] = Try {
+////    println(map)
+////    val prop = new java.util.Properties()
+////    import scala.collection.JavaConverters._
+////    prop.putAll(map.asMap.map {
+////      case (x, y) if x == null => ("", toLine(y))
+////      case (x, y)              => (x, toLine(y))
+////    }.asJava)
+////    data.usingWriter(s => prop.store(s, "saved HMap"))
+////  }
+//  def toLine(line: Seq[String]): String = line.mkString(",")
+//}
+//
+//case class EmptyHMap() extends HierarchicalMultimap {
+//  def subset(key: String): HierarchicalMultimap = this
+//  def get(key: String): Option[String] = None
+//  def list(key: String): Option[String] = None
+//  def asMap: Map[String, Seq[String]] = Map()
+//}
+//case class MapHMap2(map: Map[String, Seq[String]]) extends HierarchicalMultimap {
+//  def subset(key: String): HierarchicalMultimap = subsetString(key + ".")
+//  private def subsetString(key: String): HierarchicalMultimap = MapHMap2(map.filterKeys(_.startsWith(key)).map { case (k, v) => k.stripPrefix(key) -> v })
+//  def get(key: String): Option[String] = map.getOrElse(key, Seq()).headOption
+//  def list(key: String): Option[String] = None
+//  def asMap: Map[String, Seq[String]] = map
+//}
+///**HMap with good performance on subset,key,list.*/
+//object FastHMap {
+//  def apply(map: Map[String, Seq[String]]): HierarchicalMultimap = FastHMap("", map)
+//}
+//case class FastHMap(prefix: String, map: Map[String, Seq[String]]) extends HierarchicalMultimap {
+//  def subset(key: String): HierarchicalMultimap = FastHMap(prefix + "." + key, map)
+//  def get(key: String): Option[String] = map.getOrElse(prefix + "." + key, Seq()).headOption
+//  def list(key: String): Option[String] = None
+//  def asMap: Map[String, Seq[String]] =
+//    if (prefix.isEmpty)
+//      map
+//    else
+//      map.filterKeys(_.startsWith(prefix + ".")).map { case (k, v) => k.stripPrefix(prefix + ".") -> v }
+//}
+//
+//case class HttpHMap(request: Map[String, Seq[String]], response: Map[String, Seq[String]]) extends HierarchicalMultimap {
+//  val all = request.map { case (key, value) => "request." + key -> value } ++ response.map { case (key, value) => "response." + key -> value }
+//  def subset(key: String): HierarchicalMultimap = key match {
+//    case "request" =>
+//      FastHMap(request)
+//    case "response" =>
+//      FastHMap(response)
+//    case _ =>
+//      EmptyHMap()
+//  }
+//  def get(key: String): Option[String] = all.getOrElse(key, Seq()).headOption
+//  def list(key: String): Option[String] = None
+//  def asMap: Map[String, Seq[String]] = all
+//}
 
 trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState { self =>
   type Repr = self.type
-  def uniqueId: String = raw
-  def toUrl: java.net.URL = ???
-  def size: Long
-  final def length: Long = size
-  def exists: Boolean
-  protected def using[A <% AutoCloseable, B](resource: A)(f: A => B): B = {
-    try f(resource) finally resource.close()
-  }
-  implicit def toAutoCloseable(source: scala.io.BufferedSource): AutoCloseable = new AutoCloseable {
-    override def close() = source.close()
-  }
-  def nonExisting(process: (this.type) => Any): Repr = {
-    if (!exists) process(this)
-    this
-  }
-  def existing(source: BufferedSource) = {
-    //if (source.nonEmpty)
-    val hasNext = Try { source.hasNext }
-    val hasNext2 = hasNext.recover {
-      case ex: Throwable =>
-        throw new RuntimeException("[" + this + "] doesn't exist!")
-    }
-    //hasNext might be false if is empty
-    //    if (!hasNext2.get)
-    //      throw new RuntimeException("[" + self + "] doesn't have next!")
-    source
-  }
-  def existing: Repr =
-    if (exists)
-      this
-    else
-      throw new RuntimeException("[" + this + "] doesn't exist!")
-  def existingOption: Option[Repr] =
-    if (exists)
-      Some(this)
-    else
-      None
-  def nonExistingOption: Option[Repr] =
-    if (exists)
-      None
-    else
-      Some(this)
+//  def uniqueId: String = raw
+//  def toUrl: java.net.URL = ???
+//  def size: Long
+//  final def length: Long = size
+//  def exists: Boolean
+//  protected def using[A <% AutoCloseable, B](resource: A)(f: A => B): B = {
+//    try f(resource) finally resource.close()
+//  }
+//  implicit def toAutoCloseable(source: scala.io.BufferedSource): AutoCloseable = new AutoCloseable {
+//    override def close() = source.close()
+//  }
+//  def nonExisting(process: (this.type) => Any): Repr = {
+//    if (!exists) process(this)
+//    this
+//  }
+//  def existing(source: BufferedSource) = {
+//    //if (source.nonEmpty)
+//    val hasNext = Try { source.hasNext }
+//    val hasNext2 = hasNext.recover {
+//      case ex: Throwable =>
+//        throw new RuntimeException("[" + this + "] doesn't exist!")
+//    }
+//    //hasNext might be false if is empty
+//    //    if (!hasNext2.get)
+//    //      throw new RuntimeException("[" + self + "] doesn't have next!")
+//    source
+//  }
+//  def existing: Repr =
+//    if (exists)
+//      this
+//    else
+//      throw new RuntimeException("[" + this + "] doesn't exist!")
+//  def existingOption: Option[Repr] =
+//    if (exists)
+//      Some(this)
+//    else
+//      None
+//  def nonExistingOption: Option[Repr] =
+//    if (exists)
+//      None
+//    else
+//      Some(this)
 }
 trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation { self =>
   override type Repr = self.type
-  def unsafeToInputStream: InputStream
-  def unsafeToInputStreamIfFile: InputStream = {
-    //Return the InputStream only if this is a file. Classpath folder is returning an InputStream with the list of the files.
-    if (!isFile)
-      throw new RuntimeException("Cannot create inputStream since [" + this + "] is not a file!")
-    unsafeToInputStream
-  }
-  def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStreamIfFile, decoder)
-  def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStreamIfFile)(decoder)
-  def bytes: Array[Byte] = {
-    //TODO implement
-    ??? //IOUtils.readFully(x$1, x$2)
-  }
-
-  def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStreamIfFile)(op)
-  def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
-  def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
-
-  def usingInputStreamAndContinue(op: InputStream => Any): Repr = { using(unsafeToInputStreamIfFile)(op); this }
-  def usingReaderAndContinue(reader: java.io.Reader => Any): Repr = { using(unsafeToReader)(reader); this }
-  def usingSourceAndContinue(processor: scala.io.BufferedSource => Any): Repr = { using(unsafeToSource)(processor); this }
-
-  def readLines: Iterable[String] = traverseLines.toIterable
-  def traverseLines: Traversable[String] = new Traversable[String] {
-    def foreach[U](f: String => U): Unit = {
-      usingSource { x => x.getLines().foreach(f) }
-    }
-  }
-
-  def copyToIfNotExists(dest: OutputLocation): Repr = { dest.nonExistingOption.map(_.copyFrom(this)); this }
-  def copyTo(dest: OutputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): Repr = { dest.copyFrom(self); this }
-
-  def readContent = {
-    // Read a file into a string
-    //    import rapture._
-    //    import core._, io._, net._, uri._, json._, codec._
-    //    import encodings.`UTF-8`
-    //    val src = uri"http://rapture.io/sample.json".slurp[Char]
-    //existing(toSource).getLines mkString ("\n")
-    usingReader { reader =>
-      try { IOUtils.toString(reader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
-    }
-  }
-  def readContentAsText: Try[String] =
-    Try(readContent)
-  //Try(existing(toSource).getLines mkString ("\n"))
-  //def unzip: ZipInputLocation = ???
-  //def unzip: ZipInputLocation = ZipInputLocation(this, None)
-  //def cached(implicit cacheConfig: CacheConfig = DefaultCacheConfig): CachedLocation[this.type] = CachedLocation(cacheConfig, this)
-  /**Sometimes we want the content to be available locally in the filesystem.*/
-  def asFileInputLocation: FileInputLocation = ???
+//  def unsafeToInputStream: InputStream
+//  def unsafeToInputStreamIfFile: InputStream = {
+//    //Return the InputStream only if this is a file. Classpath folder is returning an InputStream with the list of the files.
+//    if (!isFile)
+//      throw new RuntimeException("Cannot create inputStream since [" + this + "] is not a file!")
+//    unsafeToInputStream
+//  }
+//  def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStreamIfFile, decoder)
+//  def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStreamIfFile)(decoder)
+//  def bytes: Array[Byte] = {
+//    //TODO implement
+//    ??? //IOUtils.readFully(x$1, x$2)
+//  }
+//
+//  def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStreamIfFile)(op)
+//  def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
+//  def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
+//
+//  def usingInputStreamAndContinue(op: InputStream => Any): Repr = { using(unsafeToInputStreamIfFile)(op); this }
+//  def usingReaderAndContinue(reader: java.io.Reader => Any): Repr = { using(unsafeToReader)(reader); this }
+//  def usingSourceAndContinue(processor: scala.io.BufferedSource => Any): Repr = { using(unsafeToSource)(processor); this }
+//
+//  def readLines: Iterable[String] = traverseLines.toIterable
+//  def traverseLines: Traversable[String] = new Traversable[String] {
+//    def foreach[U](f: String => U): Unit = {
+//      usingSource { x => x.getLines().foreach(f) }
+//    }
+//  }
+//
+////  def copyToIfNotExists(dest: OutputLocation): Repr = { dest.nonExistingOption.map(_.copyFrom(this)); this }
+////  def copyTo(dest: OutputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): Repr = { dest.copyFrom(self); this }
+//
+//  def readContent = {
+//    // Read a file into a string
+//    //    import rapture._
+//    //    import core._, io._, net._, uri._, json._, codec._
+//    //    import encodings.`UTF-8`
+//    //    val src = uri"http://rapture.io/sample.json".slurp[Char]
+//    //existing(toSource).getLines mkString ("\n")
+//    usingReader { reader =>
+//      try { IOUtils.toString(reader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
+//    }
+//  }
+//  def readContentAsText: Try[String] =
+//    Try(readContent)
+//  //Try(existing(toSource).getLines mkString ("\n"))
+//  //def unzip: ZipInputLocation = ???
+//  //def unzip: ZipInputLocation = ZipInputLocation(this, None)
+//  //def cached(implicit cacheConfig: CacheConfig = DefaultCacheConfig): CachedLocation[this.type] = CachedLocation(cacheConfig, this)
+//  /**Sometimes we want the content to be available locally in the filesystem.*/
+//  //def asFileInputLocation: FileInputLocation = ???
 }
 
 /**
