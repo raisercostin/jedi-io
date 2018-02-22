@@ -121,6 +121,7 @@ trait UnknownFileOrFolder extends IsFileOrFolder {
  */
 object Locations {
   System.setProperty("sun.net.http.allowRestrictedHeaders", "true")
+  implicit val unixAndWindowsToStandard = JediFileSystem.unixAndWindowsToStandard
   val logger = org.slf4j.LoggerFactory.getLogger("locations")
   def classpath(resourcePath: String): ClassPathInputLocation = ClassPathInputLocation(resourcePath)
   def file(path: Path): FileLocation =
@@ -153,7 +154,6 @@ object Locations {
   def relative(path: String = "")(implicit fsf: FileSystemFormatter = JediFileSystem.unixAndWindowsToStandard): RelativeLocation = RelativeLocation(fsf.standard(path))
   def current(relative: String): FileLocation = file(new File(new File("."), relative).getCanonicalPath())
 
-  implicit val unixAndWindowsToStandard = JediFileSystem.unixAndWindowsToStandard
   def userHome: FileLocation = file(System.getProperty("user.home"))
   lazy val environment: RuntimeEnvironment = RuntimeEnvironment()
 }

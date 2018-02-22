@@ -7,6 +7,7 @@ import org.junit.Test;
 public class UsageInJavaTest {
   @Test
   public void test() {
+    //InputLocation a = Locations.memory("a").writeContent("content");
     //fail("Not yet implemented");
   }
 }
