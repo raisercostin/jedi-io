@@ -8,13 +8,11 @@ import java.nio.file.Files
 import java.nio.file.CopyOption
 
 trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocation with NavigableOutputLocation{ self =>
-  override type Repr = self.type
-
-  def mkdirOnParentIfNecessary: Repr = {
+  def mkdirOnParentIfNecessary: self.type = {
     parent.mkdirIfNecessary
     this
   }
-  def deleteOrRenameIfExists: Repr = {
+  def deleteOrRenameIfExists: self.type = {
     Try { deleteIfExists }.recover { case _ => renamedIfExists }.get
   }
   def asInput: NavigableFileInputLocation
@@ -27,7 +25,7 @@ trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocat
         moveToRenamedIfExists(dest.renamedIfExists)
     }
   }
-  private def backupExistingOneAndReturnBackup(backupEmptyFolderToo:Boolean = true): Repr = {
+  private def backupExistingOneAndReturnBackup(backupEmptyFolderToo:Boolean = true): self.type = {
     //new name should never exists
     val newName:NavigableFileLocation = renamedIfExists(false)
     if (!newName.equals(this)){
@@ -37,15 +35,15 @@ trait NavigableFileOutputLocation extends OutputLocation with NavigableFileLocat
     }else
       this
   }
-  def backupExistingOne(onBackup: Repr => Unit, backupIfEmpty:Boolean = true): Repr = {
+  def backupExistingOne(onBackup: self.type => Unit, backupIfEmpty:Boolean = true): self.type = {
     onBackup(backupExistingOneAndReturnBackup(backupIfEmpty))
     this
   }
-  def backupExistingOne(backupEmptyFolderToo:Boolean): Repr = {
+  def backupExistingOne(backupEmptyFolderToo:Boolean): self.type = {
     backupExistingOneAndReturnBackup(backupEmptyFolderToo)
     this
   }
-  def backupExistingOne: Repr = backupExistingOne(true)
+  def backupExistingOne: self.type = backupExistingOne(true)
 
   def renameTo[T <: FileAbsoluteBaseLocation](newName: T): T = {
     if(isSymlink)

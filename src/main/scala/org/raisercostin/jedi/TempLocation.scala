@@ -7,12 +7,11 @@ import java.nio.file.Files
 
 
 case class TempLocation(temp: File, append: Boolean = false) extends FileLocation {self=>
-  override type Repr = self.type
   override def withAppend: self.type = this.copy(append = true)
   def fileFullPath: String = temp.getAbsolutePath()
   def randomChild(prefix: String = "random", suffix: String = "") = new TempLocation(File.createTempFile(prefix, suffix, toFile))
   def randomFolderChild(prefix: String = "random") = new TempLocation(Files.createTempDirectory(prefix).toFile)
-  override def build(path:String): Repr = new TempLocation(new File(path),append)
+  override def build(path:String): self.type = new TempLocation(new File(path),append)
   //optimized not to convert back and forth to the external format
-  override def child(child: String): Repr = new TempLocation(childFile(child))
+  override def child(child: String): self.type = new TempLocation(childFile(child))
 }

@@ -10,7 +10,6 @@ object ZipInputLocation {
 }
 //TODO fix name&path&unique identifier stuff
 trait ZipInputLocation extends NavigableFileInputLocation { self =>
-  override type Repr = self.type
   def entry: Option[java.util.zip.ZipEntry]
   def raw = "ZipInputLocation[" + zip + "," + entry + "]"
 
@@ -33,7 +32,7 @@ trait ZipInputLocation extends NavigableFileInputLocation { self =>
   override def unzip: ZipInputLocation = usingInputStream { input =>
     ZipInputLocation(Locations.temp.randomChild(name).copyFrom(Locations.stream(input)), None)
   }
-  override def child(child: String): Repr = (entry match {
+  override def child(child: String): self.type = (entry match {
     case None =>
       childFromEntry(rootzip.getEntry(child))
     case Some(entry) =>
@@ -41,13 +40,13 @@ trait ZipInputLocation extends NavigableFileInputLocation { self =>
   })
 
   def childFromEntry(entry: ZipEntry) = ZipInputLocationChildImpl(zip, rootzip, Some(Option(entry).get))
-  override def list: Iterable[Repr] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => toRepr(childFromEntry(entry)))
+  override def list: Iterable[self.type] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => toRepr(childFromEntry(entry))).asInstanceOf[Iterable[self.type]]
   override def toFile = zip match {
     case zip: FileAbsoluteBaseLocation => zip.toFile
     case _                             => println(zip.toString()); ???
   }
-  override def build(path: String): Repr = ???
-  override def parent: Repr = ZipInputLocationChildImpl(zip, rootzip, Some(rootzip.getEntry(parentName)))
+  override def build(path: String): self.type = ???
+  override def parent: self.type = ZipInputLocationChildImpl(zip, rootzip, Some(rootzip.getEntry(parentName)))
   override def childName(child: String): String = ???
 
   def zip: InputLocation

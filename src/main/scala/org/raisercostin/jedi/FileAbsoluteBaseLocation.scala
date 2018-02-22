@@ -15,7 +15,6 @@ import org.raisercostin.jedi.impl._
 import java.nio.file.LinkOption
 
 trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState { self =>
-  type Repr = self.type
   def uniqueId: String = raw
   def toUrl: java.net.URL = ???
   def size: Long
@@ -29,7 +28,7 @@ trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState { sel
   implicit def toAutoCloseable(source: scala.io.BufferedSource): AutoCloseable = new AutoCloseable {
     override def close() = source.close()
   }
-  def nonExisting(process: (this.type) => Any): Repr = {
+  def nonExisting(process: (this.type) => Any): self.type = {
     if (!exists) process(this)
     this
   }
@@ -45,17 +44,17 @@ trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState { sel
     //      throw new RuntimeException("[" + self + "] doesn't have next!")
     source
   }
-  def existing: Repr =
+  def existing: self.type =
     if (exists)
       this
     else
       throw new RuntimeException("[" + this + "] doesn't exist!")
-  def existingOption: Option[Repr] =
+  def existingOption: Option[self.type] =
     if (exists)
       Some(this)
     else
       None
-  def nonExistingOption: Option[Repr] =
+  def nonExistingOption: Option[self.type] =
     if (exists)
       None
     else
@@ -67,7 +66,6 @@ trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState { sel
 //}
 
 trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocationState with FileVersionedLocation { self =>
-  override type Repr = self.type
   def toFile: File
   override def toUrl: java.net.URL = toFile.toURI.toURL
 
@@ -77,7 +75,7 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
 
   def toPath: Path = toFile.toPath
   def toPath(subFile: String): Path = toPath.resolve(subFile)
-  def mkdirIfNecessary: Repr = {
+  def mkdirIfNecessary: self.type = {
     CommonsFileUtils.forceMkdir(toFile)
     this
   }

@@ -62,7 +62,7 @@ trait ClassPathInputLocation extends NavigableFileInputLocation { self =>
   }
   def asFile: FileLocation = Locations.file(toFile)
   def asUrl: UrlLocation = Locations.url("file:" + absolute)
-  override def build(path: String): Repr = ClassPathInputLocation(standard(path).stripPrefix(outerPrefix))
+  override def build(path: String): self.type = ClassPathInputLocation(standard(path).stripPrefix(outerPrefix))
   def outerPrefix: String = absolute.stripSuffix(initialResourcePath)
   def innerPath: String = absolute.stripPrefix(outerPrefix)
 }

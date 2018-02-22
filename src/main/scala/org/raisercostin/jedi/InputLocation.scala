@@ -11,7 +11,6 @@ import scala.util.Try
 import org.apache.commons.io.IOUtils
 
 trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation { self =>
-  override type Repr = self.type
   def unsafeToInputStream: InputStream
   def unsafeToInputStreamIfFile: InputStream = {
     //Return the InputStream only if this is a file. Classpath folder is returning an InputStream with the list of the files.
@@ -30,9 +29,9 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
   def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
   def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
 
-  def usingInputStreamAndContinue(op: InputStream => Any): Repr = {using(unsafeToInputStreamIfFile)(op);this}
-  def usingReaderAndContinue(reader: java.io.Reader => Any): Repr = {using(unsafeToReader)(reader);this}
-  def usingSourceAndContinue(processor: scala.io.BufferedSource => Any): Repr = {using(unsafeToSource)(processor);this}
+  def usingInputStreamAndContinue(op: InputStream => Any): self.type = {using(unsafeToInputStreamIfFile)(op);this}
+  def usingReaderAndContinue(reader: java.io.Reader => Any): self.type = {using(unsafeToReader)(reader);this}
+  def usingSourceAndContinue(processor: scala.io.BufferedSource => Any): self.type = {using(unsafeToSource)(processor);this}
 
   def readLines: Iterable[String] = traverseLines.toIterable
   def traverseLines: Traversable[String] = new Traversable[String] {
@@ -41,8 +40,8 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
     }
   }
 
-  def copyToIfNotExists(dest: OutputLocation): Repr = { dest.nonExistingOption.map(_.copyFrom(this)); this }
-  def copyTo(dest: OutputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): Repr = { dest.copyFrom(self); this}
+  def copyToIfNotExists(dest: OutputLocation): self.type = { dest.nonExistingOption.map(_.copyFrom(this)); this }
+  def copyTo(dest: OutputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): self.type = { dest.copyFrom(self); this}
 
   def readContent = {
     // Read a file into a string
@@ -63,23 +62,4 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
   def cached(implicit cacheConfig: CacheConfig = DefaultCacheConfig): CachedLocation[this.type] = CachedLocation(cacheConfig, this)
   /**Sometimes we want the content to be available locally in the filesystem.*/
   def asFileInputLocation: FileInputLocation = cached.flush
-}
-trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with VersionedLocation {
-  //import org.apache.commons.io.input.BOMInputStream
-  //import org.apache.commons.io.IOUtils
-  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
-  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
-
-  def unsafeToInputStream: InputStream = new FileInputStream(absolute)
-  override def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
-  def copyAsHardLink(dest: FileOutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
-    dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
-    this
-  }
-  def copyAsSymLink(dest: FileLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
-    dest.copyFromAsSymLink(this, overwriteIfAlreadyExists);
-    this
-  }
-  /**Optimize by using the current FileInputLocation.*/
-  override def asFileInputLocation: FileInputLocation = this
 }

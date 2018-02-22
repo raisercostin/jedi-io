@@ -18,7 +18,6 @@ import java.net.HttpURLConnection
 import scala.util.Failure
 import java.io.IOException
 case class EmailLocation(host:String, port:Int, username:String, password:String) extends NavigableFileInOutLocation { self =>
-  override type Repr = self.type
 
 /** As seen from class EmailLocation, the missing signatures are as follows.
  *  For convenience, these are usable as stub implementations.
@@ -27,7 +26,7 @@ case class EmailLocation(host:String, port:Int, username:String, password:String
   def raw: String = ???
 
   // Members declared in org.raisercostin.jedi.BaseNavigableLocation
-  override def build(path: String): Repr = ???
+  override def build(path: String): self.type = ???
 
   // Members declared in org.raisercostin.jedi.FileAbsoluteBaseLocation
   def toFile: java.io.File = ???
@@ -41,5 +40,5 @@ case class EmailLocation(host:String, port:Int, username:String, password:String
   // Members declared in org.raisercostin.jedi.OutputLocation
   override def append: Boolean = ???
   def unsafeToOutputStream: java.io.OutputStream = ???
-  def withAppend: Repr = ???
+  def withAppend: self.type = ???
 }

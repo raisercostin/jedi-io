@@ -51,7 +51,6 @@ case class CopyOptions(copyMeta: Boolean, optionalMeta: Boolean, monitor: Operat
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
   override type MetaRepr <: OutputLocation with InputLocation
-  override type Repr = self.type
   def unsafeToOutputStream: OutputStream
   def unsafeToOutputStream2: OutputStream = {
     if (!canBeFile)
@@ -66,16 +65,16 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   def usingPrintWriter[T](op: PrintWriter => T): T = using(unsafeToPrintWriter)(op)
 
   /** Produce lateral effects in op.*/
-  def usingOutputStreamAndContinue(op: OutputStream => Any): Repr = {using(unsafeToOutputStream2)(op);this}
+  def usingOutputStreamAndContinue(op: OutputStream => Any): self.type = {using(unsafeToOutputStream2)(op);this}
   /** Produce lateral effects in op.*/
-  def usingWriterAndContinue(op: Writer => Any): Repr = {using(unsafeToWriter)(op);this}
+  def usingWriterAndContinue(op: Writer => Any): self.type = {using(unsafeToWriter)(op);this}
   /** Produce lateral effects in op.*/
-  def usingPrintWriterAndContinue(op: PrintWriter => Any): Repr = {using(unsafeToPrintWriter)(op);this}
+  def usingPrintWriterAndContinue(op: PrintWriter => Any): self.type = {using(unsafeToPrintWriter)(op);this}
 
   def append: Boolean
   def moveTo(dest: OutputLocation): this.type = ???
-  def deleteIfExists: Repr = ???
-  def delete: Repr = {
+  def deleteIfExists: self.type = ???
+  def delete: self.type = {
     if (exists)
       deleteIfExists
     else
@@ -83,29 +82,29 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
     this
   }
 
-  def writeContent(content: String): Repr = { usingPrintWriter(_.print(content)); this }
+  def writeContent(content: String): self.type = { usingPrintWriter(_.print(content)); this }
   def appendContent(content: String) = withAppend.writeContent(content)
   def withAppend: self.type
-  def copyFromWithoutMetadata(src: InputLocation): Repr = copyFrom(src)(CopyOptions.copyWithoutMetadata)
-  def copyFromWithMetadata(src: InputLocation): Repr = copyFrom(src)(CopyOptions.copyWithMetadata)
+  def copyFromWithoutMetadata(src: InputLocation): self.type = copyFrom(src)(CopyOptions.copyWithoutMetadata)
+  def copyFromWithMetadata(src: InputLocation): self.type = copyFrom(src)(CopyOptions.copyWithMetadata)
 
-  def copyFrom(src: InputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): Repr = {
+  def copyFrom(src: InputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): self.type = {
     (src, this) match {
       case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder =>
-        to.copyFromFileToFileOrFolder(from).asInstanceOf[Repr]
+        to.copyFromFileToFileOrFolder(from).asInstanceOf[self.type]
       case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder =>
-        to.copyFromFolder(from).asInstanceOf[Repr]
+        to.copyFromFolder(from).asInstanceOf[self.type]
       case (from, to) if from.isFile && to.isFile => copyFromInputLocation(from)
       case (from, to)                             => copyFromInputLocation(from)
     }
   }
-  private def copyFromIncludingMetadata(src: InputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): Repr =
+  private def copyFromIncludingMetadata(src: InputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): self.type =
     (for {
       x1 <- Try(copyFromWithoutMetadata(src));
       x2 <- metaLocation;
       x3 <- src.metaLocation;
       x4 <- Try(x2.copyFromWithoutMetadata(x3))
-    } yield x1).get
+    } yield x1).get.asInstanceOf[self.type]
   def copyFromInputLocation(from: InputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): this.type = {
     if (option.checkCopyToSame(from, this))
       from.usingInputStream { source =>
@@ -117,7 +116,6 @@ trait OutputLocation extends AbsoluteBaseLocation { self =>
   }
 }
 trait FileOutputLocation extends NavigableOutputLocation with FileAbsoluteBaseLocation { self =>
-  override type Repr = self.type
   def unsafeToOutputStream: OutputStream = if (isFolder)
     throw new RuntimeException(s"Cannot open an OutputStream to the folder ${this}")
   else
@@ -136,14 +134,14 @@ trait FileOutputLocation extends NavigableOutputLocation with FileAbsoluteBaseLo
     case _ =>
       ???
   }
-  override def deleteIfExists: Repr = {
+  override def deleteIfExists: self.type = {
     if (exists) {
       logger.info(s"delete existing $absolute")
       impl.ApacheFileUtils.forceDelete(toPath)
     }
     this
   }
-  def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = {
+  def copyFromAsHardLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): self.type = {
     if (overwriteIfAlreadyExists) {
       Files.createLink(toPath, src.toPath)
     } else {

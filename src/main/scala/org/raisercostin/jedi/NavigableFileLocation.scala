@@ -20,41 +20,40 @@ object BaseNavigableLocation {
   val stateSep = "--state#"
 }
 trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
-  type Repr = self.type
-  protected def repr: Repr = toRepr(self)
-  implicit protected def toRepr[T <: BaseNavigableLocation](location: T): Repr = location.asInstanceOf[Repr]
-  def build(path: String): Repr
+  protected def repr: self.type = toRepr(self)
+  implicit protected def toRepr[T <: BaseNavigableLocation](location: T): self.type = location.asInstanceOf[self.type]
+  def build(path: String): self.type
 
-  def parent: Repr = build(parentName)
-  def child(child: String): Repr = build(childName(child))
+  def parent: self.type = build(parentName)
+  def child(child: String): self.type = build(childName(child))
   def childName(child: String): String = {
     require(child.trim.nonEmpty, s"An empty child [$child] cannot be added.")
     JediFileSystem.addChild(raw, child)
   }
 
-  def child(childText: Option[String]): Repr = childText match {
+  def child(childText: Option[String]): self.type = childText match {
     case None                      => repr
     case Some(s) if s.trim.isEmpty => repr
     case Some(s)                   => child(s)
   }
-  def child(childLocation: RelativeLocation): Repr = {
+  def child(childLocation: RelativeLocation): self.type = {
     if (childLocation.isEmpty) {
       repr
     } else {
       child(childLocation.relativePath)
     }
   }
-  def descendant(childs: Seq[String]): Repr = if (childs.isEmpty) repr else child(childs.head).descendant(childs.tail)
-  def withParent(process: (Repr) => Any): Repr = {
+  def descendant(childs: Seq[String]): self.type = if (childs.isEmpty) repr else child(childs.head).descendant(childs.tail)
+  def withParent(process: (self.type) => Any): self.type = {
     process(parent)
     repr
   }
-  def withSelf(process: (Repr) => Any): Repr = {
+  def withSelf(process: (self.type) => Any): self.type = {
     process(repr)
     repr
   }
   /**This one if folder otherwise the parent*/
-  def folder: Repr = {
+  def folder: self.type = {
     if (isFile)
       parent
     else
@@ -65,7 +64,7 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   def hasAncestor[T <: BaseLocation](folder: T): Boolean = childOf(folder)
   def childOf[T <: BaseLocation](folder: T): Boolean = ancestor(folder) == folder
   /** Finds the common ancestor of current Location and the src location. A folder should end in `/`. */
-  def ancestor[T <: BaseLocation](src: T*): Repr = build(src.foldLeft(this.nameAndBefore)((x, file) => folderCommonPrefix(x, file.nameAndBefore)))
+  def ancestor[T <: BaseLocation](src: T*): self.type = build(src.foldLeft(this.nameAndBefore)((x, file) => folderCommonPrefix(x, file.nameAndBefore)))
   //  private def ancestor2[T<:BaseLocation](a:String,b:String):Repr = {
   //    build(getFolderCommonPrefix(a,b))
   //  }
@@ -98,18 +97,18 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
       Success(text.substring(prefix.length))
     else
       Failure(new RuntimeException(s"Text [$text] doesn't start with [$prefix]."))
-  def withBaseName(baseNameSupplier: String => String): Repr = parent.child(withExtension2(baseNameSupplier(baseName), extension))
-  def withBaseName2(baseNameSupplier: String => Option[String]): Repr =
+  def withBaseName(baseNameSupplier: String => String): self.type = parent.child(withExtension2(baseNameSupplier(baseName), extension))
+  def withBaseName2(baseNameSupplier: String => Option[String]): self.type =
     baseNameSupplier(baseName).map { x => parent.child(withExtension2(x, extension)) }.getOrElse(repr)
-  def withName(nameSupplier: String => String): Repr = parent.child(nameSupplier(name))
-  def withExtension(extensionSupplier: String => String): Repr = parent.child(withExtension2(baseName, extensionSupplier(extension)))
+  def withName(nameSupplier: String => String): self.type = parent.child(nameSupplier(name))
+  def withExtension(extensionSupplier: String => String): self.type = parent.child(withExtension2(baseName, extensionSupplier(extension)))
   protected def withExtension2(name: String, ext: String) =
     if (ext.length > 0)
       name + "." + ext
     else name
 
   /** State is a part before extension that can be used to add minimal metadata to your file.*/
-  def withState(state: String): Repr = {
+  def withState(state: String): self.type = {
     import BaseNavigableLocation._
     val index = baseName.lastIndexOf(stateSep)
     if (index == -1)
@@ -129,10 +128,9 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
   def withoutState = withState("")
 }
 trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation { self =>
-  override type Repr = self.type
-  def list: Iterable[Repr]
-  final def descendants: Iterable[Repr] = descendantsWithOptions(true)
-  def descendantsWithOptions(traverseDir:Boolean): Iterable[Repr] = ???
+  def list: Iterable[self.type]
+  final def descendants: Iterable[self.type] = descendantsWithOptions(true)
+  def descendantsWithOptions(traverseDir:Boolean): Iterable[self.type] = ???
   def absolute: String
   //  def loop(h: Int, n: Int): Stream[Int] = h #:: loop(n, h + n)
   //  loop(1, 1)
@@ -146,20 +144,19 @@ trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation 
   //  }
 }
 trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation with NavigableLocation { self =>
-  override type Repr = self.type
   //TODO review these
-  override protected def repr: Repr = toRepr2(self)
-  implicit protected def toRepr2[T <: NavigableFileLocation](location: T): Repr = location.asInstanceOf[Repr]
+  override protected def repr: self.type = toRepr2(self)
+  implicit protected def toRepr2[T <: NavigableFileLocation](location: T): self.type = location.asInstanceOf[self.type]
   def isEmptyFolder = list.isEmpty
 
-  def list: Iterable[Repr] = Option(existing).map { x =>
+  def list: Iterable[self.type] = Option(existing).map { x =>
     Option(x.toFile.listFiles).map(_.toIterable).getOrElse(Iterable(x.toFile))
-  }.getOrElse(Iterable()).map(buildFromFile)
-  override def descendantsWithOptions(includeDirs:Boolean): Iterable[Repr] = {
+  }.getOrElse(Iterable()).map(buildFromFile).asInstanceOf[Iterable[self.type]]
+  override def descendantsWithOptions(includeDirs:Boolean): Iterable[self.type] = {
     val all: Iterable[File] = Option(existing).map { x =>
       traverse(includeDirs).map(_._1.toFile).toIterable
     }.getOrElse(Iterable[File]())
-    all.map(buildFromFile)
+    all.map(buildFromFile).asInstanceOf[Iterable[self.type]]
   }
   import java.nio.file.Files
   import java.nio.file.Path
@@ -171,12 +168,12 @@ trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableL
   //def traverseFiles: Traversable[Path] = if (exists) traverse.map { case (file, attr) => file } else Traversable()
   //def traverseWithDir = new TraversePath(toPath, true)
 
-  override def build(path: String): Repr = Locations.file(path)
-  protected def buildFromFile(x: File): Repr = build(x.getAbsolutePath)
-  def renamedIfExists: Repr = renamedIfExists(true)
-  def renamedIfExists(renameIfEmptyToo: Boolean = false): Repr = {
+  override def build(path: String): self.type = Locations.file(path)
+  protected def buildFromFile(x: File): self.type = build(x.getAbsolutePath)
+  def renamedIfExists: self.type = renamedIfExists(true)
+  def renamedIfExists(renameIfEmptyToo: Boolean = false): self.type = {
     @tailrec
-    def findUniqueName(destFile: Repr, counter: Int): Repr = {
+    def findUniqueName(destFile: self.type, counter: Int): self.type = {
       val renamed = destFile.withBaseName { baseName: String => (baseName + "-" + counter) }
       if (renamed.existsWithoutResolving)
         if (renameIfEmptyToo && exists && list.isEmpty)

@@ -12,7 +12,6 @@ import scala.language.reflectiveCalls
 import scala.util.Try
 
 case class MemoryLocation(val memoryName: String) extends RelativeLocation with InOutLocation with NavigableInputLocation{self=>
-  override type Repr = self.type
   override def nameAndBefore: String = absolute
   def absolute: String = memoryName
   def relativePath: String = memoryName
@@ -23,14 +22,14 @@ case class MemoryLocation(val memoryName: String) extends RelativeLocation with 
   lazy val outStream = new ByteArrayOutputStream()
   override def unsafeToOutputStream: OutputStream = outStream
   override def unsafeToInputStream: InputStream = new ByteArrayInputStream(outStream.toByteArray())
-  override def child(child: String): Repr = ???
-  override def build(path:String): Repr = new MemoryLocation(path)
-  override def parent: Repr = ???
+  override def child(child: String): self.type = ???
+  override def build(path:String): self.type = new MemoryLocation(path)
+  override def parent: self.type = ???
   override def withAppend: this.type = ???
   override def size: Long = outStream.size()
   override def exists = true
-  override def descendantsWithOptions(traverseDir:Boolean): Iterable[Repr] = Iterable(this)
-  override def list: Iterable[Repr] = Iterable(this)
+  override def descendantsWithOptions(traverseDir:Boolean): Iterable[self.type] = Iterable(this)
+  override def list: Iterable[self.type] = Iterable(this)
   override def childName(child:String):String = ???
   override def isFolder = false
   override def isFile: Boolean = true

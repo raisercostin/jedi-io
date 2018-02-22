@@ -10,31 +10,30 @@ object VfsLocation{
 }
 
 case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
-  override type Repr = self.type
   def raw = file.getName.getPath
   def fileFullPath: String = file.getName.getPath
-  override def build(path:String): Repr = ???//new VfsLocation(file)
-  def buildNew(x: FileObject): Repr = new VfsLocation(x)
-  override def parent: Repr = buildNew(file.getParent)
-  override def child(child: String): Repr = buildNew(file.getChild(child))
+  override def build(path:String): self.type = ???//new VfsLocation(file)
+  def buildNew(x: FileObject): self.type = new VfsLocation(x)
+  override def parent: self.type = buildNew(file.getParent)
+  override def child(child: String): self.type = buildNew(file.getChild(child))
   override def childName(child:String):String = file.getChild(child).getName.getPath
   override def exists:Boolean = file.exists
-  override def list: Iterable[Repr] = Option(existing).map { x =>
+  override def list: Iterable[self.type] = Option(existing).map { x =>
     Option(x.file.getChildren).map(_.toIterable).getOrElse(Iterable(x.file))
-  }.getOrElse(Iterable()).map(buildNew)
+  }.getOrElse(Iterable()).map(buildNew).asInstanceOf[Iterable[self.type]]
   def isFile: Boolean = file.isFile
   def isFolder: Boolean = file.isFolder
-  def mkdirIfNecessary: Repr = {
+  def mkdirIfNecessary: self.type = {
     file.createFolder
     this
   }
-  def mkdirOnParentIfNecessary:Repr = {
+  def mkdirOnParentIfNecessary:self.type = {
     file.getParent.createFolder
     this
   }
   def asInput: NavigableInOutLocation = self
   override def append: Boolean = ???
-  def withAppend: Repr = ???
+  def withAppend: self.type = ???
   override def size:Long = file.getContent.getSize
   override def nameAndBefore: String = raw
   override def name:String = file.getName.getBaseName

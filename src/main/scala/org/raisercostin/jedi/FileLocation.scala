@@ -18,8 +18,27 @@ import scala.util.Failure
 import java.nio.file.Files
 import org.raisercostin.jedi.impl.ProcessUtils
 
+trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with VersionedLocation {
+  //import org.apache.commons.io.input.BOMInputStream
+  //import org.apache.commons.io.IOUtils
+  //def toBomInputStream: InputStream = new BOMInputStream(unsafeToInputStream,false)
+  //def toSource: BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStream, "UTF-8")
+
+  def unsafeToInputStream: InputStream = new FileInputStream(absolute)
+  override def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
+  def copyAsHardLink(dest: FileOutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+    dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
+    this
+  }
+  def copyAsSymLink(dest: FileLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
+    dest.copyFromAsSymLink(this, overwriteIfAlreadyExists);
+    this
+  }
+  /**Optimize by using the current FileInputLocation.*/
+  override def asFileInputLocation: FileInputLocation = this
+}
+
 trait FileLocation extends NavigableFileInOutLocation with FileInputLocation with FileOutputLocation { self =>
-  override type Repr = self.type
   def fileFullPath: String
   override def parentName: String = toFile.getParentFile.getAbsolutePath
   def raw = fileFullPath
@@ -35,8 +54,8 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
   }
   def childFile(child:String) = toPath.resolve(checkedChild(child)).toFile
   //import org.raisercostin.util.MimeTypesUtils2
-  def asFile: Repr = self
-  def renamed(renamer: String => String): Try[Repr] = Try {
+  def asFile: self.type = self
+  def renamed(renamer: String => String): Try[self.type] = Try {
     val newName = renamer(baseName)
     if (newName == baseName) {
       //p rintln(s"ignore [${absolute}] to [${absolute}]")
@@ -95,24 +114,24 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
   //  }
   override def childName(child:String): String = childFile(child).getAbsolutePath
 
-  override def build(path: String): Repr = FileLocation(path)
-  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Repr = copyFromAsSymLink(src, overwriteIfAlreadyExists).get
+  override def build(path: String): self.type = FileLocation(path)
+  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): self.type = copyFromAsSymLink(src, overwriteIfAlreadyExists).get
   import org.raisercostin.jedi.impl.LogTry._
-  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[Repr] = {
+  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[self.type] = {
     SlfLogger.logger.info("symLink {} -> {}", src, this, "")
     if (!parent.exists) {
       Failure(new RuntimeException("Destination parent folder " + parent + " doesn't exists."))
     } else if (!overwriteIfAlreadyExists && exists) {
       Failure(new RuntimeException("Destination file " + this + " already exists."))
     } else {
-      val first: Try[Repr] = Try {
+      val first: Try[self.type] = Try {
         Files.createSymbolicLink(toPath, src.toPath)
         self
       }
       first.recoverWith {
         case error =>
           val symlinkType = if (src.isFile) "" else "/D"
-          val second: Try[Repr] = {
+          val second: Try[self.type] = {
             ProcessUtils.executeWindows(Seq("mklink", symlinkType, this.absoluteWindows, src.absoluteWindows)).map(x => self)
           }
           second.recoverWith { case x => Failure { x.addSuppressed(first.failed.get); x } }
@@ -145,12 +164,10 @@ object FileLocation {
   def apply(path: Path, append: Boolean): FileLocation = apply(path.toFile.getAbsolutePath, append)
 }
 case class FileLocationImpl(fileFullPath: String) extends FileLocation { self =>
-  override type Repr = self.type
-  override def withAppend: Repr = FileLocationAppendable(fileFullPath)
+  override def withAppend: self.type = FileLocationAppendable(fileFullPath)
   override def append: Boolean = false
 }
 case class FileLocationAppendable(fileFullPath: String) extends FileLocation { self =>
-  override type Repr = self.type
-  override def withAppend: Repr = self
+  override def withAppend: self.type = self
   override def append: Boolean = true
 }
