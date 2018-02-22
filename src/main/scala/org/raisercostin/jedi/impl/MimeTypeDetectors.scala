@@ -71,7 +71,7 @@ case object MimeType6 extends MimeTypeNameDetector {
 
 object MimeTypeDetectors {
   private final val LOG = org.slf4j.LoggerFactory.getLogger(MimeTypeDetectors.getClass)
-  type Detector = String
+  //type Detector = String
   private object MimeTypeDetectorRegistry {
     var detectorsSeq: Seq[MimeTypeDetector] = Seq()
     def detectors = detectorsSeq

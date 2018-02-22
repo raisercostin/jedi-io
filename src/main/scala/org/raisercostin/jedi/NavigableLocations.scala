@@ -13,15 +13,15 @@ import scala.util.Success
  */
 trait InOutLocation extends InputLocation with OutputLocation
 trait NavigableInputLocation extends InputLocation with NavigableLocation { self =>
-  override type MetaRepr = self.type
+  //override type MetaRepr = self.type
   def copyToFolder(to: NavigableOutputLocation): self.type = {
     to.copyFromFolder(self)
   }
-  def metaLocation: Try[MetaRepr] = Try { withName(_ + ".meta") }
+  def metaLocation: Try[NavigableInOutLocation/*MetaRepr*/] = Try { withName(_ + ".meta").asInstanceOf[NavigableInOutLocation/*MetaRepr*/] }
 }
 trait NavigableOutputLocation extends OutputLocation with NavigableLocation { self =>
-  type InputPairType = NavigableInputLocation
-  def asInput: InputPairType
+  //type InputPairType = NavigableInputLocation
+  def asInput: NavigableInputLocation
   def mkdirIfNecessary: self.type
   def mkdirOnParentIfNecessary: self.type
   def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): self.type = {
@@ -36,7 +36,7 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
     this
   }
   def copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): self.type = {
-    def copyMeta(meta:Try[MetaRepr]):Unit={
+    def copyMeta(meta:Try[NavigableInOutLocation/*MetaRepr*/]):Unit={
       if (option.copyMeta){
         if(!option.optionalMeta || meta.isSuccess && meta.get.exists)
           meta.get.copyFromInputLocation(from.metaLocation.get)

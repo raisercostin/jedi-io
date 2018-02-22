@@ -54,7 +54,7 @@ object UrlLocation extends SlfLogger
  * See here for good behaviour: https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/
  */
 case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig.defaultConfig) extends InputLocation with IsFile{ self =>
-  override type MetaRepr = MemoryLocation
+//  override type MetaRepr = MemoryLocation
   def exists = ???
   def raw = url.toExternalForm()
   //TODO dump intermediate requests/responses
@@ -79,7 +79,7 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
     case conn: FileURLConnection =>
       openedHeadConnection(conn)
   }
-  def metaLocation:Try[MetaRepr] = {
+  def metaLocation:Try[NavigableInOutLocation/*MetaRepr*/] = {
     val out = Locations.memory("")
     HierarchicalMultimap.save(meta.get,out).map(_=>out)
   }

@@ -14,7 +14,7 @@ case class StreamLocation(val inputStream: InputStream) extends InputLocation wi
   def raw = "inputStream[" + inputStream + "]"
   override def unsafeToInputStream: InputStream = inputStream
   override def size:Long = ???
-  def metaLocation:Try[MetaRepr] = ???
+  def metaLocation:Try[NavigableInOutLocation/*MetaRepr*/] = ???
 }
 
 case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLocation with IsFile{
@@ -23,5 +23,5 @@ case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLoc
   def raw = "inputStream[" + inputStream + "]"
   override def unsafeToInputStream: InputStream = inputStream.apply()
   override def size:Long = ???
-  def metaLocation:Try[MetaRepr] = ???
+  def metaLocation:Try[NavigableInOutLocation/*MetaRepr*/] = ???
 }

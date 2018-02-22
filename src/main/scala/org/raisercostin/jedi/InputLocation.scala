@@ -9,6 +9,24 @@ import scala.language.reflectiveCalls
 import scala.util.Try
 
 import org.apache.commons.io.IOUtils
+import scala.util.Success
+
+
+/**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
+trait LocationState
+/**
+ * Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that
+ * are not available in offline mode.
+ */
+trait UnresolvedLocationState extends LocationState
+/**If a location has access to its content and metadata is said to be resolved.*/
+trait ResolvedLocationState extends LocationState with IsFileOrFolder {
+  //type MetaRepr <: InputLocation
+
+  /**The meta seen as another location.*/
+  def metaLocation: Try[NavigableInOutLocation/*MetaRepr*/]
+  def meta: Try[HierarchicalMultimap] = metaLocation.flatMap(_.existingOption.map(_.readContentAsText.map(x => HierarchicalMultimap(x))).getOrElse(Success(HierarchicalMultimap())))
+}
 
 trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation { self =>
   def unsafeToInputStream: InputStream

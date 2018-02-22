@@ -50,7 +50,7 @@ case class CopyOptions(copyMeta: Boolean, optionalMeta: Boolean, monitor: Operat
 
 //TODO add DeletableLocation?
 trait OutputLocation extends AbsoluteBaseLocation { self =>
-  override type MetaRepr <: OutputLocation with InputLocation
+  //override type MetaRepr <: OutputLocation with InputLocation
   def unsafeToOutputStream: OutputStream
   def unsafeToOutputStream2: OutputStream = {
     if (!canBeFile)
