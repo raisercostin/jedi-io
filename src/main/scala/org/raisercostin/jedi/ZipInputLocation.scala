@@ -5,14 +5,12 @@ import java.io.InputStream
 
 import scala.Iterable
 import scala.util.Try
-
-object ZipInputLocation{
-  def apply(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) = ZipInputLocationImpl(zip,entry)
+object ZipInputLocation {
+  def apply(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) = ZipInputLocationImpl(zip, entry)
 }
 //TODO fix name&path&unique identifier stuff
 trait ZipInputLocation extends NavigableFileInputLocation { self =>
   override type Repr = self.type
-  def zip: InputLocation
   def entry: Option[java.util.zip.ZipEntry]
   def raw = "ZipInputLocation[" + zip + "," + entry + "]"
 
@@ -24,32 +22,41 @@ trait ZipInputLocation extends NavigableFileInputLocation { self =>
       rootzip.getInputStream(entry)
   }
 
-  protected lazy val rootzip = new java.util.zip.ZipFile(Try { toFile }.getOrElse(Locations.temp.randomChild(name).copyFrom(zip).toFile))
+  protected def rootzip: java.util.zip.ZipFile
   //private lazy val rootzip = new java.util.zip.ZipInputStream(zip.unsafeToInputStream)
   import collection.JavaConverters._
   import java.util.zip._
   protected lazy val entries: Iterable[ZipEntry] = new Iterable[ZipEntry] {
     def iterator = rootzip.entries.asScala
   }
-  override def name = entry.map(_.getName).getOrElse(zip.name + "-unzipped")
+  override def name = entry.map(_.getName).getOrElse(zipName + "-unzipped")
   override def unzip: ZipInputLocation = usingInputStream { input =>
     ZipInputLocation(Locations.temp.randomChild(name).copyFrom(Locations.stream(input)), None)
   }
   override def child(child: String): Repr = (entry match {
     case None =>
-      ZipInputLocation(zip, Some(rootzip.getEntry(child)))
+      childFromEntry(rootzip.getEntry(child))
     case Some(entry) =>
-      ZipInputLocation(zip, Some(rootzip.getEntry(entry.getName() + "/" + child)))
+      childFromEntry(Option(rootzip.getEntry(entry.getName() + child)).getOrElse(throw new RuntimeException(s"Couldn't find a zip entry [${entry.getName() + "/" + child}] for "+this)))
   })
-  override def list: Iterable[Repr] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => toRepr(ZipInputLocation(zip, Some(entry))))
+
+  def childFromEntry(entry: ZipEntry) = ZipInputLocationChildImpl(zip, rootzip, Some(Option(entry).get))
+  override def list: Iterable[Repr] = Option(existing).map(_ => entries).getOrElse(Iterable()).map(entry => toRepr(childFromEntry(entry)))
   override def toFile = zip match {
-    case zip:FileAbsoluteBaseLocation => zip.toFile
-    case _ => println(zip.toString()); ???
+    case zip: FileAbsoluteBaseLocation => zip.toFile
+    case _                             => println(zip.toString()); ???
   }
-  override def build(path:String): Repr = ???
-  override def parent: Repr = ZipInputLocation(zip, Some(rootzip.getEntry(parentName)))
-  override def childName(child:String):String = ???
+  override def build(path: String): Repr = ???
+  override def parent: Repr = ZipInputLocationChildImpl(zip, rootzip, Some(rootzip.getEntry(parentName)))
+  override def childName(child: String): String = ???
+
+  def zip: InputLocation
+  def zipName: String = zip.name
 }
-case class ZipInputLocationImpl(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocation{
+case class ZipInputLocationChildImpl(zip: InputLocation, override val rootzip: java.util.zip.ZipFile, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocation {
   override def toString = s"ZipInputLocation($zip,$entry)"
+}
+case class ZipInputLocationImpl(zip: InputLocation, entry: Option[java.util.zip.ZipEntry]) extends ZipInputLocation {
+  override def toString = s"ZipInputLocation($zip,$entry)"
+  override protected lazy val rootzip = new java.util.zip.ZipFile(Try { toFile }.getOrElse(Locations.temp.randomChild(name).copyFrom(zip).toFile))
 }

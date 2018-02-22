@@ -12,7 +12,13 @@ import scala.util.Try
 import java.util.regex.Pattern.Loop
 
 import Locations._
+import org.junit.Test
 
+class LocationsTest2{
+  @Test def test1 = {
+      assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c/e/)]""", Locations.classpath("location.zip").unzip.child("c").child("e").raw)
+  }
+}
 @RunWith(classOf[JUnitRunner])
 class LocationsTest extends FunSuite {
 
@@ -46,7 +52,7 @@ ZipInputLocation(ClassPathInputLocation(location.zip),Some(c/subzip.zip))""".rep
     assertEquals("""a - file content""", Locations.classpath("location.zip").unzip.child("a.txt").readContent)
     assertEquals("""f content""", Locations.classpath("location.zip").unzip.child("c/e/f.txt").readContent)
     assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c/)]""", Locations.classpath("location.zip").unzip.child("c").raw)
-    assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c/e)]""", Locations.classpath("location.zip").unzip.child("c").child("e").raw)
+    assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c/e/)]""", Locations.classpath("location.zip").unzip.child("c").child("e").raw)
     assertEquals("""ZipInputLocation[ClassPathInputLocation(location.zip),Some(c/e/f.txt)]""", Locations.classpath("location.zip").unzip.child("c").child("e").child("f.txt").raw)
     assertEquals("""f content""", Locations.classpath("location.zip").unzip.child("c").child("e").child("f.txt").readContent)
   }
