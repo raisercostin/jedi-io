@@ -1,11 +1,19 @@
-package a
+package eclipseScalaBug
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
+import java.net.HttpURLConnection
 import java.nio.charset.CodingErrorAction
+import java.nio.file.FileStore
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 import java.time.LocalDate
 
+import scala.collection.JavaConverters.iterableAsScalaIterableConverter
+import scala.collection.JavaConverters.mapAsScalaMapConverter
+import scala.io.BufferedSource
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 import scala.util.Failure
@@ -13,23 +21,11 @@ import scala.util.Properties
 import scala.util.Success
 import scala.util.Try
 
+import org.apache.commons.io.{ FileUtils => CommonsFileUtils }
 import org.apache.commons.io.FilenameUtils
-import org.raisercostin.util.Escape
-
-import java.io.IOException
-import java.net.HttpURLConnection
+import org.raisercostin.jedi.impl.Escape
 
 import sun.net.www.protocol.file.FileURLConnection
-
-import java.nio.file.FileStore
-import java.nio.file.LinkOption
-import java.nio.file.attribute.BasicFileAttributes
-
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
-import scala.collection.JavaConverters.mapAsScalaMapConverter
-import scala.io.BufferedSource
-
-import org.apache.commons.io.{ FileUtils => CommonsFileUtils }
 
 object Locations {
   val logger = org.slf4j.LoggerFactory.getLogger("locations")
@@ -1370,6 +1366,10 @@ trait FileVersionedLocation extends VersionedLocation { self: FileAbsoluteBaseLo
 
 import org.apache.commons.vfs2.FileObject
 import org.apache.commons.vfs2.VFS
+import org.raisercostin.jedi.impl.Escape
+import org.raisercostin.jedi.impl.Escape
+import org.raisercostin.jedi.impl.Escape
+
 object VfsLocation {
   private val fsManager = VFS.getManager()
   def apply(url: String): VfsLocation = VfsLocation(fsManager.resolveFile(url))
