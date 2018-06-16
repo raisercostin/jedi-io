@@ -159,6 +159,7 @@ Projects that are using jedi-io:
        - recursive
        - using symlinks
      - move
+ - see java.lang.ProcessBuilder.Redirect with types like: READ, WRITE, PIPE, from, to
 
 ## Technology Selection
 

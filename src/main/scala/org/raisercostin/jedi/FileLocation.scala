@@ -26,12 +26,12 @@ trait FileInputLocation extends InputLocation with FileAbsoluteBaseLocation with
 
   def unsafeToInputStream: InputStream = new FileInputStream(absolute)
   override def bytes: Array[Byte] = org.apache.commons.io.FileUtils.readFileToByteArray(toFile)
-  def copyAsHardLink(dest: FileOutputLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
-    dest.copyFromAsHardLink(this, overwriteIfAlreadyExists);
+  def copyAsHardLink(dest: FileOutputLocation)(implicit option: CopyOptions = CopyOptions.default): this.type = {
+    dest.copyFromAsHardLink(this);
     this
   }
-  def copyAsSymLink(dest: FileLocation, overwriteIfAlreadyExists: Boolean = false): this.type = {
-    dest.copyFromAsSymLink(this, overwriteIfAlreadyExists);
+  def copyAsSymLink(dest: FileLocation)(implicit option: CopyOptions = CopyOptions.default): this.type = {
+    dest.copyFromAsSymLink(this);
     this
   }
   /**Optimize by using the current FileInputLocation.*/
@@ -115,13 +115,13 @@ trait FileLocation extends NavigableFileInOutLocation with FileInputLocation wit
   override def childName(child:String): String = childFile(child).getAbsolutePath
 
   override def build(path: String): self.type = FileLocation(path)
-  def copyFromAsSymLinkAndGet(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): self.type = copyFromAsSymLink(src, overwriteIfAlreadyExists).get
+  def copyFromAsSymLinkAndGet(src: FileInputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type = copyFromAsSymLink(src).get
   import org.raisercostin.jedi.impl.LogTry._
-  def copyFromAsSymLink(src: FileInputLocation, overwriteIfAlreadyExists: Boolean = false): Try[self.type] = {
+  def copyFromAsSymLink(src: FileInputLocation)(implicit option: CopyOptions = CopyOptions.default): Try[self.type] = {
     SlfLogger.logger.info("symLink {} -> {}", src, this, "")
     if (!parent.exists) {
       Failure(new RuntimeException("Destination parent folder " + parent + " doesn't exists."))
-    } else if (!overwriteIfAlreadyExists && exists) {
+    } else if (!option.overwriteIfAlreadyExists && exists) {
       Failure(new RuntimeException("Destination file " + this + " already exists."))
     } else {
       val first: Try[self.type] = Try {

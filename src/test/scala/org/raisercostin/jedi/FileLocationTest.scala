@@ -1,24 +1,12 @@
 package org.raisercostin.jedi
-import org.raisercostin.jedi.Locations._
-import org.scalatest._
-import org.junit.runner.RunWith
 import org.junit.Assert._
+import org.junit.Test
+import org.scalatest._
 
 import scala.util.Try
 
-import java.util.regex.Pattern.Loop
-
-import Locations._
-import org.scalatest.Matchers._
-import java.nio.file.Files
-import java.nio.file.NotLinkException
-import java.io.FileNotFoundException
-import org.scalatest.words.ContainWord
-import org.junit.Test
-
 //@RunWith(classOf[org.scalatest.junit.JUnitRunner])
 class FileLocationTest extends FunSuite with FileAbsoluteBaseLocationTest with NavigableInputLocationReusableTest{
-  import org.raisercostin.jedi.impl.LogTry._
 
   override def location: FileLocation = Locations.classpath("""a b.jpg""").asFile
 
@@ -39,7 +27,7 @@ class FileLocationTest extends FunSuite with FileAbsoluteBaseLocationTest with N
   }
   @Test def `hardlinks should be detected with same uniqueId` {
     val dest = Locations.temp.randomFolderChild("test").child(location.name)
-    location.copyAsHardLink(dest, true)
+    location.copyAsHardLink(dest)(CopyOptions.default.withOverwriteIfAlreadyExists)
     val uniqueIdSrc = location.canonicalOverSymLinks
     val uniqueIdDest = dest.canonicalOverSymLinks
     assertNotNull(uniqueIdSrc)
@@ -49,9 +37,9 @@ class FileLocationTest extends FunSuite with FileAbsoluteBaseLocationTest with N
   }
   @Test def `hardlinks on same drive` {
     val dest = Locations.temp.randomFolderChild("test").child(location.name)
-    location.copyAsHardLink(dest, true)
+    location.copyAsHardLink(dest)(CopyOptions.default.withOverwriteIfAlreadyExists)
     val dest2 = dest.parent.child(location.name).renamedIfExists
-    dest.copyAsHardLink(dest2, true)
+    dest.copyAsHardLink(dest2)(CopyOptions.default.withOverwriteIfAlreadyExists)
     val uniqueIdSrc = dest.canonicalOverSymLinks
     val uniqueIdDest = dest2.canonicalOverSymLinks
     assertNotNull(uniqueIdSrc)

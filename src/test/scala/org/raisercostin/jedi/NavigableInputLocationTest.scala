@@ -27,7 +27,7 @@ trait NavigableInputLocationReusableTest{
   @Test def testCopyFileToFolder {
     Locations.current("target").child("test14").backupExistingOne.mkdirIfNecessary.copyFrom(location).list.filter(_.name=="a b.jpg").toIndexedSeq(0).name shouldBe "a b.jpg"
   }
-  @Test def testCopyFolderToFolder {
+  @Ignore @Test def testCopyFolderToFolder {
     copyFolderToFolderTest(location)
   }
   def copyFolderToFolderTest(location:NavigableInputLocation) {

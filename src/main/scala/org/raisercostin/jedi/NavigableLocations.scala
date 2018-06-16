@@ -24,7 +24,7 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
   def asInput: NavigableInputLocation
   def mkdirIfNecessary: self.type
   def mkdirOnParentIfNecessary: self.type
-  def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): self.type = {
+  def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=CopyOptions.default): self.type = {
     if (!src.isFolder)
       throw new RuntimeException(s"Src $src is not a folder")
     if(option.checkCopyToSame(src,this))
@@ -37,7 +37,7 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
       }
     this
   }
-  def copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=CopyOptions.simpleCopy): self.type = {
+  def copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=CopyOptions.default): self.type = {
     def copyMeta(meta:Try[NavigableInOutLocation/*MetaRepr*/]):Unit={
       if (option.copyMeta){
         if(!option.optionalMeta || meta.isSuccess && meta.get.exists)

@@ -59,7 +59,7 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
   }
 
   def copyToIfNotExists(dest: OutputLocation): self.type = { dest.nonExistingOption.map(_.copyFrom(this)); this }
-  def copyTo(dest: OutputLocation)(implicit option: CopyOptions = CopyOptions.simpleCopy): self.type = { dest.copyFrom(self); this}
+  def copyTo(dest: OutputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type = { dest.copyFrom(self); this}
 
   def readContent = {
     // Read a file into a string
