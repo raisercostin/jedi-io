@@ -49,4 +49,6 @@ trait BaseLocation extends IsFileOrFolder {
     message(this)
     this
   }
+  /**Splits nameAndBefore by folder parts: `foo.folder/bar/bar.jpg` into `[foo.folder,bar,bar.jpg]` */
+  def nameAndBeforeParts: Array[String] = JediFileSystem.splitPartialPath(nameAndBefore)
 }
