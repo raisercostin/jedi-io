@@ -9,12 +9,11 @@ import scala.language.reflectiveCalls
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-
 import org.apache.commons.io.FilenameUtils
-
 import Locations.relative
 import org.raisercostin.jedi.impl.JediFileSystem
 import org.raisercostin.jedi.impl.TraversePath
+import rx.lang.scala.Observable
 
 object BaseNavigableLocation {
   val stateSep = "--state#"
@@ -142,6 +141,20 @@ trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation 
   //    }.getOrElse(Iterable[File]())
   //    all.map(buildNewFile)
   //  }
+  /**Return pairs of files that has the same relative names under src and dest. Each location can be tested for existence with `exists` or existingOption.*/
+  def compare[T2 <: NavigableLocation](dest: T2): Observable[Tuple2[self.type, T2]] = compare(this,dest)
+  /**Return pairs of files that has the same relative names under src and dest. Each location can be tested for existence with `exists` or existingOption.*/
+  def compare[T1 <: NavigableLocation,T2 <: NavigableLocation](src: T1, dest: T2): Observable[Tuple2[T1, T2]] = {
+    val a = src.descendants.map { x =>
+      //emit (some,some) and (some,none)
+      Tuple2(x, dest.child(x.extractPrefix(src).get))
+    } ++
+      //emit (none,some)
+      (dest.descendants.map { x =>
+        Tuple2(src.child(x.extractPrefix(dest).get), x)
+      }.filter(!_._1.exists))
+    Observable.from(a)
+  }
 }
 trait NavigableFileLocation extends FileAbsoluteBaseLocation with BaseNavigableLocation with NavigableLocation { self =>
   //TODO review these
