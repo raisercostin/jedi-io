@@ -8,20 +8,20 @@ import scala.language.reflectiveCalls
 import scala.util.Try
 
 
-case class StreamLocation(val inputStream: InputStream) extends InputLocation with IsFile{
-  def exists: Boolean = true
-  def nameAndBefore: String = inputStream.toString()
-  def raw = "inputStream[" + inputStream + "]"
-  override def unsafeToInputStream: InputStream = inputStream
-  override def size:Long = ???
-  def metaLocation:Try[NavigableInOutLocation/*MetaRepr*/] = ???
+data class StreamLocation(val inputStream: InputStream) : InputLocation , IsFile{
+  fun exists: Boolean = true
+  fun nameAndBefore: String = inputStream.toString()
+  fun raw ()= "inputStream<" + inputStream + ">"
+  override fun unsafeToInputStream: InputStream = inputStream
+  override fun size:Long = ???
+  fun metaLocation:Try<NavigableInOutLocation/*MetaRepr*/> = ???
 }
 
-case class StreamProviderLocation(inputStream: ()=>InputStream) extends InputLocation with IsFile{
-  def exists: Boolean = true
-  def nameAndBefore: String = inputStream.toString()
-  def raw = "inputStream[" + inputStream + "]"
-  override def unsafeToInputStream: InputStream = inputStream.apply()
-  override def size:Long = ???
-  def metaLocation:Try[NavigableInOutLocation/*MetaRepr*/] = ???
+data class StreamProviderLocation(inputStream: ()->InputStream) : InputLocation , IsFile{
+  fun exists: Boolean = true
+  fun nameAndBefore: String = inputStream.toString()
+  fun raw ()= "inputStream<" + inputStream + ">"
+  override fun unsafeToInputStream: InputStream = inputStream.apply()
+  override fun size:Long = ???
+  fun metaLocation:Try<NavigableInOutLocation/*MetaRepr*/> = ???
 }

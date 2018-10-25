@@ -7,10 +7,10 @@ import java.nio.file.Paths
 import java.nio.file.Path
 
 object ApacheFileUtils {
-  def forceDelete(path: Path) = try {
+  fun forceDelete(path: Path) = try {
     FileUtils.forceDelete(path.toFile)
   } catch {
-    case e: IOException =>
+    e: IOException ->
       val msg = "Unable to delete file: "
       if (e.getMessage.startsWith(msg)) {
         Files.deleteIfExists(Paths.get(e.getMessage.stripPrefix(msg)))

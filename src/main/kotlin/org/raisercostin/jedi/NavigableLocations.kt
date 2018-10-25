@@ -5,30 +5,30 @@ import scala.util.Success
 /**
  * Should take into consideration several composable/ortogonal aspects:
  * - end of line: win,linux,osx - internal standard: \n
- * - file separator: win,linux,osx - internal standard: / (like linux, fewer colisions with string escaping in java)
- * - file name case sensitivity - internal standard: case sensible (in windows there will not be any problem)
+ * - file separator: win,linux,osx - internal standard: / (like linux, fewer colisions , string escaping in java)
+ * - file name sensitivity - internal standard: sensible (in windows there will not be any problem)
  * - win 8.3 file names vs. full file names - internal standard: utf-8
  *
  * In principle should be agnostic to these aspects and only at runtime will depend on the local environment.
  */
-trait InOutLocation extends InputLocation with OutputLocation
-trait NavigableInputLocation extends InputLocation with NavigableLocation { self =>
+interface InOutLocation : InputLocation , OutputLocation
+interface NavigableInputLocation : InputLocation , NavigableLocation { self ->
   //override type MetaRepr = self.type
-  def copyToFolder(to: NavigableOutputLocation): self.type = {
+  fun copyToFolder(to: NavigableOutputLocation): self.type {
     to.copyFromFolder(self)
   }
-  def metaLocation: Try[NavigableInOutLocation/*MetaRepr*/] = Try { withName(_ + ".meta").asInstanceOf[NavigableInOutLocation/*MetaRepr*/] }
+  fun metaLocation: Try<NavigableInOutLocation/*MetaRepr*/> = Try { ,Name(_ + ".meta") as NavigableInOutLocation/*MetaRepr*/> }
 }
-trait NavigableOutputLocation extends OutputLocation with NavigableLocation { self =>
+interface NavigableOutputLocation : OutputLocation , NavigableLocation { self ->
   //type InputPairType = NavigableInputLocation
-  def asInput: NavigableInputLocation
-  def mkdirIfNecessary: self.type
-  def mkdirOnParentIfNecessary: self.type
-  def copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=CopyOptions.default): self.type = {
+  fun asInput: NavigableInputLocation
+  fun mkdirIfNecessary: self.type
+  fun mkdirOnParentIfNecessary: self.type
+  fun copyFromFolder(src: NavigableInputLocation)(implicit option:CopyOptions=CopyOptions.default): self.type {
     if (!src.isFolder)
-      throw new RuntimeException(s"Src $src is not a folder")
+      throw RuntimeException(s"Src $src is not a folder")
     if(option.checkCopyToSame(src,this))
-      src.descendants.map { x =>
+      src.descendants.map { x ->
         val rel = x.extractPrefix(src).get
         if(rel.nonEmpty){
           val y = child(rel).mkdirOnParentIfNecessary.copyFrom(x)
@@ -37,8 +37,8 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
       }
     this
   }
-  def copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=CopyOptions.default): self.type = {
-    def copyMeta(meta:Try[NavigableInOutLocation/*MetaRepr*/]):Unit={
+  fun copyFromFileToFileOrFolder(from: InputLocation)(implicit option:CopyOptions=CopyOptions.default): self.type {
+    fun copyMeta(meta:Try<NavigableInOutLocation/*MetaRepr*/>):Unit={
       if (option.copyMeta){
         if(!option.optionalMeta || meta.isSuccess && meta.get.exists)
           meta.get.copyFromInputLocation(from.metaLocation.get)
@@ -57,8 +57,8 @@ trait NavigableOutputLocation extends OutputLocation with NavigableLocation { se
     }
   }
 }
-trait NavigableInOutLocation extends InOutLocation with NavigableInputLocation with NavigableOutputLocation {
+interface NavigableInOutLocation : InOutLocation , NavigableInputLocation , NavigableOutputLocation {
 }
 
-trait NavigableFileInputLocation extends InputLocation with NavigableFileLocation with NavigableInputLocation
-trait NavigableFileInOutLocation extends InOutLocation with NavigableFileInputLocation with NavigableFileOutputLocation with NavigableInOutLocation
+interface NavigableFileInputLocation : InputLocation , NavigableFileLocation , NavigableInputLocation
+interface NavigableFileInOutLocation : InOutLocation , NavigableFileInputLocation , NavigableFileOutputLocation , NavigableInOutLocation

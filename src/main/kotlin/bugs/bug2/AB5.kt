@@ -1,5 +1,5 @@
 package bugs.bug2
 
 //works
-trait AB4 {
+interface AB4 {
 }

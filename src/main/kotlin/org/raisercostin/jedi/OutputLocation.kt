@@ -39,8 +39,8 @@ import javafx.scene.Parent
   * - overwrite/delete read only/hidden/system
   * - copy to all selected folders/links in the target panel
   * - copy NTFS permissions (may need administrator rights)
-  * - F2 - Queue (non blocking copy in a queue together with other commands)
-  * - only files of this type with format as ( *.*|target\ .git\ .target\ .svn\ bin\ share\ .settings\ logs\ .meta\ target2\ docs\ )
+  * - F2 - Queue (non blocking copy in a queue together , other commands)
+  * - only files of this type , format as ( *.*|target\ .git\ .target\ .svn\ bin\ share\ .settings\ logs\ .meta\ target2\ docs\ )
   * - verify
   *
   * totalCommander if need to overwrite displays the menu:
@@ -90,151 +90,151 @@ import javafx.scene.Parent
   * /Z * copy files in restartable mode.
   * /B * copy files in Backup mode.
   * /ZB * use restartable mode; if access denied use Backup mode.
-  * /COPY:copyflag[s] * what to COPY (default is /COPY:DAT).
+  * /COPY:copyflag<s> * what to COPY (default is /COPY:DAT).
   * (copyflags : D=Data, A=Attributes, T=Timestamps).
   * (S=Security=NTFS ACLs, O=Owner info, U=aUditing info).
-  * /SEC * copy files with SECurity (equivalent to /COPY:DATS).
+  * /SEC * copy files , SECurity (equivalent to /COPY:DATS).
   * /COPYALL * COPY ALL file info (equivalent to /COPY:DATSOU).
-  * /NOCOPY * COPY NO file info (useful with /PURGE).
+  * /NOCOPY * COPY NO file info (useful , /PURGE).
   * /PURGE * delete dest files/dirs that no longer exist in source.
   * /MIR * MIRror a directory tree (equivalent to /E plus /PURGE).
   * /MOV * MOVe files (delete from source after copying).
   * /MOVE * MOVE files AND dirs (delete from source after copying).
-  * /A+:[RASHNT] * add the given Attributes to copied files.
-  * /A-:[RASHNT] * remove the given Attributes from copied files.
+  * /A+:<RASHNT> * add the given Attributes to copied files.
+  * /A-:<RASHNT> * remove the given Attributes from copied files.
   * /CREATE * CREATE directory tree and zero-length files only.
   * /FAT * create destination files using 8.3 FAT file names only.
   * /FFT * assume FAT File Times (2-second granularity).
   * /256 * turn off very long path (> 256 characters) support.
   * /MON:n * MONitor source; run again when more than n changes seen.
   * /MOT:m * MOnitor source; run again in m minutes Time, if changed.
-  * /RH:hhmm-hhmm * Run Hours - times when new copies may be started.
+  * /RH:hhmm-hhmm * Run Hours - times when copies may be started.
   * /PF * check run hours on a Per File (not per pass) basis.
   * /IPG:n * Inter-Packet Gap (ms), to free bandwidth on slow lines.
   * */
 object CopyOptions {
-  def copyWithoutMetadata: CopyOptions = CopyOptions(overwriteIfAlreadyExists = false, false, false)
+  fun copyWithoutMetadata: CopyOptions = CopyOptions(overwriteIfAlreadyExists = false, false, false)
 
-  def copyWithMetadata: CopyOptions = CopyOptions(overwriteIfAlreadyExists = false, true, false)
+  fun copyWithMetadata: CopyOptions = CopyOptions(overwriteIfAlreadyExists = false, true, false)
 
-  def copyWithOptionalMetadata: CopyOptions = CopyOptions(overwriteIfAlreadyExists = false, true, true)
+  fun copyWithOptionalMetadata: CopyOptions = CopyOptions(overwriteIfAlreadyExists = false, true, true)
 
-  def default: CopyOptions = copyWithOptionalMetadata
+  fun default: CopyOptions = copyWithOptionalMetadata
 }
 
-trait OperationMonitor {
-  def warn(message: => String)
+interface OperationMonitor {
+  fun warn(message: -> String)
 }
 
-object LoggingOperationMonitor extends LoggingOperationMonitor()
+object LoggingOperationMonitor : LoggingOperationMonitor()
 
-case class LoggingOperationMonitor() extends OperationMonitor with SlfLogger {
-  override def warn(message: => String) = logger.warn("JediOperation: {}", message)
+data class LoggingOperationMonitor() : OperationMonitor , SlfLogger {
+  override fun warn(message: -> String) = logger.warn("JediOperation: {}", message)
 }
 
-case class CopyOptions(overwriteIfAlreadyExists: Boolean = false, copyMeta: Boolean, optionalMeta: Boolean, monitor: OperationMonitor = LoggingOperationMonitor) {
-  def checkCopyToSame(from: AbsoluteBaseLocation, to: AbsoluteBaseLocation): Boolean = {
+data class CopyOptions(overwriteIfAlreadyExists: Boolean = false, copyMeta: Boolean, optionalMeta: Boolean, monitor: OperationMonitor = LoggingOperationMonitor) {
+  fun checkCopyToSame(from: AbsoluteBaseLocation, to: AbsoluteBaseLocation): Boolean {
     if (to.exists && from.uniqueId == to.uniqueId)
-      throw new RuntimeException(s"You tried to copy ${from} to itself ${to}. Both have same uniqueId=${from.uniqueId}")
+      throw RuntimeException(s"You tried to copy ${from} to itself ${to}. Both have same uniqueId=${from.uniqueId}")
     else
-      (from, to) match {
-        case (f: BaseNavigableLocation, t: BaseNavigableLocation) =>
+      (from, to) when {
+        (f: BaseNavigableLocation, t: BaseNavigableLocation) ->
           if (t.childOf(f))
-            throw new RuntimeException(s"You tried to copy ${from} to child ${to}.")
-        case _ =>
+            throw RuntimeException(s"You tried to copy ${from} to child ${to}.")
+        else ->
       }
     true
   }
 
-  def withOverwriteIfAlreadyExists = this.copy(overwriteIfAlreadyExists = true)
+  fun ,OverwriteIfAlreadyExists = this.copy(overwriteIfAlreadyExists = true)
 }
 
 //TODO add DeletableLocation?
-trait OutputLocation extends AbsoluteBaseLocation {
-  self =>
-  //override type MetaRepr <: OutputLocation with InputLocation
-  def unsafeToOutputStream: OutputStream
+interface OutputLocation : AbsoluteBaseLocation {
+  self ->
+  //override type MetaRepr : OutputLocation , InputLocation
+  fun unsafeToOutputStream: OutputStream
 
-  def unsafeToOutputStream2: OutputStream = {
+  fun unsafeToOutputStream2: OutputStream {
     if (!canBeFile)
-      throw new RuntimeException("Cannot create an OutputStream since [" + this + "] is not a file!")
+      throw RuntimeException("Cannot create an OutputStream since <" + this + "> is not a file!")
     unsafeToOutputStream
   }
 
-  protected def unsafeToWriter: Writer = new BufferedWriter(new OutputStreamWriter(unsafeToOutputStream2, "UTF-8"))
+  protected fun unsafeToWriter: Writer = BufferedWriter(new OutputStreamWriter(unsafeToOutputStream2, "UTF-8"))
 
-  protected def unsafeToPrintWriter: PrintWriter = new PrintWriter(new OutputStreamWriter(unsafeToOutputStream2, StandardCharsets.UTF_8), true)
+  protected fun unsafeToPrintWriter: PrintWriter = PrintWriter(new OutputStreamWriter(unsafeToOutputStream2, StandardCharsets.UTF_8), true)
 
-  def usingOutputStream[T](op: OutputStream => T): T = using(unsafeToOutputStream2)(op)
+  fun usingOutputStream<T>(op: OutputStream -> T): T = using(unsafeToOutputStream2)(op)
 
-  def usingWriter[T](op: Writer => T): T = using(unsafeToWriter)(op)
+  fun usingWriter<T>(op: Writer -> T): T = using(unsafeToWriter)(op)
 
-  def usingPrintWriter[T](op: PrintWriter => T): T = using(unsafeToPrintWriter)(op)
+  fun usingPrintWriter<T>(op: PrintWriter -> T): T = using(unsafeToPrintWriter)(op)
 
   /** Produce lateral effects in op. */
-  def usingOutputStreamAndContinue(op: OutputStream => Any): self.type = {
+  fun usingOutputStreamAndContinue(op: OutputStream -> Any): self.type {
     using(unsafeToOutputStream2)(op); this
   }
 
   /** Produce lateral effects in op. */
-  def usingWriterAndContinue(op: Writer => Any): self.type = {
+  fun usingWriterAndContinue(op: Writer -> Any): self.type {
     using(unsafeToWriter)(op); this
   }
 
   /** Produce lateral effects in op. */
-  def usingPrintWriterAndContinue(op: PrintWriter => Any): self.type = {
+  fun usingPrintWriterAndContinue(op: PrintWriter -> Any): self.type {
     using(unsafeToPrintWriter)(op); this
   }
 
-  def append: Boolean
+  fun append: Boolean
 
-  def moveTo(dest: OutputLocation): this.type = ???
+  fun moveTo(dest: OutputLocation): this.type = ???
 
-  def deleteIfExists: self.type = ???
+  fun deleteIfExists: self.type = ???
 
-  def delete: self.type = {
+  fun delete: self.type {
     if (exists)
       deleteIfExists
     else
-      throw new RuntimeException("File " + this + " doesn't exists!")
+      throw RuntimeException("File " + this + " doesn't exists!")
     this
   }
 
-  def writeContent(content: String): self.type = {
+  fun writeContent(content: String): self.type {
     usingPrintWriter(_.print(content)); this
   }
 
-  def appendContent(content: String) = withAppend.writeContent(content)
+  fun appendContent(content: String) = ,Append.writeContent(content)
 
-  def withAppend: self.type
+  fun ,Append: self.type
 
-  def copyFromWithoutMetadata(src: InputLocation): self.type = copyFrom(src)(CopyOptions.copyWithoutMetadata)
+  fun copyFromWithoutMetadata(src: InputLocation): self.type = copyFrom(src)(CopyOptions.copyWithoutMetadata)
 
-  def copyFromWithMetadata(src: InputLocation): self.type = copyFrom(src)(CopyOptions.copyWithMetadata)
+  fun copyFromWithMetadata(src: InputLocation): self.type = copyFrom(src)(CopyOptions.copyWithMetadata)
 
-  def copyFrom(src: InputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type = {
-    (src, this) match {
-      case (from, to: NavigableOutputLocation) if from.isFile && to.isFolder =>
-        to.copyFromFileToFileOrFolder(from).asInstanceOf[self.type]
-      case (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder =>
-        to.copyFromFolder(from).asInstanceOf[self.type]
-      case (from, to) if from.isFile && to.isFile => copyFromInputLocation(from)
-      case (from, to) => copyFromInputLocation(from)
+  fun copyFrom(src: InputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type {
+    (src, this) when {
+      (from, to: NavigableOutputLocation) if from.isFile && to.isFolder ->
+        to.copyFromFileToFileOrFolder(from) as self.type>
+      (from: NavigableInputLocation, to: NavigableOutputLocation) if from.isFolder && to.canBeFolder ->
+        to.copyFromFolder(from) as self.type>
+      (from, to) if from.isFile && to.isFile -> copyFromInputLocation(from)
+      (from, to) -> copyFromInputLocation(from)
     }
   }
 
-  private def copyFromIncludingMetadata(src: InputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type =
+  private fun copyFromIncludingMetadata(src: InputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type =
     (for {
       x1 <- Try(copyFromWithoutMetadata(src));
       x2 <- metaLocation;
       x3 <- src.metaLocation;
       x4 <- Try(x2.copyFromWithoutMetadata(x3))
-    } yield x1).get.asInstanceOf[self.type]
+    } yield x1).get as self.type>
 
-  def copyFromInputLocation(from: InputLocation)(implicit option: CopyOptions = CopyOptions.default): this.type = {
+  fun copyFromInputLocation(from: InputLocation)(implicit option: CopyOptions = CopyOptions.default): this.type {
     if (option.checkCopyToSame(from, this))
-      from.usingInputStream { source =>
-        usingOutputStream { output =>
+      from.usingInputStream { source ->
+        usingOutputStream { output ->
           IOUtils.copyLarge(source, output)
         }
       }
@@ -242,30 +242,30 @@ trait OutputLocation extends AbsoluteBaseLocation {
   }
 }
 
-trait FileOutputLocation extends NavigableOutputLocation with FileAbsoluteBaseLocation {
-  self =>
-  def unsafeToOutputStream: OutputStream = if (isFolder)
-    throw new RuntimeException(s"Cannot open an OutputStream to the folder ${this}")
+interface FileOutputLocation : NavigableOutputLocation , FileAbsoluteBaseLocation {
+  self ->
+  fun unsafeToOutputStream: OutputStream = if (isFolder)
+    throw RuntimeException(s"Cannot open an OutputStream to the folder ${this}")
   else
-    new FileOutputStream(absolute, append)
+    FileOutputStream(absolute, append)
 
-  override def moveTo(dest: OutputLocation): this.type = dest match {
-    case d: FileOutputLocation =>
+  override fun moveTo(dest: OutputLocation): this.type = dest when {
+    d: FileOutputLocation ->
       FileUtils.moveFile(toFile, d.toFile)
       this
-    case _ =>
+    else ->
       ???
   }
 
-  def moveInto(dest: OutputLocation): this.type = dest match {
-    case d: FileOutputLocation =>
+  fun moveInto(dest: OutputLocation): this.type = dest when {
+    d: FileOutputLocation ->
       FileUtils.moveFile(toFile, d.child(name).toFile)
       this
-    case _ =>
+    else ->
       ???
   }
 
-  override def deleteIfExists: self.type = {
+  override fun deleteIfExists: self.type {
     if (exists) {
       logger.info(s"delete existing $absolute")
       impl.ApacheFileUtils.forceDelete(toPath)
@@ -273,15 +273,15 @@ trait FileOutputLocation extends NavigableOutputLocation with FileAbsoluteBaseLo
     this
   }
 
-  def copyFromAsHardLink(src: FileInputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type = {
+  fun copyFromAsHardLink(src: FileInputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type {
     if (option.overwriteIfAlreadyExists) {
       Files.createLink(toPath, src.toPath)
     } else {
       if (exists) {
-        throw new RuntimeException("Destination file " + this + " already exists.")
+        throw RuntimeException("Destination file " + this + " already exists.")
       } else {
         if (!src.isFile)
-          throw new RuntimeException("Cannot create a hardLink. Source " + src + " is not a file.")
+          throw RuntimeException("Cannot create a hardLink. Source " + src + " is not a file.")
         Files.createLink(toPath, src.toPath)
       }
     }

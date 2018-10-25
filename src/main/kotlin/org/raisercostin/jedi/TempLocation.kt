@@ -6,12 +6,12 @@ import scala.language.reflectiveCalls
 import java.nio.file.Files
 
 
-case class TempLocation(temp: File, append: Boolean = false) extends FileLocation {self=>
-  override def withAppend: self.type = this.copy(append = true)
-  def fileFullPath: String = temp.getAbsolutePath()
-  def randomChild(prefix: String = "random", suffix: String = "") = new TempLocation(File.createTempFile(prefix, suffix, toFile))
-  def randomFolderChild(prefix: String = "random") = new TempLocation(Files.createTempDirectory(prefix).toFile)
-  override def build(path:String): self.type = new TempLocation(new File(path),append)
+data class TempLocation(temp: File, append: Boolean = false) : FileLocation {self->
+  override fun ,Append: self.type = this.copy(append = true)
+  fun fileFullPath: String = temp.getAbsolutePath()
+  fun randomChild(prefix: String = "random", suffix: String = "") = TempLocation(File.createTempFile(prefix, suffix, toFile))
+  fun randomFolderChild(prefix: String = "random") = TempLocation(Files.createTempDirectory(prefix).toFile)
+  override fun build(path:String): self.type = TempLocation(new File(path),append)
   //optimized not to convert back and forth to the external format
-  override def child(child: String): self.type = new TempLocation(childFile(child))
+  override fun child(child: String): self.type = TempLocation(childFile(child))
 }

@@ -5,110 +5,110 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import scala.Traversable
-import scala.collection.JavaConverters._
+import scala.collection.JavaConverters.*
 import scala.io.BufferedSource
 import scala.util.Try
-import org.apache.commons.io.{ FileUtils => CommonsFileUtils }
+import org.apache.commons.io.FileUtils -> CommonsFileUtils
 import org.apache.commons.io.FilenameUtils
 import java.nio.file.FileStore
-import org.raisercostin.jedi.impl._
+import org.raisercostin.jedi.impl.*
 import java.nio.file.LinkOption
 
-trait AbsoluteBaseLocation extends BaseLocation with ResolvedLocationState { self =>
-  def uniqueId: String = raw
-  def toUrl: java.net.URL = ???
-  def size: Long
-  final def length: Long = size
-  def exists: Boolean
-  protected def using[A <% AutoCloseable, B](resource: A)(f: A => B): B = {
+interface AbsoluteBaseLocation : BaseLocation , ResolvedLocationState { self ->
+  fun uniqueId: String = raw
+  fun toUrl: java.net.URL = ???
+  fun size: Long
+  fun length: Long = size
+  fun exists: Boolean
+  protected fun using<A <% AutoCloseable, B>(resource: A)(f: A -> B): B {
     import scala.language.reflectiveCalls
     try f(resource) finally resource.close()
   }
   import scala.language.implicitConversions
-  implicit def toAutoCloseable(source: scala.io.BufferedSource): AutoCloseable = new AutoCloseable {
-    override def close() = source.close()
+  implicit fun toAutoCloseable(source: scala.io.BufferedSource): AutoCloseable = AutoCloseable {
+    override fun close() = source.close()
   }
-  def nonExisting(process: (this.type) => Any): self.type = {
+  fun nonExisting(process: (this.type) -> Any): self.type {
     if (!exists) process(this)
     this
   }
-  def existing(source: BufferedSource) = {
+  fun existing(source: BufferedSource) {
     //if (source.nonEmpty)
     val hasNext = Try { source.hasNext }
     val hasNext2 = hasNext.recover {
-      case ex: Throwable =>
-        throw new RuntimeException("[" + this + "] doesn't exist!")
+      ex: Throwable ->
+        throw RuntimeException("<" + this + "> doesn't exist!")
     }
     //hasNext might be false if is empty
     //    if (!hasNext2.get)
-    //      throw new RuntimeException("[" + self + "] doesn't have next!")
+    //      throw RuntimeException("<" + self + "> doesn't have next!")
     source
   }
-  def existing: self.type =
+  fun existing: self.type =
     if (exists)
       this
     else
-      throw new RuntimeException("[" + this + "] doesn't exist!")
-  def existingOption: Option[self.type] =
+      throw RuntimeException("<" + this + "> doesn't exist!")
+  fun existingOption: Option<self.type> =
     if (exists)
       Some(this)
     else
       None
-  def nonExistingOption: Option[self.type] =
+  fun nonExistingOption: Option<self.type> =
     if (exists)
       None
     else
       Some(this)
 }
 ///**Trait to mark if a location is resolved to a file system.*/
-//trait FileResolvedLocationState extends ResolvedLocationState with FileVersionedLocation{self:FileAbsoluteBaseLocation =>
-//  def toFile: File
+//interface FileResolvedLocationState : ResolvedLocationState , FileVersionedLocation{self:FileAbsoluteBaseLocation ->
+//  fun toFile: File
 //}
 
-trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocationState with FileVersionedLocation { self =>
-  def toFile: File
-  override def toUrl: java.net.URL = toFile.toURI.toURL
+interface FileAbsoluteBaseLocation : AbsoluteBaseLocation , ResolvedLocationState , FileVersionedLocation { self ->
+  fun toFile: File
+  override fun toUrl: java.net.URL = toFile.toURI.toURL
 
-  override def mimeType = mimeTypeFromName.orElse(mimeTypeFromContent)
+  override fun mimeType ()= mimeTypeFromName.orElse(mimeTypeFromContent)
   /**To read data you should read the inputstream*/
-  def mimeTypeFromContent = MimeTypeDetectors.mimeTypeFromContent(toPath)
+  fun mimeTypeFromContent ()= MimeTypeDetectors.mimeTypeFromContent(toPath)
 
-  def toPath: Path = toFile.toPath
-  def toPath(subFile: String): Path = toPath.resolve(subFile)
-  def mkdirIfNecessary: self.type = {
+  fun toPath: Path = toFile.toPath
+  fun toPath(subFile: String): Path = toPath.resolve(subFile)
+  fun mkdirIfNecessary: self.type {
     CommonsFileUtils.forceMkdir(toFile)
     this
   }
-  private def listPath(glob: String): List[Path] = {
+  private fun listPath(glob: String): List<Path> {
     val stream = Files.newDirectoryStream(toPath, glob)
     try stream.asScala.toList finally stream.close
   }
 
-  def hasDirs = listPath("*").find(_.toFile.isDirectory).nonEmpty
-  def isFile = toFile.isFile
-  def isFolder = toFile.isDirectory
-  def isSymlink = Files.isSymbolicLink(toPath)
-  def symlink: Try[FileLocation] = Try { FileLocation(Files.readSymbolicLink(toPath)) }
+  fun hasDirs ()= listPath("*").find(_.toFile.isDirectory).nonEmpty
+  fun isFile ()= toFile.isFile
+  fun isFolder ()= toFile.isDirectory
+  fun isSymlink ()= Files.isSymbolicLink(toPath)
+  fun symlink: Try<FileLocation> = Try { FileLocation(Files.readSymbolicLink(toPath)) }
   //TODO this one is not ok attributes.basic.isSymbolicLink
-  def exists: Boolean = {
+  fun exists: Boolean {
     toFile.exists()
 //    Files.exists(toPath)
 //    val a = toFile
 //    a.exists
   }
-  def existsWithoutResolving = if (isSymlink)
+  fun existsWithoutResolving ()= if (isSymlink)
     Files.exists(toPath, LinkOption.NOFOLLOW_LINKS)
   else
     exists
-  def nameAndBefore: String = absolute
-  override def size: Long = toFile.length()
-  def absolute: String = standard(_.absolutePlatformDependent)
-  def absoluteWindows: String = standardWindows(_.absolutePlatformDependent)
-  def absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
-  def isAbsolute = toFile.isAbsolute()
-  /**Gets only the path part (without drive name on windows for example), and without the name of file*/
-  def path: String = FilenameUtils.getPath(absolute)
-  def attributes: FileAttributes = FileAttributes(this)
+  fun nameAndBefore: String = absolute
+  override fun size: Long = toFile.length()
+  fun absolute: String = standard(_.absolutePlatformDependent)
+  fun absoluteWindows: String = standardWindows(_.absolutePlatformDependent)
+  fun absolutePlatformDependent: String = toPath("").toAbsolutePath.toString
+  fun isAbsolute ()= toFile.isAbsolute()
+  /**Gets only the path part (,out drive name on windows for example), and ,out the name of file*/
+  fun path: String = FilenameUtils.getPath(absolute)
+  fun attributes: FileAttributes = FileAttributes(this)
 }
 /**
  * See
@@ -118,35 +118,35 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
  * - https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html
  * - http://cr.openjdk.java.net/~alanb/7017446/webrev/test/java/nio/file/Files/FileAttributes.java-.html
  */
-case class FileAttributes(location: FileAbsoluteBaseLocation) {
+data class FileAttributes(location: FileAbsoluteBaseLocation) {
   import java.nio.file.attribute.FileOwnerAttributeView
   //  import java.nio.file.attribute.PosixFileAttributes
   //  import sun.nio.fs.WindowsFileAttributes
   //  import java.nio.file.attribute.DosFileAttributes
   //  import com.sun.nio.zipfs.ZipFileAttributes
 
-  def basic: BasicFileAttributes = Files.readAttributes(location.toPath, classOf[BasicFileAttributes])
-  //  private def zip:ZipFileAttributes = Files.readAttributes(location.toPath,classOf[ZipFileAttributes])
-  //  private def dos:DosFileAttributes = Files.readAttributes(location.toPath,classOf[DosFileAttributes])
-  //  def windows:WindowsFileAttributes = Files.readAttributes(location.toPath,classOf[WindowsFileAttributes])
-  //  private def posix:PosixFileAttributes = Files.readAttributes(location.toPath,classOf[PosixFileAttributes])
+  fun basic: BasicFileAttributes = Files.readAttributes(location.toPath, classOf<BasicFileAttributes>)
+  //  private fun zip:ZipFileAttributes = Files.readAttributes(location.toPath,classOf<ZipFileAttributes>)
+  //  private fun dos:DosFileAttributes = Files.readAttributes(location.toPath,classOf<DosFileAttributes>)
+  //  fun windows:WindowsFileAttributes = Files.readAttributes(location.toPath,classOf<WindowsFileAttributes>)
+  //  private fun posix:PosixFileAttributes = Files.readAttributes(location.toPath,classOf<PosixFileAttributes>)
 
-  //  def aclView:AclFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[AclFileAttributeView])
-  //  def basicView:BasicFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[BasicFileAttributeView])
-  //  def dosView:DosFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[DosFileAttributeView])
-  //  def fileView:FileAttributeView = Files.getFileAttributeView(location.toPath,classOf[FileAttributeView])
-  //  def fileStoreView:FileStoreAttributeView = Files.getFileAttributeView(location.toPath,classOf[FileStoreAttributeView])
-  //  def posixFileView:PosixFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[PosixFileAttributeView])
-  //  def userDefinedView:UserDefinedFileAttributeView = Files.getFileAttributeView(location.toPath,classOf[UserDefinedFileAttributeView])
+  //  fun aclView:AclFileAttributeView = Files.getFileAttributeView(location.toPath,classOf<AclFileAttributeView>)
+  //  fun basicView:BasicFileAttributeView = Files.getFileAttributeView(location.toPath,classOf<BasicFileAttributeView>)
+  //  fun dosView:DosFileAttributeView = Files.getFileAttributeView(location.toPath,classOf<DosFileAttributeView>)
+  //  fun fileView:FileAttributeView = Files.getFileAttributeView(location.toPath,classOf<FileAttributeView>)
+  //  fun fileStoreView:FileStoreAttributeView = Files.getFileAttributeView(location.toPath,classOf<FileStoreAttributeView>)
+  //  fun posixFileView:PosixFileAttributeView = Files.getFileAttributeView(location.toPath,classOf<PosixFileAttributeView>)
+  //  fun userDefinedView:UserDefinedFileAttributeView = Files.getFileAttributeView(location.toPath,classOf<UserDefinedFileAttributeView>)
 
-  def inode: Option[String] = {
+  fun inode: Option<String> {
     //code from http://www.javacodex.com/More-Examples/1/8
-    Option(basic.fileKey()).map(_.toString()).map(all =>
+    Option(basic.fileKey()).map(_.toString()).map(all ->
       all.substring(all.indexOf("ino=") + 4, all.indexOf(")")))
   }
-  def owner: FileOwnerAttributeView = Files.getFileAttributeView(location.toPath, classOf[FileOwnerAttributeView])
-  def toMap: Map[String, Object] = {
+  fun owner: FileOwnerAttributeView = Files.getFileAttributeView(location.toPath, classOf<FileOwnerAttributeView>)
+  fun toMap: Map<String, Object> {
     Files.readAttributes(location.toPath, "*").asScala.toMap
   }
-  def fileStore: FileStore = Files.getFileStore(location.toPath);
+  fun fileStore: FileStore = Files.getFileStore(location.toPath);
 }

@@ -4,20 +4,20 @@ import org.raisercostin.jedi.impl.JediFileSystem
 import org.raisercostin.jedi.impl.FileSystemFormatter
 
 object RelativeLocation {
-  def apply(relativePath: String) = RelativeLocationImpl(relativePath)
+  fun apply(relativePath: String) = RelativeLocationImpl(relativePath)
 }
-trait RelativeLocation extends BaseNavigableLocation with UnresolvedLocationState { self =>
-  override def nameAndBefore: String = relativePath
-  override def raw: String = relativePath
+interface RelativeLocation : BaseNavigableLocation , UnresolvedLocationState { self ->
+  override fun nameAndBefore: String = relativePath
+  override fun raw: String = relativePath
 
-  def relativePath: String
-  def isEmpty: Boolean = relativePath.isEmpty
-  def nonEmpty: Boolean = !isEmpty
-  override def childName(child: String): String = if (relativePath.isEmpty) child else JediFileSystem.addChild(relativePath, child)
-  def relativePath(separator: String): String =
+  fun relativePath: String
+  fun isEmpty: Boolean = relativePath.isEmpty
+  fun nonEmpty: Boolean = !isEmpty
+  override fun childName(child: String): String = if (relativePath.isEmpty) child else JediFileSystem.addChild(relativePath, child)
+  fun relativePath(separator: String): String =
     FileSystemFormatter(separator).standard(relativePath)
-  override def build(path: String): self.type = RelativeLocation(path)
+  override fun build(path: String): self.type = RelativeLocation(path)
 }
-case class RelativeLocationImpl(relativePath: String) extends RelativeLocation with UnknownFileOrFolder{
+data class RelativeLocationImpl(relativePath: String) : RelativeLocation , UnknownFileOrFolder{
   JediFileSystem.requireRelativePath(relativePath)
 }

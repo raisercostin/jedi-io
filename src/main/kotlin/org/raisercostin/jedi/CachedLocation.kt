@@ -4,17 +4,17 @@ import java.io.InputStream
 import java.time.Clock
 import java.time.LocalDate
 
-abstract case class CacheEntry(cache: NavigableFileInOutLocation) {
-  def cacheIt: Unit
+abstract data class CacheEntry(cache: NavigableFileInOutLocation) {
+  fun cacheIt: Unit
 }
-trait CacheConfig {
-  def cacheFor(src: InputLocation): CacheEntry
+interface CacheConfig {
+  fun cacheFor(src: InputLocation): CacheEntry
 }
-object DefaultCacheConfig extends TimeSensitiveEtagCachedEntry(Locations.temp.child("default-cache"))
+object DefaultCacheConfig : TimeSensitiveEtagCachedEntry(Locations.temp.child("default-cache"))
 
-case class EtagCacheConfig(cacheFolder: NavigableFileInOutLocation) extends CacheConfig {
-  def cacheFor(origin: InputLocation): CacheEntry = new CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).withBaseName(x => x + "--etag-" + origin.etag)) {
-    def cacheIt: Unit = {
+data class EtagCacheConfig(cacheFolder: NavigableFileInOutLocation) : CacheConfig {
+  fun cacheFor(origin: InputLocation): CacheEntry = CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).,BaseName(x -> x + "--etag-" + origin.etag)) {
+    fun cacheIt: Unit {
       //since the name is computed based on etag is enough to check the existence of file
       //TODO maybe we should start to delete equivalent files that are older
       if (!cache.exists)
@@ -22,24 +22,24 @@ case class EtagCacheConfig(cacheFolder: NavigableFileInOutLocation) extends Cach
     }
   }
 }
-case class TimeSensitiveCachedEntry(cacheFolder: NavigableFileInOutLocation) extends CacheConfig {
-  def cacheFor(origin: InputLocation): CacheEntry = new CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).withBaseName(x => x + "--date-" + LocalDate.now())) {
-    def cacheIt: Unit = {
+data class TimeSensitiveCachedEntry(cacheFolder: NavigableFileInOutLocation) : CacheConfig {
+  fun cacheFor(origin: InputLocation): CacheEntry = CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).,BaseName(x -> x + "--date-" + LocalDate.now())) {
+    fun cacheIt: Unit {
       if (!cache.exists)
         cache.copyFrom(origin)
     }
   }
 }
 /**Use etag if UrlLocation returns one non empty otherwise use date.*/
-case class TimeSensitiveEtagCachedEntry(cacheFolder: NavigableFileInOutLocation) extends CacheConfig {
-  def cacheFor(origin: InputLocation): CacheEntry = new CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).withBaseName { x =>
+data class TimeSensitiveEtagCachedEntry(cacheFolder: NavigableFileInOutLocation) : CacheConfig {
+  fun cacheFor(origin: InputLocation): CacheEntry = CacheEntry(cacheFolder.mkdirIfNecessary.child(origin.slug).,BaseName { x ->
     x +
       (if (origin.etag.isEmpty())
         "--date-" + LocalDate.now()
       else
         "--etag-" + origin.etag)
   }) {
-    def cacheIt: Unit = {
+    fun cacheIt: Unit {
       if (!cache.exists)
         cache.copyFrom(origin)
     }
@@ -47,32 +47,32 @@ case class TimeSensitiveEtagCachedEntry(cacheFolder: NavigableFileInOutLocation)
 }
 
 //TODO CachedLocation when printed should show the temporary file 
-case class CachedLocation[O <: InputLocation](cacheConfig: CacheConfig, origin: O) extends FileLocation { self =>
+data class CachedLocation<O : InputLocation>(cacheConfig: CacheConfig, origin: O) : FileLocation { self ->
 
   private lazy val cacheEntry: CacheEntry = cacheConfig.cacheFor(origin)
-  def cache = cacheEntry.cache
+  fun cache ()= cacheEntry.cache
   //def cache: InOutLocation = cacheConfig.cacheFor(origin)
-  override def build(path: String): self.type = origin match {
-    case n: NavigableLocation =>
+  override fun build(path: String): self.type = origin when {
+    n: NavigableLocation ->
       CachedLocation(cacheConfig, n.build(path))
-    case _ =>
+    else ->
       //TODO bug since origin is not used?
       FileLocation(path)
   }
-  override def childName(child: String): String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
-  //override def withAppend: Repr = self.copy(append = true)
-  override def unsafeToInputStream: InputStream = {
+  override fun childName(child: String): String = toPath.resolve(checkedChild(child)).toFile.getAbsolutePath
+  //override fun ,Append: Repr = self.copy(append = true)
+  override fun unsafeToInputStream: InputStream {
     flush
     super.unsafeToInputStream
   }
   /**Force caching.*/
   //TODO as async
-  def flush: this.type = {
+  fun flush: this.type {
     cacheEntry.cacheIt
     this
   }
 
-  override def append: Boolean = cache.append
-  def fileFullPath: String = cache.nameAndBefore
-  def withAppend = ??? //this.copy(cache = cache.withAppend)
+  override fun append: Boolean = cache.append
+  fun fileFullPath: String = cache.nameAndBefore
+  fun ,Append = ??? //this.copy(cache = cache.,Append)
 }

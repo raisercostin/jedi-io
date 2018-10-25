@@ -17,28 +17,28 @@ import org.raisercostin.jedi.impl.QueryStringUrlFunc
 import java.net.HttpURLConnection
 import scala.util.Failure
 import java.io.IOException
-case class EmailLocation(host:String, port:Int, username:String, password:String) extends NavigableFileInOutLocation { self =>
+data class EmailLocation(host:String, port:Int, username:String, password:String) : NavigableFileInOutLocation { self ->
 
 /** As seen from class EmailLocation, the missing signatures are as follows.
  *  For convenience, these are usable as stub implementations.
  */
   // Members declared in org.raisercostin.jedi.BaseLocation
-  def raw: String = ???
+  fun raw: String = ???
 
   // Members declared in org.raisercostin.jedi.BaseNavigableLocation
-  override def build(path: String): self.type = ???
+  override fun build(path: String): self.type = ???
 
   // Members declared in org.raisercostin.jedi.FileAbsoluteBaseLocation
-  def toFile: java.io.File = ???
+  fun toFile: java.io.File = ???
 
   // Members declared in org.raisercostin.jedi.InputLocation
-  def unsafeToInputStream: java.io.InputStream = ???
+  fun unsafeToInputStream: java.io.InputStream = ???
 
   // Members declared in org.raisercostin.jedi.NavigableOutputLocation
-  def asInput: org.raisercostin.jedi.NavigableFileInputLocation = ???
+  fun asInput: org.raisercostin.jedi.NavigableFileInputLocation = ???
 
   // Members declared in org.raisercostin.jedi.OutputLocation
-  override def append: Boolean = ???
-  def unsafeToOutputStream: java.io.OutputStream = ???
-  def withAppend: self.type = ???
+  override fun append: Boolean = ???
+  fun unsafeToOutputStream: java.io.OutputStream = ???
+  fun ,Append: self.type = ???
 }

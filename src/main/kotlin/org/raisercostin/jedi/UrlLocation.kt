@@ -23,16 +23,16 @@ object HttpConfig {
     "User-Agent" -> "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
     "Accept" -> "*/*"))
 }
-case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000, useScalaJHttp: Boolean = true) {
-  def followRedirects = allowedRedirects > 0
-  def configureConnection(conn: HttpURLConnection): Unit = {
-    header.foreach(element => conn.setRequestProperty(element._1, element._2))
+data class HttpConfig(header: Map<String, String> = Map(), allowedRedirects: Int = 5, connectionTimeout: Int = 10000, readTimeout: Int = 15000, useScalaJHttp: Boolean = true) {
+  fun followRedirects ()= allowedRedirects > 0
+  fun configureConnection(conn: HttpURLConnection): Unit {
+    header.foreach(element -> conn.setRequestProperty(element._1, element._2))
     conn.setInstanceFollowRedirects(followRedirects)
     conn.setConnectTimeout(connectionTimeout)
     conn.setReadTimeout(readTimeout)
   }
   /**Usually needed if a 403 is returned.*/
-  def withBrowserHeader: HttpConfig = HttpConfig(header = this.header + (
+  fun ,BrowserHeader: HttpConfig = HttpConfig(header = this.header + (
     "User-Agent" -> "curl/7.51.0",
     "Accept" -> "*/*"))
   //Other useful settings:
@@ -45,95 +45,95 @@ case class HttpConfig(header: Map[String, String] = Map(), allowedRedirects: Int
   //MIsid 20b3258abfd25dfda1d9a2a04088f577
   //Http.configure(_ setFollowRedirects true)(q OK as.String)
   //"Connection" -> "Keep-Alive", "Cookie" -> cookies)
-  def withJavaImpl: HttpConfig = this.copy(useScalaJHttp = false)
-  def withAgent(newAgent: String) = this.copy(header = header + ("User-Agent" -> newAgent))
-  def withoutAgent = this.copy(header = header - "User-Agent")
+  fun ,JavaImpl: HttpConfig = this.copy(useScalaJHttp = false)
+  fun ,Agent(newAgent: String) = this.copy(header = header + ("User-Agent" -> newAgent))
+  fun ,outAgent = this.copy(header = header - "User-Agent")
 }
-object UrlLocation extends SlfLogger
+object UrlLocation : SlfLogger
 /**
  * See here for good behaviour: https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/
  */
-case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), config: HttpConfig = HttpConfig.defaultConfig) extends InputLocation with IsFile{ self =>
+data class UrlLocation(url: java.net.URL, redirects: List<UrlLocation> = Seq(), config: HttpConfig = HttpConfig.defaultConfig) : InputLocation , IsFile{ self ->
 //  override type MetaRepr = MemoryLocation
-  def exists = ???
-  def raw = url.toExternalForm()
+  fun exists ()= ???
+  fun raw ()= url.toExternalForm()
   //TODO dump intermediate requests/responses
-  override def toUrl: java.net.URL = url
-  override def nameAndBefore: String = url.getPath
-  def toFile: File = ???
+  override fun toUrl: java.net.URL = url
+  override fun nameAndBefore: String = url.getPath
+  fun toFile: File = ???
   import java.net._
-  override def size: Long = lengthTry.get
+  override fun size: Long = lengthTry.get
 
   //TODO sending the current etag as well and wait for 302 not modified? This will save one more connection. Maybe this should be managed in a CachedUrlLocation?
-  def etagFromHttpRequestHeader: Option[String] = headConnection { conn => conn.getHeaderField("ETag").stripPrefix("\"").stripSuffix("\"") }.toOption
-  def headConnection[T](openedHeadConnection: URLConnection => T): Try[T] = ResourceUtil.cleanly(url.openConnection()) {
-    case c: HttpURLConnection =>
+  fun etagFromHttpRequestHeader: Option<String> = headConnection { conn -> conn.getHeaderField("ETag").stripPrefix("\"").stripSuffix("\"") }.toOption
+  fun headConnection<T>(openedHeadConnection: URLConnection -> T): Try<T> = ResourceUtil.cleanly(url.openConnection()) {
+    c: HttpURLConnection ->
       c.disconnect()
-    case f: FileURLConnection =>
+    f: FileURLConnection ->
       f.close()
   } {
-    case conn: HttpURLConnection =>
+    conn: HttpURLConnection ->
       config.configureConnection(conn)
       conn.setRequestMethod("HEAD")
       openedHeadConnection(conn)
-    case conn: FileURLConnection =>
+    conn: FileURLConnection ->
       openedHeadConnection(conn)
   }
-  def metaLocation:Try[NavigableInOutLocation/*MetaRepr*/] = {
+  fun metaLocation:Try<NavigableInOutLocation/*MetaRepr*/> {
     val out = Locations.memory("")
-    HierarchicalMultimap.save(meta.get,out).map(_=>out)
+    HierarchicalMultimap.save(meta.get,out).map(_->out)
   }
   /**
-   * InputLocations should have metadata. Worst case scenario in a separate file or other files in the filesystem.
+   * InputLocations should have metadata. Worst scenario in a separate file or other files in the filesystem.
    * See .svn, .csv, .git, dos navigator, .info files, nio meta/user attributes etc.
    */
-  override def meta: Try[HttpHMap] = headConnection { conn =>
-    conn match {
-      case conn: HttpURLConnection =>
+  override fun meta: Try<HttpHMap> = headConnection { conn ->
+    conn when {
+      conn: HttpURLConnection ->
         if (conn.getResponseCode != 200)
-          throw new RuntimeException("A redirect is needed. Cannot compute size!")
+          throw RuntimeException("A redirect is needed. Cannot compute size!")
         import scala.collection.JavaConverters._
         HttpHMap(conn.getRequestProperties.asScala.toMap.mapValues(_.asScala), conn.getHeaderFields.asScala.toMap.mapValues(_.asScala))
-      case conn: FileURLConnection =>
+      conn: FileURLConnection ->
         HttpHMap(Map(), Map())
     }
   }
-  def lengthTry: Try[Long] = headConnection { conn =>
-    conn match {
-      case conn: HttpURLConnection =>
+  fun lengthTry: Try<Long> = headConnection { conn ->
+    conn when {
+      conn: HttpURLConnection ->
         if (conn.getResponseCode != 200)
-          throw new RuntimeException("A redirect is needed. Cannot compute size!")
+          throw RuntimeException("A redirect is needed. Cannot compute size!")
         val len = conn.getContentLengthLong()
-        if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
+        if (len < 0) throw RuntimeException("Invalid length " + len + " received!")
         len
-      case conn: FileURLConnection =>
+      conn: FileURLConnection ->
         //conn.getInputStream
         val len = conn.getContentLengthLong()
-        if (len < 0) throw new RuntimeException("Invalid length " + len + " received!")
+        if (len < 0) throw RuntimeException("Invalid length " + len + " received!")
         len
     }
   }
-  override def unsafeToInputStream: InputStream =
+  override fun unsafeToInputStream: InputStream =
     if (config.useScalaJHttp)
       unsafeToInputStreamUsingScalaJHttp
     else
       unsafeToInputStreamUsingJava
 
-  private def createRequester(url: String) = {
+  private fun createRequester(url: String) {
     import scalaj.http.Http
     import scalaj.http.HttpOptions
     HttpRequest(
       url = raw,
       method = "GET",
-      connectFunc = {
-        case (req: HttpRequest, conn: HttpURLConnection) =>
+      connectFunc {
+        (req: HttpRequest, conn: HttpURLConnection) ->
           import scala.collection.JavaConverters._
           UrlLocation.logger.debug(s"RequestHeaders for $raw:\n    " + conn.getRequestProperties.asScala.mkString("\n    "))
           DefaultConnectFunc.apply(req, conn)
           UrlLocation.logger.debug(s"ResponseHeaders for $raw:\n    " + conn.getHeaderFields.asScala.mkString("\n    "))
       },
       params = Nil,
-      headers = config.header.toSeq, //agent.map(ag=>Seq("User-Agent" -> ag)).getOrElse(Seq()),//"scalaj-http/1.0"),
+      headers = config.header.toSeq, //agent.map(ag->Seq("User-Agent" -> ag)).getOrElse(Seq()),//"scalaj-http/1.0"),
       options = HttpConstants.defaultOptions,
       proxyConfig = None,
       charset = HttpConstants.utf8,
@@ -145,18 +145,18 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
       .option(HttpOptions.readTimeout(config.readTimeout))
       .headers(config.header)
   }
-  def unsafeToInputStreamUsingScalaJHttp: InputStream = {
-    createRequester(raw).withUnclosedConnection.exec {
-      case (code, map, stream) =>
+  fun unsafeToInputStreamUsingScalaJHttp: InputStream {
+    createRequester(raw).,UnclosedConnection.exec {
+      (code, map, stream) ->
         handleCode(code, map.getOrElse("Location", Seq()).headOption.getOrElse(null), stream, Try { map })
         stream
     }.body
   }
 
   //protected override
-  def unsafeToInputStreamUsingJava: InputStream = {
-    url.openConnection() match {
-      case conn: HttpURLConnection =>
+  fun unsafeToInputStreamUsingJava: InputStream {
+    url.openConnection() when {
+      conn: HttpURLConnection ->
         config.configureConnection(conn)
         import scala.collection.JavaConverters._
         UrlLocation.logger.info("header:\n" + config.header.mkString("\n    "))
@@ -164,22 +164,22 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
         //if (UrlLocation.log.isDebugEnabled())
         UrlLocation.logger.info(s"ResponseHeaders for $raw:\n    " + Try { conn.getHeaderFields.asScala.mkString("\n    ") })
         handleCode(conn.getResponseCode, conn.getHeaderField("Location"), { conn.getInputStream }, Try { conn.getHeaderFields.asScala.toMap })
-      case conn =>
+      conn ->
         conn.getInputStream
     }
   }
 
-  def handleCode(code: Int, location: String, stream: => InputStream, map: => Try[Map[String, _]]): InputStream =
-    (code, location) match {
-      case (200, _) =>
+  fun handleCode(code: Int, location: String, stream: -> InputStream, map: -> Try<Map<String, _>>): InputStream =
+    (code, location) when {
+      (200, _) ->
         stream
-      case (code, location) if config.allowedRedirects > redirects.size && location != null && location.nonEmpty && location != raw =>
+      (code, location) if config.allowedRedirects > redirects.size && location != null && location.nonEmpty && location != raw ->
         //This is manual redirection. The connection should already do all the redirects if config.allowedRedirects is true
         closeStream(stream)
         UrlLocation(new java.net.URL(location), this +: redirects, config).unsafeToInputStream
-      case (code, _) =>
+      (code, _) ->
         closeStream(stream)
-        throw new HttpStatusException(s"Got $code response from $this. A 200 code is needed to get an InputStream. The header is\n    " + map.getOrElse(Map()).mkString("\n    ")
+        throw HttpStatusException(s"Got $code response from $this. A 200 code is needed to get an InputStream. The header is\n    " + map.getOrElse(Map()).mkString("\n    ")
           + " After " + redirects.size + " redirects:\n    " + redirects.mkString("\n    "), code, this)
     }
   /**
@@ -187,22 +187,22 @@ case class UrlLocation(url: java.net.URL, redirects: Seq[UrlLocation] = Seq(), c
    * We should just close() on the input/output/error streams
    * http://stackoverflow.com/questions/15834350/httpurlconnection-closing-io-streams
    */
-  def closeStream(stream: => InputStream) = Try {
+  fun closeStream(stream: -> InputStream) = Try {
     if (stream != null)
       stream.close
-  }.recover { case e => UrlLocation.logger.debug("Couldn't close input/error stream to " + this, e) }
+  }.recover { e -> UrlLocation.logger.debug("Couldn't close input/error stream to " + this, e) }
 
-  def withSensibleAgent = withAgent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
-  def withAgent(newAgent: String) = this.copy(config = config.withAgent(newAgent))
-  def withoutAgent = this.copy(config = config.withoutAgent)
-  def withBrowserHeader = this.copy(config = config.withBrowserHeader)
-  def withoutRedirect = this.copy(config = config.copy(allowedRedirects = 0))
-  def resolved: ResolvedUrlLocation = ResolvedUrlLocation(this)
-  def withJavaImpl = this.copy(config = config.withJavaImpl)
+  fun ,SensibleAgent = ,Agent("User-Agent:Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
+  fun ,Agent(newAgent: String) = this.copy(config = config.,Agent(newAgent))
+  fun ,outAgent = this.copy(config = config.,outAgent)
+  fun ,BrowserHeader = this.copy(config = config.,BrowserHeader)
+  fun ,outRedirect = this.copy(config = config.copy(allowedRedirects = 0))
+  fun resolved: ResolvedUrlLocation = ResolvedUrlLocation(this)
+  fun ,JavaImpl = this.copy(config = config.,JavaImpl)
 
-  override def etag: String = etagFromHttpRequestHeader.getOrElse("")
+  override fun etag: String = etagFromHttpRequestHeader.getOrElse("")
 }
 //TODO add a resolved state where you can interrogate things like All redirects headers, status code and others.
-case class ResolvedUrlLocation(location: UrlLocation) {
+data class ResolvedUrlLocation(location: UrlLocation) {
 }
-case class HttpStatusException(message: String, code: Int, url: UrlLocation) extends IOException(message)
+data class HttpStatusException(message: String, code: Int, url: UrlLocation) : IOException(message)

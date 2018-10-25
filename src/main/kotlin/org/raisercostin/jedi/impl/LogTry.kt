@@ -1,13 +1,15 @@
 package org.raisercostin.jedi.impl
 
-import scala.util.{ Try, Success, Failure }
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
 
 object LogTry {
-  implicit class LogTry[+A](res: Try[A]) extends SlfLogger{
-    def log():Try[A] = res match {
-      case Success(s) =>
+  implicit class LogTry<+A>(res: Try<A>) : SlfLogger{
+    fun log():Try<A> = res when {
+      Success(s) ->
         res
-      case Failure(f) =>
+      Failure(f) ->
         logger.info("Failure via LogTry.",f)
         res
     }

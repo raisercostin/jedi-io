@@ -13,71 +13,71 @@ import scala.util.Success
 
 
 /**Location orthogonal dimension: Resolved/Unresolved: Can reach content/cannot.*/
-trait LocationState
+interface LocationState
 /**
  * Trait to mark if a location is not resolved to a file system. For example Relative locations or offline urls that
  * are not available in offline mode.
  */
-trait UnresolvedLocationState extends LocationState
+interface UnresolvedLocationState : LocationState
 /**If a location has access to its content and metadata is said to be resolved.*/
-trait ResolvedLocationState extends LocationState with IsFileOrFolder {
-  //type MetaRepr <: InputLocation
+interface ResolvedLocationState : LocationState , IsFileOrFolder {
+  //type MetaRepr : InputLocation
 
   /**The meta seen as another location.*/
-  def metaLocation: Try[NavigableInOutLocation/*MetaRepr*/]
-  def meta: Try[HierarchicalMultimap] = metaLocation.flatMap(_.existingOption.map(_.readContentAsText.map(x => HierarchicalMultimap(x))).getOrElse(Success(HierarchicalMultimap())))
+  fun metaLocation: Try<NavigableInOutLocation/*MetaRepr*/>
+  fun meta: Try<HierarchicalMultimap> = metaLocation.flatMap(_.existingOption.map(_.readContentAsText.map(x -> HierarchicalMultimap(x))).getOrElse(Success(HierarchicalMultimap())))
 }
 
-trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with VersionedLocation { self =>
-  def unsafeToInputStream: InputStream
-  def unsafeToInputStreamIfFile: InputStream = {
-    //Return the InputStream only if this is a file. Classpath folder is returning an InputStream with the list of the files.
+interface InputLocation : AbsoluteBaseLocation , ResolvedLocationState , VersionedLocation { self ->
+  fun unsafeToInputStream: InputStream
+  fun unsafeToInputStreamIfFile: InputStream {
+    //Return the InputStream only if this is a file. Classpath folder is returning an InputStream , the list of the files.
     if (!isFile)
-      throw new RuntimeException("Cannot create inputStream since [" + this + "] is not a file!")
+      throw RuntimeException("Cannot create inputStream since <" + this + "> is not a file!")
     unsafeToInputStream
   }
-  def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStreamIfFile, decoder)
-  def unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStreamIfFile)(decoder)
-  def bytes: Array[Byte] = {
+  fun unsafeToReader: java.io.Reader = java.io.InputStreamReader(unsafeToInputStreamIfFile, decoder)
+  fun unsafeToSource: scala.io.BufferedSource = scala.io.Source.fromInputStream(unsafeToInputStreamIfFile)(decoder)
+  fun bytes: Array<Byte> {
     //TODO implement
     ??? //IOUtils.readFully(x$1, x$2)
   }
 
-  def usingInputStream[T](op: InputStream => T): T = using(unsafeToInputStreamIfFile)(op)
-  def usingReader[T](reader: java.io.Reader => T): T = using(unsafeToReader)(reader)
-  def usingSource[T](processor: scala.io.BufferedSource => T): T = using(unsafeToSource)(processor)
+  fun usingInputStream<T>(op: InputStream -> T): T = using(unsafeToInputStreamIfFile)(op)
+  fun usingReader<T>(reader: java.io.Reader -> T): T = using(unsafeToReader)(reader)
+  fun usingSource<T>(processor: scala.io.BufferedSource -> T): T = using(unsafeToSource)(processor)
 
-  def usingInputStreamAndContinue(op: InputStream => Any): self.type = {using(unsafeToInputStreamIfFile)(op);this}
-  def usingReaderAndContinue(reader: java.io.Reader => Any): self.type = {using(unsafeToReader)(reader);this}
-  def usingSourceAndContinue(processor: scala.io.BufferedSource => Any): self.type = {using(unsafeToSource)(processor);this}
+  fun usingInputStreamAndContinue(op: InputStream -> Any): self.type {using(unsafeToInputStreamIfFile)(op);this}
+  fun usingReaderAndContinue(reader: java.io.Reader -> Any): self.type {using(unsafeToReader)(reader);this}
+  fun usingSourceAndContinue(processor: scala.io.BufferedSource -> Any): self.type {using(unsafeToSource)(processor);this}
 
-  def readLines: Iterable[String] = traverseLines.toIterable
-  def traverseLines: Traversable[String] = new Traversable[String] {
-    def foreach[U](f: String => U): Unit = {
-      usingSource { x => x.getLines().foreach(f) }
+  fun readLines: Iterable<String> = traverseLines.toIterable
+  fun traverseLines: Traversable<String> = Traversable<String> {
+    fun foreach<U>(f: String -> U): Unit {
+      usingSource { x -> x.getLines().foreach(f) }
     }
   }
 
-  def copyToIfNotExists(dest: OutputLocation): self.type = { dest.nonExistingOption.map(_.copyFrom(this)); this }
-  def copyTo(dest: OutputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type = { dest.copyFrom(self); this}
+  fun copyToIfNotExists(dest: OutputLocation): self.type { dest.nonExistingOption.map(_.copyFrom(this)); this }
+  fun copyTo(dest: OutputLocation)(implicit option: CopyOptions = CopyOptions.default): self.type { dest.copyFrom(self); this}
 
-  def readContent = {
+  fun readContent {
     // Read a file into a string
     //    import rapture._
     //    import core._, io._, net._, uri._, json._, codec._
     //    import encodings.`UTF-8`
-    //    val src = uri"http://rapture.io/sample.json".slurp[Char]
+    //    val src = uri"http://rapture.io/sample.json".slurp<Char>
     //existing(toSource).getLines mkString ("\n")
-    usingReader { reader =>
-      try { IOUtils.toString(reader) } catch { case x: Throwable => throw new RuntimeException("While reading " + this, x) }
+    usingReader { reader ->
+      try { IOUtils.toString(reader) } catch { x: Throwable -> throw RuntimeException("While reading " + this, x) }
     }
   }
-  def readContentAsText: Try[String] =
+  fun readContentAsText: Try<String> =
     Try(readContent)
   //Try(existing(toSource).getLines mkString ("\n"))
   //def unzip: ZipInputLocation = ???
-  def unzip: ZipInputLocation = ZipInputLocation(this, None)
-  def cached(implicit cacheConfig: CacheConfig = DefaultCacheConfig): CachedLocation[this.type] = CachedLocation(cacheConfig, this)
+  fun unzip: ZipInputLocation = ZipInputLocation(this, None)
+  fun cached(implicit cacheConfig: CacheConfig = DefaultCacheConfig): CachedLocation<this.type> = CachedLocation(cacheConfig, this)
   /**Sometimes we want the content to be available locally in the filesystem.*/
-  def asFileInputLocation: FileInputLocation = cached.flush
+  fun asFileInputLocation: FileInputLocation = cached.flush
 }
