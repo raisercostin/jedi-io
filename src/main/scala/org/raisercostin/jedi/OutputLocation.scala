@@ -18,7 +18,6 @@ import scala.util.Failure
 import org.apache.commons.io.IOUtils
 import scala.util.Success
 import org.raisercostin.jedi.impl.ProcessUtils
-import javafx.scene.Parent
 
 /** A copy operation can be influenced by a lot of parameters.
   * Still needs to decide which ones are useful. 

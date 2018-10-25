@@ -20,7 +20,7 @@ trait LocationState
  */
 trait UnresolvedLocationState extends LocationState
 /**If a location has access to its content and metadata is said to be resolved.*/
-trait ResolvedLocationState extends LocationState with IsFileOrFolder {
+trait ResolvedLocationState extends LocationState with IsFile {
   //type MetaRepr <: InputLocation
 
   /**The meta seen as another location.*/
@@ -32,8 +32,8 @@ trait InputLocation extends AbsoluteBaseLocation with ResolvedLocationState with
   def unsafeToInputStream: InputStream
   def unsafeToInputStreamIfFile: InputStream = {
     //Return the InputStream only if this is a file. Classpath folder is returning an InputStream with the list of the files.
-    if (!isFile)
-      throw new RuntimeException("Cannot create inputStream since [" + this + "] is not a file!")
+//    if (!isFile)
+//      throw new RuntimeException("Cannot create inputStream since [" + this + "] is not a file!")
     unsafeToInputStream
   }
   def unsafeToReader: java.io.Reader = new java.io.InputStreamReader(unsafeToInputStreamIfFile, decoder)

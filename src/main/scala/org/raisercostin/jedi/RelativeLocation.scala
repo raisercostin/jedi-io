@@ -18,6 +18,6 @@ trait RelativeLocation extends BaseNavigableLocation with UnresolvedLocationStat
     FileSystemFormatter(separator).standard(relativePath)
   override def build(path: String): self.type = RelativeLocation(path)
 }
-case class RelativeLocationImpl(relativePath: String) extends RelativeLocation with UnknownFileOrFolder{
+case class RelativeLocationImpl(relativePath: String) extends RelativeLocation {
   JediFileSystem.requireRelativePath(relativePath)
 }

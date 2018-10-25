@@ -10,16 +10,8 @@ import scala.util.Try
 import scala.util.Success
 
 
-trait IsFolder extends IsFileOrFolder {
-  override def isFile = false
-  override def isFolder = true
-}
-trait UnknownFileOrFolder extends IsFileOrFolder {
-  override def isFile = throw new RuntimeException("Unknown if file or folder.")
-  override def isFolder = throw new RuntimeException("Unknown if file or folder.")
-}
 
-trait BaseLocation extends IsFileOrFolder {
+trait BaseLocation {
   def uri: String = raw
   def raw: String
   /**A part of the location that will be used to retrieve name, baseName, extension.*/
