@@ -57,7 +57,7 @@ public class FileTraversals {
             return traverse(start, "**/*", ignoreCase);
         }
         default <T> Flowable<T> traverse(Path start, boolean ignoreCase, Function<Path,T> f) {
-            return traverse(start, "**/*", ignoreCase).map(x->{System.out.println("map "+x);return f.apply(x);});
+            return traverse(start, "**/*", ignoreCase).map(x->f.apply(x));
         }
 
         Flowable<Path> traverse(Path start, String regex, boolean ignoreCase);
@@ -75,7 +75,7 @@ public class FileTraversals {
     public static class WalkTraversal implements SimpleFileTraversal {
         public Flowable<Path> traverse(Path start, boolean ignoreCase) {
             try {
-                return toFlowableViaIterator(Files.walk(start).map(x->{System.out.println("walk "+x);return x;}));
+                return toFlowableViaIterator(Files.walk(start));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
