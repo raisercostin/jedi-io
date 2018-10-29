@@ -1,6 +1,7 @@
 package org.raisercostin.jedi
 
 import java.io.File
+import java.nio.file.{Path, Paths}
 
 import scala.Iterable
 import scala.annotation.tailrec
@@ -11,6 +12,7 @@ import scala.util.Success
 import scala.util.Try
 import org.apache.commons.io.FilenameUtils
 import Locations.relative
+import io.reactivex.Flowable
 import org.raisercostin.jedi.impl.JediFileSystem
 import org.raisercostin.jedi.impl.TraversePath
 import rx.lang.scala.Observable
@@ -128,6 +130,19 @@ trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
 }
 trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation { self =>
   def list: Iterable[self.type]
+  import scala.collection.JavaConverters._
+  import scala.compat.java8.FunctionConverters._
+
+  val function: java.util.function.Function[Path, self.type] = new java.util.function.Function[Path,self.type](){
+    override def apply(t: Path): NavigableLocation.this.type =
+      build(t.toFile.getAbsolutePath)
+  }
+
+  def visit:Flowable[self.type] =
+    //FileTraversals.traverseUsingGuava().traverse(Paths.get(absolute),true, function)
+    FileTraversals.traverseUsingWalk().traverse(Paths.get(absolute),true, function)
+    //Flowable.fromIterable(descendants.asJava)
+      .asInstanceOf[Flowable[self.type]]
   final def descendants: Iterable[self.type] = descendantsWithOptions(true)
   def descendantsWithOptions(traverseDir:Boolean): Iterable[self.type] = ???
   def absolute: String

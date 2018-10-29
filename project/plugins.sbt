@@ -19,3 +19,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.0")
 //tools
 addSbtPlugin("com.gilt" % "sbt-dependency-graph-sugar" % "0.8.2")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
+
+// add sbt-ensime to your build or in global.sbt
+// sbt ensimeConfig - to generate ensime configuration: 
+addSbtPlugin("org.ensime" % "sbt-ensime" % "2.5.1")

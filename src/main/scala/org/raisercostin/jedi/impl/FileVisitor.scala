@@ -9,6 +9,7 @@ class TraversePath(path: Path, withDir: Boolean = false) extends Traversable[(Pa
   override def foreach[U](f: ((Path, BasicFileAttributes)) => U) {
     class Visitor extends SimpleFileVisitor[Path] {
       override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
+        println("visited "+file)
         f(file -> attrs)
         FileVisitResult.CONTINUE
         //} catch {
@@ -16,6 +17,7 @@ class TraversePath(path: Path, withDir: Boolean = false) extends Traversable[(Pa
       }
       override def preVisitDirectory(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
         if (withDir) {
+          println("visited folder "+file)
           f(file -> attrs)
         }
         FileVisitResult.CONTINUE

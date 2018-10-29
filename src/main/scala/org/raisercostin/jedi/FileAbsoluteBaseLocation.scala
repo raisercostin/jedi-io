@@ -85,8 +85,8 @@ trait FileAbsoluteBaseLocation extends AbsoluteBaseLocation with ResolvedLocatio
   }
 
   def hasDirs = listPath("*").find(_.toFile.isDirectory).nonEmpty
-  def isFile = toFile.isFile
-  def isFolder = toFile.isDirectory
+  override def isFile = toFile.isFile
+  override def isFolder = toFile.isDirectory
   def isSymlink = Files.isSymbolicLink(toPath)
   def symlink: Try[FileLocation] = Try { FileLocation(Files.readSymbolicLink(toPath)) }
   //TODO this one is not ok attributes.basic.isSymbolicLink

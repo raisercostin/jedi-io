@@ -26,3 +26,5 @@ project/plugins/project/
 /.scalastyle
 /.cache-main
 /.cache-tests
+/.ensime
+/.ensime_cache

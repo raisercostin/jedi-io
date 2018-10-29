@@ -21,8 +21,8 @@ case class VfsLocation(file:FileObject) extends NavigableInOutLocation { self =>
   override def list: Iterable[self.type] = Option(existing).map { x =>
     Option(x.file.getChildren).map(_.toIterable).getOrElse(Iterable(x.file))
   }.getOrElse(Iterable()).map(buildNew).asInstanceOf[Iterable[self.type]]
-  def isFile: Boolean = file.isFile
-  def isFolder: Boolean = file.isFolder
+  override def isFile: Boolean = file.isFile
+  override def isFolder: Boolean = file.isFolder
   def mkdirIfNecessary: self.type = {
     file.createFolder
     this

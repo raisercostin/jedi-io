@@ -26,12 +26,15 @@ libraryDependencies ++= Seq(
 	//,"org.apache.jackrabbit" % "jackrabbit-webdav" % "1.5.2"
 	,"org.kohsuke" % "file-leak-detector" % "1.8" % "optional"
 	,"io.reactivex" %% "rxscala" % "0.26.5"
+	,"io.reactivex.rxjava2" % "rxjava" % "2.2.3"
 	,"org.scalaj" %% "scalaj-http" % "2.3.0"
 	,"org.apache.commons" % "commons-email" % "1.4" excludeAll (
 	         ExclusionRule(organization="com.sun.mail", name= "javax.mail")
 	         ,ExclusionRule(organization="javax.activation", name="activation")
 	        )
 	, "com.sun.mail" % "javax.mail" % "1.5.5"
+	,"com.google.guava" % "guava"%"26.0-jre"
+  ,"org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
 )
 
 /*
@@ -149,3 +152,6 @@ releaseNextVersion := { ver => sbtrelease.Version(ver).map(_.bumpMinor.string).g
 //  else false
 //}
 //scapegoatVersion := "1.1.0"
+
+
+ensimeIgnoreScalaMismatch in ThisBuild := true
