@@ -10,18 +10,13 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.DirectoryStream.Filter;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import io.reactivex.Flowable;
-import io.vavr.Lazy;
-import io.vavr.control.Try;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -33,6 +28,8 @@ import com.google.common.collect.Streams;
 import com.google.common.graph.Traverser;
 
 public class FileTraversals {
+    public static final String GLOB_ALL = "glob:**/*";
+    public static final String GLOB_NONE = "glob:";
     /**
      * The traversal has two important filters:
      * - performance/pruning filter - that can cut out entire folders from final result (you don't need to test that cuts only folders since this will affect performance.
@@ -40,6 +37,7 @@ public class FileTraversals {
      * Files or folders that are matched by both pruning and filter will not be returned.
      */
     public static interface FileTraversal {
+
         default Flowable<Path> traverse(Path start, boolean ignoreCase) {
             return traverse(start, GLOB_ALL, ignoreCase);
         }
@@ -60,11 +58,14 @@ public class FileTraversals {
             return traverse(start, restrictedFiles, restrictedFolders, ignoreCase).map(x -> f.apply(x));
         }
 
-        Flowable<Path> traverse(Path start, String restrictedFiles, String restrictedFolders, boolean ignoreCase);
+        default Flowable<Path> traverse(Path start, String matcher, String pruningMatcher, boolean ignoreCase){
+            FileSystem fs = start.getFileSystem();
+            return traverse(start,fs.getPathMatcher(matcher),fs.getPathMatcher(pruningMatcher),ignoreCase);
+        }
+        Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase);
     }
 
 
-    public static final String GLOB_ALL = "glob:**/*";
 
     public static FileTraversal traverseUsingWalk() {
         return new WalkTraversal();
@@ -88,8 +89,7 @@ public class FileTraversals {
 
         @Deprecated
         /**simple but not efficient implementation.*/
-        default Flowable<Path> traverse(Path start, String restrictedFiles, String restrictedFolders, boolean ignoreCase) {
-            PathMatcher matcher = FileSystems.getDefault().getPathMatcher(restrictedFiles);
+        default Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase) {
             return traverse(start, ignoreCase).filter(path -> matcher.matches(path));
         }
     }
@@ -179,7 +179,7 @@ public class FileTraversals {
             return new OrFileFilter(all);
         }
 
-        public Flowable<Path> traverse(Path start, String restrictedFiles, String restrictedFolders, boolean ignoreCase) {
+        public Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase) {
             IOFileFilter fileFilter = TrueFileFilter.INSTANCE;
             IOFileFilter dirFilter = getFilter(ignoreCase);
             Iterable<File> a = () -> FileUtils.iterateFilesAndDirs(start.toFile(), fileFilter,
@@ -221,26 +221,21 @@ public class FileTraversals {
      * Reimplemented com.google.common.io.Files.fileTraverser using Files.newDirectoryStream.
      */
     public static class GuavaAndDirectoryStreamTraversal implements FileTraversal {
-        public Flowable<Path> traverse(Path start, String filter, String pruningFilter, boolean ignoreCase) {
+        public Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase) {
             try {
-                // create a matcher and return a filter that uses it.
-                FileSystem fs = start.getFileSystem();
-                PathMatcher matcher = fs.getPathMatcher(filter);
-                PathMatcher pruningMatcher = fs.getPathMatcher(pruningFilter);
-
                 PathMatcher all = new PathMatcher() {
                     @Override
                     public boolean matches(Path path) {
                         if(pruningMatcher.matches(path))
                             return false;
-                        //first use matchers as the Files.isXXX uses the filesystem
-                        return matcher.matches(path) && Files.isRegularFile(path) ||
-                                pruningMatcher.matches(path) && Files.isDirectory(path);
+                        if(Files.isDirectory(path))
+                            return true;
+                        return matcher.matches(path);
                     }
                 };
                 Iterable<Path> iterable = fileTraverser(createFilter(all)).depthFirstPreOrder(start);
                 //.breadthFirst(start);
-                return Flowable.fromIterable(iterable).filter(path -> matcher.matches(path));
+                return Flowable.fromIterable(iterable).filter(path -> matcher.matches(path));//.map(x->{System.out.println("found "+x);return x;});
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
