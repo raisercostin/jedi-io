@@ -26,7 +26,7 @@ class FileLocationTest extends FunSuite with FileAbsoluteBaseLocationTest with N
     assertNotNull(location.attributes.inode)
   }
   @Test def `hardlinks should be detected with same uniqueId` {
-    val dest = Locations.temp.randomFolderChild("test").child(location.name)
+    val dest = Locations.current("target").child("test").child(location.name).renamedIfExists.mkdirOnParentIfNecessary
     location.copyAsHardLink(dest)(CopyOptions.default.withOverwriteIfAlreadyExists)
     val uniqueIdSrc = location.canonicalOverSymLinks
     val uniqueIdDest = dest.canonicalOverSymLinks
@@ -36,7 +36,7 @@ class FileLocationTest extends FunSuite with FileAbsoluteBaseLocationTest with N
     //assertEquals(uniqueIdSrc,uniqueIdDest)
   }
   @Test def `hardlinks on same drive` {
-    val dest = Locations.temp.randomFolderChild("test").child(location.name)
+    val dest = Locations.current("target").child("test").child(location.name).renamedIfExists.mkdirOnParentIfNecessary
     location.copyAsHardLink(dest)(CopyOptions.default.withOverwriteIfAlreadyExists)
     val dest2 = dest.parent.child(location.name).renamedIfExists
     dest.copyAsHardLink(dest2)(CopyOptions.default.withOverwriteIfAlreadyExists)

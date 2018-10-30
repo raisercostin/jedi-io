@@ -16,7 +16,7 @@ class DescendantsTest extends FunSuite {
   def testAllListedChildrenAreAlsoDescendants() {
     val children = Locations.file("src").list.toSeq
     val all = Locations.file("src").descendants.toSeq
-    all.size shouldBe 77
+    all.size shouldBe 100
     children.size shouldBe 2
     
     val good = children.map(c => (c->all.contains(c))).filterNot(_._2)

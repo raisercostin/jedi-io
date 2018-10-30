@@ -11,7 +11,7 @@ import scala.util.Success
 
 
 
-trait BaseLocation extends IsFileOrFolder {
+trait BaseLocation  {
   def uri: String = raw
   def raw: String
   /**A part of the location that will be used to retrieve name, baseName, extension.*/

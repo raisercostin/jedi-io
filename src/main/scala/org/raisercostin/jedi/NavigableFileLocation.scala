@@ -20,7 +20,7 @@ import rx.lang.scala.Observable
 object BaseNavigableLocation {
   val stateSep = "--state#"
 }
-trait BaseNavigableLocation extends BaseLocation with LocationState { self =>
+trait BaseNavigableLocation extends BaseLocation with LocationState with IsFileOrFolder{ self =>
   protected def repr: self.type = toRepr(self)
   implicit protected def toRepr[T <: BaseNavigableLocation](location: T): self.type = location.asInstanceOf[self.type]
   def build(path: String): self.type

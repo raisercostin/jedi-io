@@ -16,10 +16,12 @@ trait ClassPathInputLocation extends NavigableFileInputLocation { self =>
   def initialResourcePath: String
   def raw = initialResourcePath
   import ClassPathInputLocation._
-  val resourcePath = initialResourcePath.stripPrefix("/")
-  val resource: java.net.URL = {
+  val resourcePath = //if(initialResourcePath.isEmpty) "/" else
+       initialResourcePath.stripPrefix("/")
+  override def nameAndBefore:String = raw
+  lazy val resource: java.net.URL = {
     val res = getSpecialClassLoader.getResource(resourcePath);
-    Predef2.requireNotNull(res, s"Couldn't get a stream from $self");
+    Predef2.requireNotNull(res, s"Couldn't get a stream from $self with resourcePath=[$resourcePath]");
     res
   }
   override def exists = true //resource != null - resource is always resolved
