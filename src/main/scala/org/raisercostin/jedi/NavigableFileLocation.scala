@@ -137,10 +137,17 @@ trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation 
     override def apply(t: Path): NavigableLocation.this.type =
       build(t.toFile.getAbsolutePath)
   }
+  def visit(restrictedFiles:String = FileTraversals.GLOB_ALL, ignoreCase:Boolean = true):Flowable[self.type] =
+    visitFull(restrictedFiles,ignoreCase = ignoreCase)
 
-  def visit:Flowable[self.type] =
-    //FileTraversals.traverseUsingGuava().traverse(Paths.get(absolute),true, function)
-    FileTraversals.traverseUsingWalk().traverse(Paths.get(absolute),true, function)
+  /**See java.nio.file.PathMatcher for regex.
+    * @param restrictedFolders filters in/out folders when searching
+    */
+  def visitFull(restrictedFiles:String = FileTraversals.GLOB_ALL, restrictedFolders:String = FileTraversals.GLOB_ALL, ignoreCase:Boolean = true):Flowable[self.type] =
+    FileTraversals
+      //.traverseUsingWalk()
+      .traverseUsingGuavaAndDirectoryStream()
+      .traverse(Paths.get(absolute),restrictedFiles, restrictedFolders, ignoreCase ,function)
     //Flowable.fromIterable(descendants.asJava)
       .asInstanceOf[Flowable[self.type]]
   final def descendants: Iterable[self.type] = descendantsWithOptions(true)

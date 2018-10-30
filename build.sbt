@@ -34,7 +34,8 @@ libraryDependencies ++= Seq(
 	        )
 	, "com.sun.mail" % "javax.mail" % "1.5.5"
 	,"com.google.guava" % "guava"%"26.0-jre"
-  ,"org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+  ,"org.scala-lang.modules" %% "scala-java8-compat" %  "0.9.0"
+	,"io.vavr" % "vavr" % "0.9.2"
 )
 
 /*
