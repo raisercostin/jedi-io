@@ -9,13 +9,22 @@ import org.apache.commons.io.filefilter.OrFileFilter;
 
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.raisercostin.jedi.FileTraversals.TraversalFilter;
 
 import static org.apache.commons.io.filefilter.FileFilterUtils.nameFileFilter;
 
 public class Filters {
+    private static final PathMatcher NO_PRUNING_PATH_MATCHER = new PathMatcher() {
+        @Override
+        public boolean matches(Path path) {
+            return false;
+        }
+    };
+
     /**
      * Sample gitIgnores:
      * <pre>
@@ -33,7 +42,13 @@ public class Filters {
      * See https://www.concretepage.com/java/jdk7/example-pathmatcher-java-nio
      */
     public static PathMatcher createGlob(String globExpression) {
-        return FileSystems.getDefault().getPathMatcher("glob:" + globExpression);
+        return createAny("glob:"+globExpression);
+    }
+    /**
+     * See https://www.concretepage.com/java/jdk7/example-pathmatcher-java-nio
+     */
+    public static PathMatcher createAny(String anyExpression) {
+        return FileSystems.getDefault().getPathMatcher(anyExpression);
     }
 
     /**
@@ -62,5 +77,47 @@ public class Filters {
     public static PathMatcher createTotalCommanderExpression(String totalcmdExpression) {
         String glob = Stream.ofAll(Splitter.onPattern("\\s+").split(totalcmdExpression)).map(x->"**/"+x).mkString(",");
         return createGlob("{"+glob+"}");
+    }
+
+    public static TraversalFilter filter(PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase) {
+        return new TraversalFilter() {
+            @Override
+            public PathMatcher matcher() {
+                return matcher;
+            }
+
+            @Override
+            public PathMatcher pruningMatcher() {
+                return pruningMatcher;
+            }
+
+            @Override
+            public boolean ignoreCase() {
+                return ignoreCase;
+            }
+        };
+    }
+
+    public static TraversalFilter createTotalCommanderFilter(String totalCommanderFilter) {
+        List<String> list = Splitter.on("|").splitToList(totalCommanderFilter);
+        String first = list.get(0);
+        String second = "";
+        if(list.size()==2)
+            second = list.get(1);
+        if(list.size()>2)
+            throw new IllegalArgumentException("Strange split for "+totalCommanderFilter);
+        return filter(createTotalCommanderExpression(first),createTotalCommanderExpression(second),true);
+    }
+
+    public static TraversalFilter globFilter(String matcher, String prunningMatcher, boolean ignoreCase) {
+        return filter(createGlob(matcher),createGlob(prunningMatcher),ignoreCase);
+    }
+
+    public static TraversalFilter anyFilter(String matcher, String prunningMatcher, boolean ignoreCase) {
+        return filter(createAny(matcher),createAny(prunningMatcher),ignoreCase);
+    }
+
+    public static TraversalFilter anyFilterNoPruning(String matcher, boolean ignoreCase) {
+        return filter(createAny(matcher),NO_PRUNING_PATH_MATCHER,ignoreCase);
     }
 }

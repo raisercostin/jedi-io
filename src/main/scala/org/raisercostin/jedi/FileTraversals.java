@@ -30,6 +30,20 @@ import com.google.common.graph.Traverser;
 public class FileTraversals {
     public static final String GLOB_ALL = "glob:**/*";
     public static final String GLOB_NONE = "glob:";
+    public static interface TraversalFilter{
+        PathMatcher matcher();
+        PathMatcher pruningMatcher();
+        @Deprecated//toremove
+        boolean ignoreCase();
+
+        default boolean shouldPrune(Path path) {
+            return pruningMatcher().matches(path);
+        }
+
+        default boolean matches(Path path){
+            return matcher().matches(path);
+        }
+    }
     /**
      * The traversal has two important filters:
      * - performance/pruning filter - that can cut out entire folders from final result (you don't need to test that cuts only folders since this will affect performance.
@@ -60,12 +74,17 @@ public class FileTraversals {
         default <T> Flowable<T> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase, Function<Path, T> f) {
             return traverse(start, matcher, pruningMatcher, ignoreCase).map(x -> f.apply(x));
         }
-
         default Flowable<Path> traverse(Path start, String matcher, String pruningMatcher, boolean ignoreCase){
             FileSystem fs = start.getFileSystem();
             return traverse(start,fs.getPathMatcher(matcher),fs.getPathMatcher(pruningMatcher),ignoreCase);
         }
-        Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase);
+        default Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase){
+            return traverse(start,Filters.filter(matcher,pruningMatcher,ignoreCase));
+        }
+        default <T> Flowable<T> traverse(Path start, TraversalFilter filter, Function<Path, T> f) {
+            return traverse(start, filter).map(x -> f.apply(x));
+        }
+        Flowable<Path> traverse(Path start, TraversalFilter filter);
     }
 
 
@@ -92,8 +111,8 @@ public class FileTraversals {
 
         @Deprecated
         /**simple but not efficient implementation.*/
-        default Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase) {
-            return traverse(start, ignoreCase).filter(path -> matcher.matches(path));
+        default Flowable<Path> traverse(Path start, TraversalFilter filter) {
+            return traverse(start, filter.ignoreCase()).filter(path -> filter.matcher().matches(path));
         }
     }
 
@@ -192,9 +211,9 @@ public class FileTraversals {
             gitFilterCaseInSensible = notFileFilter(and(directoryFileFilter(), createGitFilter(gitIgnores, false)));
         }
 
-        public Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase) {
+        public Flowable<Path> traverse(Path start, TraversalFilter filter) {
             IOFileFilter fileFilter = TrueFileFilter.INSTANCE;
-            IOFileFilter dirFilter = getFilter(ignoreCase);
+            IOFileFilter dirFilter = getFilter(filter.ignoreCase());
             Iterable<File> a = () -> FileUtils.iterateFilesAndDirs(start.toFile(), fileFilter,
                     dirFilter);
             // lesAndDirs(start.toFile(), null, null);
@@ -236,21 +255,21 @@ public class FileTraversals {
      * Reimplemented com.google.common.io.Files.fileTraverser using Files.newDirectoryStream.
      */
     public static class GuavaAndDirectoryStreamTraversal implements FileTraversal {
-        public Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase) {
+        public Flowable<Path> traverse(Path start, TraversalFilter filter) {
             try {
                 PathMatcher all = new PathMatcher() {
                     @Override
                     public boolean matches(Path path) {
-                        if(pruningMatcher.matches(path))
+                        if(filter.shouldPrune(path))
                             return false;
                         if(Files.isDirectory(path))
                             return true;
-                        return matcher.matches(path);
+                        return filter.matches(path);
                     }
                 };
                 Iterable<Path> iterable = fileTraverser(createFilter(all)).depthFirstPreOrder(start);
                 //.breadthFirst(start);
-                return Flowable.fromIterable(iterable).filter(path -> matcher.matches(path));//.map(x->{System.out.println("found "+x);return x;});
+                return Flowable.fromIterable(iterable).filter(path -> filter.matches(path));//.map(x->{System.out.println("found "+x);return x;});
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

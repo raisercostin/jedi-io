@@ -10,7 +10,8 @@ public class JavaFileIteratorTest {
     @Test
     public void test() {
         //Locations.file("d:\\home\\raiser\\work\\export-all\\revomatico\\all\\design\\").visit().take(3).forEach(System.out::println);
-        Flowable<?> res = Locations.current("src/test/resources").visit("glob:**/*.{ZIP,jpg}", false);
+        Flowable<?> res = Locations.current("src/test/resources").visit3(
+                Filters.anyFilterNoPruning("glob:**/*.{ZIP,jpg}", false));
         res.forEach(System.out::println);
         assertEquals(3, res.toList().blockingGet().size());
         //Locations.file("z:\\media\\media-ebooks2\\").visit().forEach(System.out::println);
@@ -20,7 +21,7 @@ public class JavaFileIteratorTest {
     @Test
     public void test2() {
         Flowable<?> res = Locations.current("src/test/resources")
-                .visitFull("glob:**/*.{zip,jpg}", "glob:**/{folder,.git,.svn}", false);
+                .visit3(Filters.anyFilter("glob:**/*.{zip,jpg}", "glob:**/{folder,.git,.svn}", false));
         res.forEach(System.out::println);
         assertEquals(2, res.toList().blockingGet().size());
     }
@@ -28,18 +29,19 @@ public class JavaFileIteratorTest {
     @Test
     public void testIgnoreFolders() {
         Flowable<?> res = Locations.current("src/test/resources")
-                .visit2(Filters.createGlob("**/*.{zip,jpg}"),Filters.createGitFilter("#test\nfolder",true),false);
+                .visit3(Filters.filter(Filters.createGlob("**/*.{zip,jpg}"),Filters.createGitFilter("#test\nfolder",true),false));
         res.forEach(System.out::println);
         assertEquals(2, res.toList().blockingGet().size());
         Flowable<?> res3 = Locations.file("d:\\home\\raiser\\work\\namek-uniboard\\")
-                .visit2(Filters.createGlob("**/*.{js,jpg}"),Filters.createGitFilter("#test\n.nuxt\nnode_modules",true),false);
+                .visit3(Filters.filter(
+                        Filters.createGlob("**/*.{js,jpg}"),Filters.createGitFilter("#test\n.nuxt\nnode_modules",true),true));
         res3.forEach(System.out::println);
     }
 
     @Test
     public void testSearchLikeInTotalCommander() {
         Flowable<?> res = Locations.current("")
-                .visit2(Filters.createTotalCommanderExpression("*.zip *.jpg"),Filters.createGitFilter("#test\nfolder",true),false);
+                .visit3(Filters.createTotalCommanderFilter("*.zip *.jpg|folder"));
         res.forEach(System.out::println);
         assertEquals(33, res.toList().blockingGet().size());
     }

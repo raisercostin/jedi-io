@@ -3,6 +3,7 @@ package org.raisercostin.jedi
 import java.io.File
 import java.nio.file.{Path, Paths}
 import java.nio.file.PathMatcher
+
 import scala.Iterable
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -13,6 +14,7 @@ import scala.util.Try
 import org.apache.commons.io.FilenameUtils
 import Locations.relative
 import io.reactivex.Flowable
+import org.raisercostin.jedi.FileTraversals.TraversalFilter
 import org.raisercostin.jedi.impl.JediFileSystem
 import org.raisercostin.jedi.impl.TraversePath
 import rx.lang.scala.Observable
@@ -155,6 +157,13 @@ trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation 
       //.traverseUsingWalk()
       .traverseUsingGuavaAndDirectoryStream()
       .traverse(Paths.get(absolute),matcher, pruningMatcher, ignoreCase, function)
+      //Flowable.fromIterable(descendants.asJava)
+      .asInstanceOf[Flowable[self.type]]
+  def visit3(filter:TraversalFilter):Flowable[self.type] =
+    FileTraversals
+      //.traverseUsingWalk()
+      .traverseUsingGuavaAndDirectoryStream()
+      .traverse(Paths.get(absolute),filter, function)
       //Flowable.fromIterable(descendants.asJava)
       .asInstanceOf[Flowable[self.type]]
   final def descendants: Iterable[self.type] = descendantsWithOptions(true)
