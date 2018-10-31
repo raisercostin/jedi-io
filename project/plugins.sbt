@@ -8,7 +8,8 @@ resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/release
 //for scoverage
 resolvers += Resolver.url("scoverage-bintray", url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(Resolver.ivyStylePatterns)
 
-addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
+//addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.3.0")
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.7.0")
