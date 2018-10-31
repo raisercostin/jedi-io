@@ -24,4 +24,23 @@ public class JavaFileIteratorTest {
         res.forEach(System.out::println);
         assertEquals(2, res.toList().blockingGet().size());
     }
+
+    @Test
+    public void testIgnoreFolders() {
+        Flowable<?> res = Locations.current("src/test/resources")
+                .visit2(Filters.createGlob("**/*.{zip,jpg}"),Filters.createGitFilter("#test\nfolder",true),false);
+        res.forEach(System.out::println);
+        assertEquals(2, res.toList().blockingGet().size());
+        Flowable<?> res3 = Locations.file("d:\\home\\raiser\\work\\namek-uniboard\\")
+                .visit2(Filters.createGlob("**/*.{js,jpg}"),Filters.createGitFilter("#test\n.nuxt\nnode_modules",true),false);
+        res3.forEach(System.out::println);
+    }
+
+    @Test
+    public void testSearchLikeInTotalCommander() {
+        Flowable<?> res = Locations.current("")
+                .visit2(Filters.createTotalCommanderExpression("*.zip *.jpg"),Filters.createGitFilter("#test\nfolder",true),false);
+        res.forEach(System.out::println);
+        assertEquals(33, res.toList().blockingGet().size());
+    }
 }

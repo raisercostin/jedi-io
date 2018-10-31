@@ -2,7 +2,7 @@ package org.raisercostin.jedi
 
 import java.io.File
 import java.nio.file.{Path, Paths}
-
+import java.nio.file.PathMatcher
 import scala.Iterable
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -148,7 +148,14 @@ trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation 
       //.traverseUsingWalk()
       .traverseUsingGuavaAndDirectoryStream()
       .traverse(Paths.get(absolute),matcher, pruningMatcher, ignoreCase ,function)
-    //Flowable.fromIterable(descendants.asJava)
+      //Flowable.fromIterable(descendants.asJava)
+      .asInstanceOf[Flowable[self.type]]
+  def visit2(matcher:PathMatcher, pruningMatcher:PathMatcher, ignoreCase:Boolean):Flowable[self.type] =
+    FileTraversals
+      //.traverseUsingWalk()
+      .traverseUsingGuavaAndDirectoryStream()
+      .traverse(Paths.get(absolute),matcher, pruningMatcher, ignoreCase, function)
+      //Flowable.fromIterable(descendants.asJava)
       .asInstanceOf[Flowable[self.type]]
   final def descendants: Iterable[self.type] = descendantsWithOptions(true)
   def descendantsWithOptions(traverseDir:Boolean): Iterable[self.type] = ???

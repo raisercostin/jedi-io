@@ -57,6 +57,9 @@ public class FileTraversals {
         default <T> Flowable<T> traverse(Path start, String restrictedFiles, String restrictedFolders, boolean ignoreCase, Function<Path, T> f) {
             return traverse(start, restrictedFiles, restrictedFolders, ignoreCase).map(x -> f.apply(x));
         }
+        default <T> Flowable<T> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase, Function<Path, T> f) {
+            return traverse(start, matcher, pruningMatcher, ignoreCase).map(x -> f.apply(x));
+        }
 
         default Flowable<Path> traverse(Path start, String matcher, String pruningMatcher, boolean ignoreCase){
             FileSystem fs = start.getFileSystem();
@@ -162,21 +165,31 @@ public class FileTraversals {
         );
     }
 
+    /**
+     * Sample gitIgnores:
+     * <pre>
+     *     # for now only folders
+     *     target
+     *     .git
+     *     .mvn
+     * </pre>
+     */
+    protected static OrFileFilter createGitFilter(String gitIgnores, boolean ignoreCase) {
+        Stream<IOFileFilter> or = Streams.stream(Splitter.on("\n").omitEmptyStrings().trimResults().split(gitIgnores))
+                .filter(line -> !line.startsWith("#"))
+                .map(folder -> nameFileFilter(folder, ignoreCase ? IOCase.INSENSITIVE : IOCase.SENSITIVE));
+        List<IOFileFilter> all = or.collect(Collectors.toList());
+        return new OrFileFilter(all);
+    }
+
+
     public static class CommonsIoTraversal implements FileTraversal {
         private final IOFileFilter gitFilterCaseSensible;
         private final IOFileFilter gitFilterCaseInSensible;
 
         public CommonsIoTraversal(String gitIgnores) {
-            gitFilterCaseSensible = notFileFilter(and(directoryFileFilter(), createFilter(gitIgnores, true)));
-            gitFilterCaseInSensible = notFileFilter(and(directoryFileFilter(), createFilter(gitIgnores, false)));
-        }
-
-        private OrFileFilter createFilter(String gitIgnores, boolean ignoreCase) {
-            Stream<IOFileFilter> or = Streams.stream(Splitter.on("\n").omitEmptyStrings().trimResults().split(gitIgnores))
-                    .filter(line -> !line.startsWith("#"))
-                    .map(folder -> nameFileFilter(folder, ignoreCase ? IOCase.INSENSITIVE : IOCase.SENSITIVE));
-            List<IOFileFilter> all = or.collect(Collectors.toList());
-            return new OrFileFilter(all);
+            gitFilterCaseSensible = notFileFilter(and(directoryFileFilter(), createGitFilter(gitIgnores, true)));
+            gitFilterCaseInSensible = notFileFilter(and(directoryFileFilter(), createGitFilter(gitIgnores, false)));
         }
 
         public Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase) {
@@ -197,6 +210,8 @@ public class FileTraversals {
     }
 
 
+    /**@deprecated use {@link GuavaAndDirectoryStreamTraversal}*/
+    @Deprecated
     public static class GuavaTraversal implements SimpleFileTraversal {
         public Flowable<Path> traverse(Path start, boolean ignoreCase) {
             Iterable<File> iterable = com.google.common.io.Files.fileTraverser().depthFirstPreOrder(start.toFile());
@@ -204,10 +219,10 @@ public class FileTraversals {
         }
     }
 
-    public static class FileFilterPathMatcher implements PathMatcher {
+    public static class FileFilterPathMatcherAdapter implements PathMatcher {
         private final FileFilter filter;
 
-        public FileFilterPathMatcher(FileFilter filter) {
+        public FileFilterPathMatcherAdapter(FileFilter filter) {
             this.filter = filter;
         }
 
