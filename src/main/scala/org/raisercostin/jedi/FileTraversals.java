@@ -51,36 +51,36 @@ public class FileTraversals {
      * Files or folders that are matched by both pruning and filter will not be returned.
      */
     public static interface FileTraversal {
-
-        default Flowable<Path> traverse(Path start, boolean ignoreCase) {
-            return traverse(start, GLOB_ALL, ignoreCase);
-        }
-
-        default Flowable<Path> traverse(Path start, String restrictedFiles, boolean ignoreCase) {
-            return traverse(start, restrictedFiles, GLOB_ALL, ignoreCase);
-        }
-
-        default <T> Flowable<T> traverse(Path start, boolean ignoreCase, Function<Path, T> f) {
-            return traverse(start, GLOB_ALL, ignoreCase).map(x -> f.apply(x));
-        }
-
-        default <T> Flowable<T> traverse(Path start, String restrictedFiles, boolean ignoreCase, Function<Path, T> f) {
-            return traverse(start, restrictedFiles, ignoreCase).map(x -> f.apply(x));
-        }
-
-        default <T> Flowable<T> traverse(Path start, String restrictedFiles, String restrictedFolders, boolean ignoreCase, Function<Path, T> f) {
-            return traverse(start, restrictedFiles, restrictedFolders, ignoreCase).map(x -> f.apply(x));
-        }
-        default <T> Flowable<T> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase, Function<Path, T> f) {
-            return traverse(start, matcher, pruningMatcher, ignoreCase).map(x -> f.apply(x));
-        }
-        default Flowable<Path> traverse(Path start, String matcher, String pruningMatcher, boolean ignoreCase){
-            FileSystem fs = start.getFileSystem();
-            return traverse(start,fs.getPathMatcher(matcher),fs.getPathMatcher(pruningMatcher),ignoreCase);
-        }
-        default Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase){
-            return traverse(start,Filters.filter(matcher,pruningMatcher,ignoreCase));
-        }
+//
+//        default Flowable<Path> traverse(Path start, boolean ignoreCase) {
+//            return traverse(start, GLOB_ALL, ignoreCase);
+//        }
+//
+//        default Flowable<Path> traverse(Path start, String restrictedFiles, boolean ignoreCase) {
+//            return traverse(start, restrictedFiles, GLOB_ALL, ignoreCase);
+//        }
+//
+//        default <T> Flowable<T> traverse(Path start, boolean ignoreCase, Function<Path, T> f) {
+//            return traverse(start, GLOB_ALL, ignoreCase).map(x -> f.apply(x));
+//        }
+//
+//        default <T> Flowable<T> traverse(Path start, String restrictedFiles, boolean ignoreCase, Function<Path, T> f) {
+//            return traverse(start, restrictedFiles, ignoreCase).map(x -> f.apply(x));
+//        }
+//
+//        default <T> Flowable<T> traverse(Path start, String restrictedFiles, String restrictedFolders, boolean ignoreCase, Function<Path, T> f) {
+//            return traverse(start, restrictedFiles, restrictedFolders, ignoreCase).map(x -> f.apply(x));
+//        }
+//        default <T> Flowable<T> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase, Function<Path, T> f) {
+//            return traverse(start, matcher, pruningMatcher, ignoreCase).map(x -> f.apply(x));
+//        }
+//        default Flowable<Path> traverse(Path start, String matcher, String pruningMatcher, boolean ignoreCase){
+//            FileSystem fs = start.getFileSystem();
+//            return traverse(start,fs.getPathMatcher(matcher),fs.getPathMatcher(pruningMatcher),ignoreCase);
+//        }
+//        default Flowable<Path> traverse(Path start, PathMatcher matcher, PathMatcher pruningMatcher, boolean ignoreCase){
+//            return traverse(start,Filters.filter(matcher,pruningMatcher,ignoreCase));
+//        }
         default <T> Flowable<T> traverse(Path start, TraversalFilter filter, Function<Path, T> f) {
             return traverse(start, filter).map(x -> f.apply(x));
         }

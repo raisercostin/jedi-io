@@ -139,27 +139,27 @@ trait NavigableLocation extends BaseNavigableLocation with AbsoluteBaseLocation 
     override def apply(t: Path): NavigableLocation.this.type =
       build(t.toFile.getAbsolutePath)
   }
-  def visit(matcher:String = FileTraversals.GLOB_ALL, ignoreCase:Boolean = true):Flowable[self.type] =
-    visitFull(matcher,ignoreCase = ignoreCase)
-
-  /**See java.nio.file.PathMatcher for regex.
-    * @param pruningMatcher filters in/out folders when searching
-    */
-  def visitFull(matcher:String = FileTraversals.GLOB_ALL, pruningMatcher:String = FileTraversals.GLOB_NONE, ignoreCase:Boolean = true):Flowable[self.type] =
-    FileTraversals
-      //.traverseUsingWalk()
-      .traverseUsingGuavaAndDirectoryStream()
-      .traverse(Paths.get(absolute),matcher, pruningMatcher, ignoreCase ,function)
-      //Flowable.fromIterable(descendants.asJava)
-      .asInstanceOf[Flowable[self.type]]
-  def visit2(matcher:PathMatcher, pruningMatcher:PathMatcher, ignoreCase:Boolean):Flowable[self.type] =
-    FileTraversals
-      //.traverseUsingWalk()
-      .traverseUsingGuavaAndDirectoryStream()
-      .traverse(Paths.get(absolute),matcher, pruningMatcher, ignoreCase, function)
-      //Flowable.fromIterable(descendants.asJava)
-      .asInstanceOf[Flowable[self.type]]
-  def visit3(filter:TraversalFilter):Flowable[self.type] =
+//  def visit(matcher:String = FileTraversals.GLOB_ALL, ignoreCase:Boolean = true):Flowable[self.type] =
+//    visitFull(matcher,ignoreCase = ignoreCase)
+//
+//  /**See java.nio.file.PathMatcher for regex.
+//    * @param pruningMatcher filters in/out folders when searching
+//    */
+//  def visitFull(matcher:String = FileTraversals.GLOB_ALL, pruningMatcher:String = FileTraversals.GLOB_NONE, ignoreCase:Boolean = true):Flowable[self.type] =
+//    FileTraversals
+//      //.traverseUsingWalk()
+//      .traverseUsingGuavaAndDirectoryStream()
+//      .traverse(Paths.get(absolute),matcher, pruningMatcher, ignoreCase ,function)
+//      //Flowable.fromIterable(descendants.asJava)
+//      .asInstanceOf[Flowable[self.type]]
+//  def visit2(matcher:PathMatcher, pruningMatcher:PathMatcher, ignoreCase:Boolean):Flowable[self.type] =
+//    FileTraversals
+//      //.traverseUsingWalk()
+//      .traverseUsingGuavaAndDirectoryStream()
+//      .traverse(Paths.get(absolute),matcher, pruningMatcher, ignoreCase, function)
+//      //Flowable.fromIterable(descendants.asJava)
+//      .asInstanceOf[Flowable[self.type]]
+  def visit(filter:TraversalFilter):Flowable[self.type] =
     FileTraversals
       //.traverseUsingWalk()
       .traverseUsingGuavaAndDirectoryStream()
