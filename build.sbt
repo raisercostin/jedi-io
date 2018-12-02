@@ -13,7 +13,7 @@ crossScalaVersions := Set(scalaVersion.value, /*"2.10.6",*/"2.11.11","2.12.3"
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
 libraryDependencies ++= Seq(
-	"ch.qos.logback" % "logback-classic" % "1.2.3"
+	"ch.qos.logback" % "logback-classic" % "1.2.3" % Optional
 	,"commons-io" % "commons-io" % "2.5"
 	,"org.slf4j" % "slf4j-api" % "1.7.5"
 	,"org.scalatest" %% "scalatest" % "3.0.1" % Test
