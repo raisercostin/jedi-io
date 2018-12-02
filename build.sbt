@@ -13,18 +13,18 @@ crossScalaVersions := Set(scalaVersion.value, /*"2.10.6",*/"2.11.11","2.12.3"
 scalacOptions ++= Seq(Opts.compile.deprecation, "-feature")
 
 libraryDependencies ++= Seq(
-	"ch.qos.logback" % "logback-classic" % "1.2.3" % Optional
+	"ch.qos.logback" % "logback-classic" % "1.2.3" % Test
 	,"commons-io" % "commons-io" % "2.5"
 	,"org.slf4j" % "slf4j-api" % "1.7.5"
 	,"org.scalatest" %% "scalatest" % "3.0.1" % Test
 	,"junit" % "junit" % "4.12" % Test
 	//,"org.slf4j" % "slf4j-simple" % "1.7.5" % Test
-	,"org.apache.commons" % "commons-vfs2" % "2.1" % "optional"
-  	,"commons-httpclient" % "commons-httpclient" % "3.1" % "optional"
-  	,"commons-codec" % "commons-codec" % "1.10" % "optional"
-  	//,"org.apache.httpcomponents" % "httpclient" % "4.0" % "optional" //next versions of httpclient but not used by commons-vfs2
+	,"org.apache.commons" % "commons-vfs2" % "2.1" % Optional
+  	,"commons-httpclient" % "commons-httpclient" % "3.1" % Optional
+  	,"commons-codec" % "commons-codec" % "1.10" % Optional
+  	//,"org.apache.httpcomponents" % "httpclient" % "4.0" % Optional //next versions of httpclient but not used by commons-vfs2
 	//,"org.apache.jackrabbit" % "jackrabbit-webdav" % "1.5.2"
-	,"org.kohsuke" % "file-leak-detector" % "1.8" % "optional"
+	,"org.kohsuke" % "file-leak-detector" % "1.8" % Optional
 	,"io.reactivex" %% "rxscala" % "0.26.5"
 	,"io.reactivex.rxjava2" % "rxjava" % "2.2.3"
 	,"org.scalaj" %% "scalaj-http" % "2.3.0"
