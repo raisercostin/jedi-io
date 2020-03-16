@@ -1,0 +1,182 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Unknown </title></head><body>
+<h1 id="jedi-io">Jedi IO</h1>
+<h2 id="status">Status</h2>
+<p><a href="https://bintray.com/raisercostin/maven/jedi-io/_latestVersion"><img alt="Download" src="https://api.bintray.com/packages/raisercostin/maven/jedi-io/images/download.svg" /></a>
+<a href="https://travis-ci.org/raisercostin/jedi-io"><img alt="Build Status" src="https://travis-ci.org/raisercostin/jedi-io.svg?branch=master" /></a>
+<a href="https://www.codacy.com/app/raisercostin/jedi-io"><img alt="Codacy Badge" src="https://www.codacy.com/project/badge/5cc4b6b21f694317ab8beec05342c7b5" /></a>
+<a href="https://codecov.io/gh/raisercostin/jedi-io"><img alt="codecov" src="https://codecov.io/gh/raisercostin/jedi-io/branch/master/graph/badge.svg" /></a>
+<!--<a href="http://codecov.io/github/raisercostin/jedi-io?branch=master">klzzwxh:0008</a>--></p>
+<h2 id="description">Description</h2>
+<p>Scala uniform, fluent access to files, urls and other resources API. Fluent for java too.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>HierarchicalMultimap should be case insensitive and should have operations to: add/remove from map and contains</li>
+<li>integrate apache commons vfs via Locations.vfs("...")</li>
+<li>UrlLocation transparently manages</li>
+<li>handle redirects</li>
+<li>good RequestHeader defaults</li>
+<li>reuse already opened HttpConnections</li>
+<li>use proxy if using scalaj/http library</li>
+<li>manage backpresure from server<ul>
+<li>[TODO] connection timeout temporarly</li>
+<li>[TODO] maximum connections/ip-hostname? for a specified timeframe?</li>
+<li>[TODO] delay between requests to same server</li>
+</ul>
+</li>
+<li>[TODO] non-blocking IO returning Future/Observable ?</li>
+<li>Version and Etag that is changed if file is changed. A change version/tag doesn't warranty a change in file content.</li>
+<li>Types of Locations</li>
+<li>Abstract Locations<ul>
+<li>InputLocation - locations that can be read</li>
+<li>OutputLocation - locations that can be written</li>
+<li>InOutLocation - location that can be read/written</li>
+<li>RelativeLocation - part of a location. Cannot be resolved to some content.</li>
+<li>NavigableLocation - location for which you can find parent/childrens/descendants.</li>
+<li>VersionedLocation - location trait with Version/Etag/UniqueId</li>
+</ul>
+</li>
+<li>Physical Locations<ul>
+<li>FileLocation - HasContent, NoChildren</li>
+<li>FolderLocation - NoContent, HasChildren</li>
+<li>MemoryLocation - read/write in memory content - useful for tests.</li>
+<li>ClasspathLocation - InputLocation from classpath.</li>
+<li>Stream Location - location from a InputStream. Might not be reopened.</li>
+<li>TempLocation - location in the temporary file system.</li>
+<li>UrlLocation - location from a url. Follows redirects if needed</li>
+<li>VfsLocation - location based on <a href="https://commons.apache.org/proper/commons-vfs/filesystems.html">Apache-Vfs library</a></li>
+<li>ZipInputLocation - location around zip files</li>
+</ul>
+</li>
+<li>natural sorting for listing files</li>
+<li>Operation Options</li>
+<li>CopyOptions: copy metadata forced or optionally if exists</li>
+<li>OperationMonitor: log warnings</li>
+<li>Default copy should use links. If needed you can specify duplicateContent.</li>
+</ul>
+<h1 id="usage">Usage</h1>
+<h2 id="samples">Samples</h2>
+<p>```
+    //Reading from a file:
+    Locations.file("/home/costin/myfile.txt").readContent</p>
+<pre><code>//Copying a file to a new folder (and create parent folder if needed)
+Locations.file("/home/costin/myfile.txt").
+    copyTo(Locations.file("/home/costin/folder2/myfile2.txt").mkdirOnParentIfNecessary))
+
+//Copying a file to a new relative folder (and create parent folder if needed)
+Locations.file("/home/costin/myfile.txt").
+    copyTo(Locations.relative("folder3/myfile2.txt")))
+
+//read content from classpath
+val text = Locations.classpath("META-INF/maven/org.slf4j/slf4j-api/pom.properties").
+    readContentAsText.get
+
+//get a stream  from classpath
+val text = Locations.classpath("META-INF/maven/org.slf4j/slf4j-api/pom.properties").toInputStream
+</code></pre>
+<p>```</p>
+<p>For more samples see <a href="src/test/scala/org/raisercostin/util/io/LocationsTest.scala">LocationsTest.scala</a></p>
+<h2 id="library">Library</h2>
+<ul>
+<li>from sbt</li>
+</ul>
+<p><code>libraryDependencies += "org.raisercostin" %% "jedi-io" % "0.18"</code>
+ - maven resolver at bintray - http://dl.bintray.com/raisercostin/maven</p>
+<p><code>resolvers += "raisercostin repository" at "http://dl.bintray.com/raisercostin/maven"</code></p>
+<h1 id="development">Development</h1>
+<p>Projects that are using jedi-io:
+ - https://github.com/raisercostin/ownit
+ - https://github.com/raisercostin/my-scala-scripts (see here a script for bulk uploading/importing maven artefacts from a repository/svn/folder to bintray)
+ - to configure release
+     <code>bintrayChangeCredentials</code>
+ - to release</p>
+<p><code>sbt&gt; release skip-tests</code></p>
+<h2 id="history">History</h2>
+<h3 id="2017-12-06">2017-12-06</h3>
+<ul>
+<li>Locations.fromString("content"):MemoryLocation</li>
+</ul>
+<h2 id="backlog">Backlog</h2>
+<ul>
+<li>remove tests from binary release</li>
+<li>add Haddop/Spark like executor for windows: \</li>
+<li>winutils from hadoop</li>
+<li>https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/FileSystemShell.html</li>
+<li>https://stackoverflow.com/questions/38233228/spark-on-windows-what-exactly-is-winutils-and-why-do-we-need-it</li>
+<li>explain concepts</li>
+<li>add File/Folder concepts</li>
+<li>operations on files/folders</li>
+<li>operations on lists of files/folders (like manual selections or filters in OFM)</li>
+<li>make it async</li>
+<li>make a small 2panel file manager - see trolCommander - <a href="https://en.wikipedia.org/wiki/Comparison_of_file_managers">other file managers</a></li>
+<li>Locations.url("file://...") should create a FileLocation?</li>
+<li>add FileStore</li>
+<li>AddHttpsWritable via vfs - http://detailfocused.blogspot.ro/2009/06/add-plugin-for-apache-vfs.html</li>
+<li>add Locations:</li>
+<li>StreamProviderLocation - location that knows how to open a stream</li>
+<li>CachedLocation - location that reads the original location only if the cache expired. Useful around UrlLocation, ZipLocation, etc. Check version if changed read origin.</li>
+<li>MetadataLocation - location that saves metadata associated with the file. See osx files, ds-</li>
+<li>investigate</li>
+<li>scala arm - http://jsuereth.com/scala-arm/continuations.html</li>
+<li>scala io - https://github.com/scala-incubator/scala-io</li>
+<li>spray -</li>
+<li>akka streams -</li>
+<li>UrlLocation use RequestHeader for mime type and reader encoding. Maybe we need MetadataLocation</li>
+<li>clarify operations</li>
+<li>do actions (need to resolve to the filesystems)</li>
+<li>just change in memory representation</li>
+<li>both Resolved/Absolute and Relative could act as destination if they are resolved with src. <code>absolute.asDestination(src)=&gt;absolute2</code> and <code>relative.asDestination(src)=&gt;absolute3</code></li>
+<li>see from here https://wiki.apache.org/commons/VfsNext . Is already integrated with vfs.  </li>
+<li>add transactional aspect as an option http://wiki.c2.com/?TransactionalFileSystem</li>
+<li>store metadata as YAML (hierarchy, use anchors). Should be useful for id3(mp3), exif(image files) etc.</li>
+<li>add hierachical map (apache collections - MultiValueMap &amp; HierarchicalConfiguration, guava - Multimap, spring - MultiValueMap, me - HierarchicalMultimap </li>
+<li>apache commons config<ul>
+<li>https://commons.apache.org/proper/commons-configuration/javadocs/v1.10/apidocs/org/apache/commons/configuration/Configuration.html</li>
+<li>https://commons.apache.org/proper/commons-configuration/userguide/howto_basicfeatures.html</li>
+<li>http://commons.apache.org/proper/commons-configuration/userguide/howto_properties.html#Using_PropertiesConfiguration</li>
+</ul>
+</li>
+<li>https://github.com/Telefonica/java-plainmap</li>
+<li>see config libraries: http://javaeeconfig.blogspot.ro/2014/08/overview-of-existing-configuration.html</li>
+<li>https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html</li>
+<li>apache Configuration vs typesafe Config</li>
+<li>https://stackoverflow.com/questions/15658310/scala-load-java-properties</li>
+<li>https://stackoverflow.com/questions/1432481/multiple-values-in-java-util-properties</li>
+<li>guava ListMultimap via Serializable - https://stackoverflow.com/questions/17697974/writing-and-reading-listmultimapobject-object-to-file-using-properties</li>
+<li>design:</li>
+<li>FileSystems: sink, source, traverse(list, ...), mount/unmount</li>
+<li>Items<ul>
+<li>src/from - dest/to</li>
+<li>folder/files</li>
+<li>selected items</li>
+<li>manually</li>
+<li>filters</li>
+</ul>
+</li>
+<li>Operations between Items with the Operation Config/Operation Strategy<ul>
+<li>copy</li>
+<li>followsymlinks</li>
+<li>including metadata</li>
+<li>overwrite</li>
+<li>recursive</li>
+<li>using symlinks</li>
+<li>move</li>
+</ul>
+</li>
+<li>see java.lang.ProcessBuilder.Redirect with types like: READ, WRITE, PIPE, from, to</li>
+</ul>
+<h2 id="technology-selection">Technology Selection</h2>
+<h3 id="hierarchical-map">Hierarchical Map</h3>
+<p>A container of keys in form a.b.c is needed.
+The value could be multivalue eventually typed : Seq(value1,value2,value3).
+Given a container and a key prefix another container should be returned with partial keys prefix removed.
+A refereence to full key might be useful. A relativeKey concept might be useful?
+A save/load from hocon, yaml would be nice.
+A business wrapper around a Config should be easy to use.</p>
+<h2 id="resources">Resources</h2>
+<ul>
+<li>http://javapapers.com/java/file-attributes-using-java-nio/</li>
+<li>https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html</li>
+<li>http://docs.oracle.com/javase/tutorial/essential/io/links.html#detect</li>
+<li>http://www.javacodex.com/More-Examples/1/8</li>
+</ul>
+</body></html>

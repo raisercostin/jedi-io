@@ -11,6 +11,7 @@
 Scala uniform, fluent access to files, urls and other resources API. Fluent for java too.
 
 ## Features
+- HierarchicalMultimap should be case insensitive and should have operations to: add/remove from map and contains
 - integrate apache commons vfs via Locations.vfs("...")
 - UrlLocation transparently manages
   - handle redirects
@@ -45,6 +46,7 @@ Scala uniform, fluent access to files, urls and other resources API. Fluent for 
 - Operation Options
   - CopyOptions: copy metadata forced or optionally if exists
   - OperationMonitor: log warnings
+- Default copy should use links. If needed you can specify duplicateContent.
 
 # Usage
 ## Samples
@@ -95,12 +97,13 @@ Projects that are using jedi-io:
  sbt> release skip-tests
  ```
 
-## Backlog
+## History
 
 ### 2017-12-06
 - Locations.fromString("content"):MemoryLocation
 
-### Others
+## Backlog
+ - remove tests from binary release
  - add Haddop/Spark like executor for windows: \
    - winutils from hadoop
    - https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/FileSystemShell.html
